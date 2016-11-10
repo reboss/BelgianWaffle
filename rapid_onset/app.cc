@@ -27,33 +27,6 @@ int receiver = 0;
 word current_state;
 int ping = 2; //2 Seconds default
 
-fsm transmit {
-
-	initial state SEND:
-		address packet;
-		packet = tcv_wnp(SEND, sfd, 30);
-		packet[1] = my_id << 12 | receiver << 8 | 1 << 4;
-		strcpy((char *) (packet+2), message);
-		tcv_endp(packet);
-		finish;
-}
-
-fsm receive {
-
-	address packet;
-	sint plength;
-	initial state RECV:
-		packet = tcv_rnp(RECV, sfd);
-		plength = tcv_left(packet);
-		proceed OUTPUT_PACKET;
-
-        state OUTPUT_PACKET:
-		ser_outf(OUTPUT_PACKET, packet+2);
-	        tcv_endp(packet);
-		proceed RECV;
-
-}
-
 fsm root {
 
 	char selection = ' ';
@@ -81,22 +54,22 @@ fsm root {
 	state SELECTION:
 		switch (selection) {
 		case 'C':
-            //TODO: Add ping rate to the ser_out call
-		    ser_outf(SELECTION, "The current ping rate is: %d\r\n", ping);
+			//TODO: Add ping rate to the ser_out call
+			ser_outf(SELECTION, "The current ping rate is: %d\r\n", ping);
 			proceed PROMPT;
 			break;
 		case 'P':
-            selection = 'P';
-            proceed PROMPT;
+			selection = 'P';
+			proceed PROMPT;
 			break;
 		case 'R':
-            selection = 'R';
-            proceed PROMPT;
+			selection = 'R';
+			proceed PROMPT;
  			break;
-       case 'S':
-            selection = 'S';
-            proceed PROMPT;
-             break;
+		case 'S':
+			selection = 'S';
+			proceed PROMPT;
+			break;
 		default:
 			ser_inf(SELECTION, "%c", &selection);
 			proceed PROMPT;
@@ -108,31 +81,31 @@ fsm root {
 	state PROMPT:
 		switch (selection) {
 		case 'C':
-		    //TODO: Set ping rate
-		    ser_inf(PROMPT, "%d", &ping);
+			//TODO: Set ping rate
+			ser_inf(PROMPT, "%d", &ping);
 			ser_outf(PROMPT, "New ping: %d\r\n", ping);
 			selection = ' ';
 			proceed DISPLAY;
 			break;
 		case 'P':
 			ser_out(PROMPT, "Beginning Packet Deployment... \r\n");
-            //TODO: Add Packet Deployment functions
+			//TODO: Add Packet Deployment functions
 			selection = ' ';
 			proceed DISPLAY;
 			break;
 		case 'R':
 			ser_out(PROMPT, "Beginning RSSI Deployment... \r\n");
-            //TODO: Add RSSI Deployment functions
+			//TODO: Add RSSI Deployment functions
 			selection = ' ';
-            proceed DISPLAY;
+			proceed DISPLAY;
 			break;
-        case 'S':
-            ser_out(PROMPT, "Checking Sink Status... \r\n");
-            //TODO: Do we need this?
+		case 'S':
+			ser_out(PROMPT, "Checking Sink Status... \r\n");
+			//TODO: Do we need this?
 			selection = ' ';
-            proceed DISPLAY;
-            break;
-        default:
+			proceed DISPLAY;
+			break;
+		default:
 			selection = ' ';
 			proceed DISPLAY;
 			break;
