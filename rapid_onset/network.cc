@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 #include "sysio.h"
 #include "serf.h"
 #include "ser.h"
@@ -7,57 +9,72 @@
 
 #include "node_tools.h"
 
-#define BUFFER 10
-#define MAX_P 60
-#define PONG_LEN 2
-#define EOT 0
+#define MAX_P     56
+#define PING_LEN  2
+#define MAX_RETRY 10
 
-int sfd;
+#define PING      1
+#define DEPLOY    2
+#define COMMAND   3
+#define STREAM    4
+#define ACK       5
+#define DEPLOYED  6
 
-
-struct ring_buffer {
-	char buffer[BUFFER][MAX_P];
-	// need to indicate EOT (end of transmission)
-	int retries;
-	int in, out, size;
-};
-
+volatile int sfd, retries = 0;
+volatile char payload[MAX_P];
+volatile bool acknowledged, pong;
 // get id's from node_tools
 volatile int my_id = 2, parent = 1, child = 3;
-
-volatile struct ring_buffer stream = {
-	.retries = 0, .in = 0,
-	.out = 0, .size = 0
-};
+volatile int seq = 0;
 
 /* 
    sends the same packet continuously until an ack is received.
    After 10 retries, lost connection is assumed.
 */
 fsm stream_data {
-	
+
 	initial state SEND:
-		if (stream.size == 0)
+		if (ack)
 			finish;
-		if (stream.retries == MAX_RETRY) {
+		if (retries == MAX_RETRY) {
 			// lost connection
 		}
 		address packet;
-		sint plen = strnlen(stream.buffer[stream.out], MAX_P);
+		sint plen = strnlen(payload, MAX_P);
 	        packet = tcv_wnp(SEND, sfd, plen);
-		packet[1] = my_id << 12 | parent << 8 | 1 << 4;
-		strcpy((char *) (stream.buffer[stream.out]+2), stream.buffer);
+		make_packet(packet, my_id, STREAM, seq, payload);
 		tcv_endp(packet);
-		stream.retries++;
+		retries++;
+		seq++;
 }
 
 fsm send_pong {
 	
 	initial state SEND:
 		address packet;
-	        packet = tcv_wnp(SEND, sfd, PONG);
-		packet[1] = my_id << 12 | 
+	        packet = tcv_wnp(SEND, sfd, PING_LEN);
+		build_packet(packet, my_id, PING, seq, NULL);
+		finish;
+}
+
+fsm send_ping {
 	
+	int ping_sequence = 0;
+	int ping_retries = 0;
+	initial state SEND:
+		if (pong)
+			ping_sequence++;
+		else 
+			ping_retries++;
+		if (ping_retries == MAX_RETRY) {
+			// lost connection
+		}
+			
+		pong = false;
+		address packet;
+	        packet = tcv_wnp(SEND, sfd, PING_LEN);
+		build_packet(packet, my_id, PING, ping_sequence, NULL);
+		delay(2000, SEND);
 }
 
 fsm receive {
@@ -69,31 +86,38 @@ fsm receive {
 		packet = tcv_rnp(RECV, sfd);
 	        plength = tcv_left(packet);
 		proceed EVALUATE;
+		
+	state EVALUATE:
+	        switch (get_opcode(packet)) {
 
-        state EVALUATE:
-		switch ((packet[1] << 8) >> 12) {
-
-		case 1:
-			runfsm send_pong;
+		case PING:
+			if (get_hop_id(packet) < my_id)
+				runfsm send_pong;
+			else 
+				pong = true;
 			break;
-		case 2:
-			// receive broadcast
+		case DEPLOY:
 			// setup()
 			break;
-		case 3:
-			// don't overwrite packets!
-			strncpy(stream.buffer[stream.in], packet+2, MAX_P);
-			stream.in = (stream.in + 1) % BUFFER;
-			stream.size++;
+		case DEPLOYED:
+			// tell parent to shutup
+			break;
+
+		case STREAM:
+			// check sequence number for lost ack
+			// check if packet has reached it's destination
+			acknowledged = false;
+			strncpy(payload, packet+3, MAX_P);
 			runfsm stream_data;
 			runfsm send_ack;
 			break;
-		case 4:
-			/* do not increment out until an ack is received */
-			stream.size--;
-			stream.out = (stream.out + 1) % BUFFER;
-			stream.retries = 0;
+		case ACK:
+			acknowledged = true;
+			retries = 0;
 			break;
+		case COMMAND:
+			break;
+			
 		default:
 			break;
 		}
