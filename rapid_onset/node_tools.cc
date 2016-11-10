@@ -9,10 +9,20 @@
 
 extern int my_id, parent, child;
 
-void get_id(address packet) {
+void set_ids(address packet) {
   my_id = (packet[1] >> 8) & 15;
   parent = (packet[1] >> 12) & 15;
   child = my_id + 1;
+}
+
+int get_destination(address packet) {
+  int destination = (packet[1] >> 8) & 15;
+  return destination;
+}
+
+int get_source_id(address packet) {
+  int source_id = packet[1] >> 12;
+  return source_id;
 }
 
 int get_hop_id(address packet) {
