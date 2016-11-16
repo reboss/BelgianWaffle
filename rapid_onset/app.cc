@@ -1,12 +1,12 @@
 /* ####################################################################
    CMPT 464
    Ad Hoc Network Deployment
-   Authors: Aidan Bush, Elliot Sobek, Christopher Dubeau, 
+   Authors: Aidan Bush, Elliott Sobek, Christopher Dubeau,
    John Mulvany-Robbins, Kevin Saforo
    Thursday, November 10
 
-   File: App.cc
-   Description: The contains the menu, and calls to other functions 
+   File: app.cc
+   Description: This file contains the menu, calls to other functions
    for the deployment of an ad hoc network, and the streaming of data
    through nodes.
    ####################################################################
@@ -32,29 +32,21 @@ fsm root {
 	char selection = ' ';
 
 	initial state INIT:
-		phys_cc1100(0, 60);
-	        tcv_plug(0, &plug_null);
-		sfd = tcv_open(WNONE, 0, 0);
-		tcv_control(sfd, PHYSOPT_RXON, NULL);
+		init_cc1100();
 		runfsm receive;
 		proceed DISPLAY;
-	
-	
 	state DISPLAY:
-		ser_outf(DISPLAY, "Rapid Onset Menu\r\n"
+		ser_outf(DISPLAY, "Rapid Onset; Node id (%d)\r\n"
 			"(C)hange Ping Rate\r\n"
 			"(P)acket Deployment\r\n"
 			"(R)SSI Deployment\r\n"
 			"(S)ink Status\r\n"
 			"Selection: ",
 			my_id);
- 
 	        proceed SELECTION;
-
 	state SELECTION:
 		switch (selection) {
 		case 'C':
-			//TODO: Add ping rate to the ser_out call
 			ser_outf(SELECTION, "The current ping rate is: %d\r\n", ping);
 			proceed PROMPT;
 			break;
@@ -77,11 +69,9 @@ fsm root {
 		}
 		proceed PROMPT;
 		release;
-
 	state PROMPT:
 		switch (selection) {
 		case 'C':
-			//TODO: Set ping rate
 			ser_inf(PROMPT, "%d", &ping);
 			ser_outf(PROMPT, "New ping: %d\r\n", ping);
 			selection = ' ';
@@ -90,12 +80,14 @@ fsm root {
 		case 'P':
 			ser_out(PROMPT, "Beginning Packet Deployment... \r\n");
 			//TODO: Add Packet Deployment functions
+			// deploy_packet();
 			selection = ' ';
 			proceed DISPLAY;
 			break;
 		case 'R':
 			ser_out(PROMPT, "Beginning RSSI Deployment... \r\n");
 			//TODO: Add RSSI Deployment functions
+			// deploy_rssi();
 			selection = ' ';
 			proceed DISPLAY;
 			break;
@@ -109,7 +101,12 @@ fsm root {
 			selection = ' ';
 			proceed DISPLAY;
 			break;
-		
 		}
 }
 
+void init_cc1100() {
+	phys_cc1100(0, 60);
+	tcv_plug(0, &plug_null);
+	sfd = tcv_open(WNONE, 0, 0);
+	tcv_control(sfd, PHYSOPT_RXON, NULL);
+}
