@@ -1,3 +1,15 @@
+/* ####################################################################
+   CMPT 464
+   Ad Hoc Network Deployment
+   Authors: Aidan Bush, Elliott Sobek, Christopher Dubeau,
+   John Mulvany-Robbins, Kevin Saforo
+   Thursday, November 10
+
+   File: node_tools.cc
+   Description: This file contains helper network functions.
+   ####################################################################
+*/
+
 #include "sysio.h"
 #include "serf.h"
 #include "ser.h"
