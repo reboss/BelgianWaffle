@@ -36,9 +36,12 @@ fsm root {
 	        tcv_plug(0, &plug_null);
 		sfd = tcv_open(WNONE, 0, 0);
 		tcv_control(sfd, PHYSOPT_RXON, NULL);
-		runfsm receive;
-		proceed DISPLAY;
-	
+		if (sfd < 0) {
+		  runfsm node;
+		  halt();
+		} else {
+		  proceed DISPLAY;
+		}
 	
 	state DISPLAY:
 		ser_outf(DISPLAY, "Rapid Onset Menu\r\n"
@@ -96,6 +99,7 @@ fsm root {
 		case 'R':
 			ser_out(PROMPT, "Beginning RSSI Deployment... \r\n");
 			//TODO: Add RSSI Deployment functions
+			runfsm send_ping;
 			selection = ' ';
 			proceed DISPLAY;
 			break;
@@ -113,3 +117,8 @@ fsm root {
 		}
 }
 
+
+fsm node {
+  state RCV_ALL:
+	runfsm receive;
+}
