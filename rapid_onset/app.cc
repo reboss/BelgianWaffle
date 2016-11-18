@@ -19,13 +19,37 @@
 #include "plug_null.h"
 #include "tcvphys.h"
 #include "phys_cc1100.h"
+#include "network.h"
+#include "node_tools.h"
 
 int sfd;
 char message[30];
 int my_id = 1;
 int receiver = 0;
 word current_state;
-int ping = 2; //2 Seconds default
+
+//Global to denote ping send/recv rate
+int ping = 2;
+
+//Global that indicates if the node is the sink or not
+int sink = 0; 
+
+init_cc1100() {
+  phys_cc1100(0, 60);
+  tcv_plug(0, &plug_null);
+  sfd = tcv_open(WNONE, 0, 0);
+}
+
+fsm node {
+  state NODE_INIT:
+	if (sink) {
+	  //send setup packet here
+	  ser_out(NODE_INIT, "Setup packet sent\r\n");
+
+	  //send_ping needs to keep retrying
+	  runfsm send_ping;
+	} 
+}
 
 fsm root {
 
@@ -34,7 +58,15 @@ fsm root {
 	initial state INIT:
 		init_cc1100();
 		runfsm receive;
-		proceed DISPLAY;
+		if (sfd < 0) {
+		  runfsm node;
+		  halt();
+		} else {
+		  tcv_control(sfd, PHYSOPT_RXON, NULL);
+		  sink = 1;
+		  proceed DISPLAY;
+		}
+
 	state DISPLAY:
 		ser_outf(DISPLAY, "Rapid Onset; Node id (%d)\r\n"
 			"(C)hange Ping Rate\r\n"
@@ -87,9 +119,9 @@ fsm root {
 		case 'R':
 			ser_out(PROMPT, "Beginning RSSI Deployment... \r\n");
 			//TODO: Add RSSI Deployment functions
+			runfsm node;
 			// deploy_rssi();
 			selection = ' ';
-			proceed DISPLAY;
 			break;
 		case 'S':
 			ser_out(PROMPT, "Checking Sink Status... \r\n");
@@ -102,11 +134,4 @@ fsm root {
 			proceed DISPLAY;
 			break;
 		}
-}
-
-void init_cc1100() {
-	phys_cc1100(0, 60);
-	tcv_plug(0, &plug_null);
-	sfd = tcv_open(WNONE, 0, 0);
-	tcv_control(sfd, PHYSOPT_RXON, NULL);
 }
