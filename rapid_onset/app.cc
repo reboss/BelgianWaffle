@@ -25,7 +25,12 @@ char message[30];
 int my_id = 1;
 int receiver = 0;
 word current_state;
-int ping = 2; //2 Seconds default
+
+//Global to denote ping send/recv rate
+int ping = 2;
+
+//Global that indicates if the node is the sink or not
+int sink = 0; 
 
 fsm root {
 
@@ -40,6 +45,7 @@ fsm root {
 		  runfsm node;
 		  halt();
 		} else {
+		  sink = 1;
 		  proceed DISPLAY;
 		}
 	
@@ -101,7 +107,6 @@ fsm root {
 			//TODO: Add RSSI Deployment functions
 			runfsm send_ping;
 			selection = ' ';
-			proceed DISPLAY;
 			break;
 		case 'S':
 			ser_out(PROMPT, "Checking Sink Status... \r\n");
@@ -117,8 +122,15 @@ fsm root {
 		}
 }
 
+fsm deploy {
+  state DEPLOY_INIT:
+	if (sink) {
+	  //send setup packet here
+	  ser_out(DEPLOY_INIT, "Setup packet sent\r\n");
 
-fsm node {
-  state RCV_ALL:
-	runfsm receive;
+	  //send_ping needs to keep retrying
+	  runfsm send_ping;
+	  runfsm receive;
+	} else {
+	  runfsm receive;
 }
