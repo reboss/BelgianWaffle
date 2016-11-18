@@ -55,7 +55,7 @@ fsm stream_data {
 		address packet;
 		sint plen = strnlen(payload, MAX_P);
 	        packet = tcv_wnp(SEND, sfd, plen);
-		make_packet(packet, my_id, STREAM, seq, payload);
+		build_packet(packet, my_id, STREAM, seq, payload);
 		tcv_endp(packet);
 		retries++;
 		seq++;
@@ -137,15 +137,17 @@ fsm receive {
 }
 
 fsm send_ack {
-
+	
+	// ack sequence will match packet it is responding to
 	int ack_sequence = 0;
 	initial state SEND:
 	        address packet = tcv_wnp(SEND, sfd, ACK_LEN);
-		make_packet(packet, my_id, ACK, ack_sequence, NULL);
+		build_packet(packet, my_id, ACK, ack_sequence, NULL);
 		tcv_endp(packet);
-		ack_sequence++;
+		finish;
 }
 
+// does this have to be called asynchronously?
 fsm setup {
 
 	initial state SETUP:
