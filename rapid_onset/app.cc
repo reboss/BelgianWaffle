@@ -25,7 +25,7 @@
 
 int sfd;
 char message[30];
-//extern int my_id = 1;
+extern int my_id;
 int receiver = 0;
 word current_state;
 

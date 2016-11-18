@@ -11,8 +11,7 @@
    ####################################################################
 */
 
-#include <stdbool.h>
-#include <string.h>
+//#include <string.h>
 
 #include "sysio.h"
 #include "serf.h"
@@ -41,13 +40,29 @@
 #define LED_GREEN 1
 #define LED_YELLOW 2
 
+#define TRUE 1
+#define FALSE 0
+
 char payload[MAX_P];
-bool ack = true, pong;
+bool ack = TRUE, pong;
 extern int ping_delay;
 int seq = 0;
 extern int sfd;
 int retries = 0;//retries should be static for the fsm
 int my_id = 2, parent_id = 1, child_id = 3;
+
+// Tell parent to shutup
+void send_deployed_status() {
+    return;
+}
+
+int is_lost_con_retries() {
+    return retries >= MAX_RETRY;
+}
+
+int is_lost_con_ping(int ping_retries) {
+    return ping_retries == MAX_RETRY;
+}
 
 // does this have to be called asynchronously?
 fsm setup {
@@ -68,7 +83,7 @@ fsm stream_data {
         if (is_lost_con_retries())
             leds(LED_RED, 1);
     	address packet;
-    	sint plen = strnlen(payload, MAX_P);
+    	sint plen = strlen(payload);
         packet = tcv_wnp(SEND, sfd, plen);
     	build_packet(packet, my_id, parent_id, STREAM, seq, payload);
     	tcv_endp(packet);
@@ -81,7 +96,7 @@ fsm send_pong {
     initial state SEND:
         address packet;
         packet = tcv_wnp(SEND, sfd, PING_LEN);
-        build_packet(packet, my_id, parent, PING, seq, NULL);
+        build_packet(packet, my_id, parent_id, PING, seq, NULL);
         finish;
 }
 
@@ -89,7 +104,6 @@ fsm send_ping {
 
     int ping_sequence = 0;
     int ping_retries = 0;
-    int dest_id = 0;//need to set dest id
     initial state SEND:
         if (pong) {
             ping_sequence++;
@@ -100,10 +114,10 @@ fsm send_ping {
         if (is_lost_con_ping(ping_retries))
             leds(LED_RED, 1);
         
-        pong = false;
+        pong = FALSE;
         address packet;
         packet = tcv_wnp(SEND, sfd, PING_LEN);
-        build_packet(packet, my_id, dest_id, PING, ping_sequence, NULL);
+        build_packet(packet, my_id, child_id, PING, ping_sequence, NULL);
         delay(2000, SEND);//should use define not magic number
 }
 
@@ -123,7 +137,7 @@ fsm receive {
             if (get_hop_id(packet) < my_id)
                 runfsm send_pong;
             else
-                pong = true;
+                pong = TRUE;
             break;
         case DEPLOY:
             runfsm setup;
@@ -136,13 +150,13 @@ fsm receive {
         case STREAM:
             // check sequence number for lost ack
             // check if packet has reached it's destination
-            ack = false;
+            ack = FALSE;
             strncpy(payload, (char *) packet + 3, MAX_P);
             runfsm stream_data;
             //runfsm send_ack;
             break;
         case ACK:
-            ack = true;
+            ack = TRUE;
             retries = 0;
             break;
         case COMMAND:
@@ -156,23 +170,10 @@ fsm send_ack {
 
     // ack sequence will match packet it is responding to
     int ack_seq = 0;
-    int dest = 0;//what is it sending it to?
     initial state SEND:
+        int dest = child_id;//what is it sending it to?
         address packet = tcv_wnp(SEND, sfd, ACK_LEN);
         build_packet(packet, my_id, dest, ACK, ack_seq, NULL);
         tcv_endp(packet);
         finish;
-}
-
-// Tell parent to shutup
-void send_deployed_status() {
-    return;
-}
-
-int is_lost_con_retries() {
-    return retries >= MAX_RETRY;
-}
-
-int is_lost_con_ping(int ping_retries) {
-    return ping_retries == MAX_RETRY;
 }
