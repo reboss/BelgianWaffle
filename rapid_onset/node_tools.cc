@@ -1,15 +1,26 @@
+/* ####################################################################
+   CMPT 464
+   Ad Hoc Network Deployment
+   Authors: Aidan Bush, Elliott Sobek, Christopher Dubeau,
+   John Mulvany-Robbins, Kevin Saforo
+   Thursday, November 10
+
+   File: node_tools.cc
+   Description: This file contains helper network functions.
+   ####################################################################
+*/
 #include <string.h>
 
 #include "sysio.h"
 
 #define MAX_P 56
 
-extern int my_id, parent, child;
+extern int my_id, parent_id, child_id;
 
 void get_id(address packet) {
   my_id = (packet[1] >> 8) & 15;
-  parent = (packet[1] >> 12) & 15;
-  child = my_id + 1;
+  parent_id = (packet[1] >> 12) & 15;
+  child_id = my_id + 1;
 }
 
 int get_hop_id(address packet) {
