@@ -139,6 +139,7 @@ fsm receive {
 
 	initial state RECV:
 		packet = tcv_rnp(RECV, sfd);
+	
 	        plength = tcv_left(packet);
 		proceed EVALUATE;
 

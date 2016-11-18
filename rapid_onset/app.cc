@@ -34,7 +34,7 @@ int ping = 2;
 //Global that indicates if the node is the sink or not
 int sink = 0; 
 
-init_cc1100() {
+void init_cc1100() {
   phys_cc1100(0, 60);
   tcv_plug(0, &plug_null);
   sfd = tcv_open(WNONE, 0, 0);
