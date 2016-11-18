@@ -11,7 +11,6 @@
    ####################################################################
 */
 
-#include <stdbool.h>
 
 #include "sysio.h"
 #include "serf.h"
@@ -22,38 +21,80 @@
 
 #include "node_tools.h"
 
-#define MAX_P     56
-#define PING_LEN  2
-#define ACK_LEN   2
-#define MAX_RETRY 10
+#define MAX_P      56
+#define PING_LEN   2
+#define ACK_LEN    2
+#define MAX_RETRY  10
 
-#define PING      1
-#define DEPLOY    2
-#define COMMAND   3
-#define STREAM    4
-#define ACK       5
-#define DEPLOYED  6
+#define PING       1
+#define DEPLOY     2
+#define COMMAND    3 
+#define STREAM     4
+#define ACK        5
+#define DEPLOYED   6
+
+#define LED_YELLOW 0
+#define LED_GREEN  1
+#define LED_RED    2
+
+#define TRUE       1
+#define FALSE      0
 
 volatile int sfd, retries = 0;
-volatile char payload[MAX_P];
+char payload[MAX_P];
 volatile bool acknowledged, pong;
 // get id's from node_tools
-volatile int my_id = 2, parent_id = 1, child_id = 3;
+extern int my_id, parent_id, child_id;
 volatile int seq = 0;
 
 /*
    sends the same packet continuously until an ack is received.
    After 10 retries, lost connection is assumed.
 */
+// does this have to be called asynchronously?
+fsm setup {
+
+  initial state SETUP:
+	finish;
+}
+
+
+// Tell parent to shutup
+void send_deployed_status(void) {
+  //send status
+}
+
+bool is_lost_con_retries(void) {
+	return retries == MAX_RETRY;
+}
+
+bool is_lost_con_ping(int ping_retries) {
+	return ping_retries == MAX_RETRY;
+}
+
+
+fsm send_ack {
+
+  // ack sequence will match packet it is responding to
+  int ack_sequence = 0;
+  initial state SEND:
+	address packet = tcv_wnp(SEND, sfd, ACK_LEN);
+  build_packet(packet, my_id, ACK, ack_sequence, NULL);
+  tcv_endp(packet);
+  finish;
+}
+
+
+
 fsm stream_data {
 
 	initial state SEND:
-		if (ack)
+		if (ACK)
 			finish;
 		if (is_lost_con_retries())
 			leds(LED_RED, 1);
 		address packet;
-		sint plen = strnlen(payload, MAX_P);
+		sint plen = strlen(payload);
 	        packet = tcv_wnp(SEND, sfd, plen);
 		build_packet(packet, my_id, STREAM, seq, payload);
 		tcv_endp(packet);
@@ -84,7 +125,7 @@ fsm send_ping {
 		if (is_lost_con_ping(ping_retries))
 			leds(LED_RED, 1);
 
-		pong = false;
+		pong = FALSE;
 		address packet;
 	        packet = tcv_wnp(SEND, sfd, PING_LEN);
 		build_packet(packet, my_id, PING, ping_sequence, NULL);
@@ -107,7 +148,7 @@ fsm receive {
 			if (get_hop_id(packet) < my_id)
 				runfsm send_pong;
 			else
-				pong = true;
+				pong = TRUE;
 			break;
 		case DEPLOY:
 			runfsm setup;
@@ -120,13 +161,13 @@ fsm receive {
 		case STREAM:
 			// check sequence number for lost ack
 			// check if packet has reached it's destination
-			acknowledged = false;
-			strncpy(payload, packet+3, MAX_P);
+			acknowledged = FALSE;
+			strncpy(payload, (char *) packet+3, MAX_P);
 			runfsm stream_data;
 			runfsm send_ack;
 			break;
 		case ACK:
-			acknowledged = true;
+			acknowledged = TRUE;
 			retries = 0;
 			break;
 		case COMMAND:
@@ -134,35 +175,4 @@ fsm receive {
 		default:
 			break;
 		}
-}
-
-fsm send_ack {
-	
-	// ack sequence will match packet it is responding to
-	int ack_sequence = 0;
-	initial state SEND:
-	        address packet = tcv_wnp(SEND, sfd, ACK_LEN);
-		build_packet(packet, my_id, ACK, ack_sequence, NULL);
-		tcv_endp(packet);
-		finish;
-}
-
-// does this have to be called asynchronously?
-fsm setup {
-
-	initial state SETUP:
-		finish;
-}
-
-// Tell parent to shutup
-void send_deployed_status(void) {
-	return;
-}
-
-bool is_lost_con_retries(void) {
-	return retries == MAX_RETRY;
-}
-
-bool is_lost_con_ping(int ping_retries) {
-	return ping_retries == MAX_RETRY;
 }

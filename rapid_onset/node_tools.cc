@@ -11,20 +11,15 @@
 */
 
 #include "sysio.h"
-#include "serf.h"
-#include "ser.h"
-#include "plug_null.h"
-#include "tcvphys.h"
-#include "phys_cc1100.h"
 
 #define MAX_P 56
 
-extern int my_id, parent, child;
+int my_id, parent_id, child_id;
 
 void get_id(address packet) {
   my_id = (packet[1] >> 8) & 15;
-  parent = (packet[1] >> 12) & 15;
-  child = my_id + 1;
+  parent_id = (packet[1] >> 12) & 15;
+  child_id = my_id + 1;
 }
 
 int get_hop_id(address packet) {
@@ -53,7 +48,8 @@ int get_rssi(address packet) {
   return rssi;
 }
 
-void build_packet(address packet, int source_id, int destination, int opcode, int seqnum, char * payload) {
+void build_packet(address packet, int source_id, int destination, int opcode,
+				  int seqnum, char * payload) {
   packet[1] = source_id << 12 | destination << 8 | my_id << 4 | opcode;
   if(payload){
     int length = strlen(payload) + 1;
