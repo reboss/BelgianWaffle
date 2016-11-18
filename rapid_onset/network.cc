@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <string.h>
 
 #include "sysio.h"
 #include "serf.h"
@@ -8,6 +9,8 @@
 #include "phys_cc1100.h"
 
 #include "node_tools.h"
+#include "packet_test.h"
+#include "rssi_test.h"
 
 #define MAX_P     56
 #define PING_LEN  2
@@ -20,12 +23,13 @@
 #define ACK       5
 #define DEPLOYED  6
 
-volatile int sfd, retries = 0;
-volatile char payload[MAX_P];
-volatile bool acknowledged, pong;
-// get id's from node_tools
-volatile int my_id = 2, parent = 1, child = 3;
-volatile int seq = 0;
+extern int sfd;
+int retries = 0;//why global not static for the fsm
+char payload[MAX_P];
+bool ack = true, pong;
+//extern int my_id, parent, child;
+extern int ping_delay = 1;
+int seq = 0;
 
 /* 
    sends the same packet continuously until an ack is received.
@@ -37,7 +41,7 @@ fsm stream_data {
 		if (ack)
 			finish;
 		if (retries == MAX_RETRY) {
-			// lost connection
+			__nop();// lost connection
 		}
 		address packet;
 		sint plen = strnlen(payload, MAX_P);
@@ -52,8 +56,8 @@ fsm send_pong {
 	
 	initial state SEND:
 		address packet;
-	        packet = tcv_wnp(SEND, sfd, PING_LEN);
-		build_packet(packet, my_id, PING, seq, NULL);
+	    packet = tcv_wnp(SEND, sfd, PING_LEN);
+		build_packet(packet, my_id, parent, PING, seq, NULL);
 		finish;
 }
 
@@ -73,7 +77,7 @@ fsm send_ping {
 		pong = false;
 		address packet;
 	        packet = tcv_wnp(SEND, sfd, PING_LEN);
-		build_packet(packet, my_id, PING, ping_sequence, NULL);
+		//build_packet(packet, my_id, PING, ping_sequence, NULL);
 		delay(2000, SEND);
 }
 
@@ -106,13 +110,13 @@ fsm receive {
 		case STREAM:
 			// check sequence number for lost ack
 			// check if packet has reached it's destination
-			acknowledged = false;
-			strncpy(payload, packet+3, MAX_P);
+			ack = false;
+			strncpy(payload, (char *) packet + 3, MAX_P);
 			runfsm stream_data;
-			runfsm send_ack;
+			//runfsm send_ack;
 			break;
 		case ACK:
-			acknowledged = true;
+			ack = true;
 			retries = 0;
 			break;
 		case COMMAND:

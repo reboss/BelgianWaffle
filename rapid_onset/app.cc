@@ -20,12 +20,14 @@
 #include "tcvphys.h"
 #include "phys_cc1100.h"
 
-int sfd;
+#include "network.cc"
+
+//extern int sfd;
 char message[30];
-int my_id = 1;
+//extern int my_id = 1;
 int receiver = 0;
 word current_state;
-int ping = 2; //2 Seconds default
+//extern int ping_delay = 2; //2 Seconds default
 
 fsm root {
 
@@ -55,7 +57,7 @@ fsm root {
 		switch (selection) {
 		case 'C':
 			//TODO: Add ping rate to the ser_out call
-			ser_outf(SELECTION, "The current ping rate is: %d\r\n", ping);
+			ser_outf(SELECTION, "The current ping rate is: %d\r\n", ping_delay);
 			proceed PROMPT;
 			break;
 		case 'P':
@@ -82,8 +84,8 @@ fsm root {
 		switch (selection) {
 		case 'C':
 			//TODO: Set ping rate
-			ser_inf(PROMPT, "%d", &ping);
-			ser_outf(PROMPT, "New ping: %d\r\n", ping);
+			ser_inf(PROMPT, "%d", &ping_delay);
+			ser_outf(PROMPT, "New ping: %d\r\n", ping_delay);
 			selection = ' ';
 			proceed DISPLAY;
 			break;
