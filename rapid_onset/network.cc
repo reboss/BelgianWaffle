@@ -1,3 +1,16 @@
+/* ####################################################################
+   CMPT 464
+   Ad Hoc Network Deployment
+   Authors: Aidan Bush, Elliott Sobek, Christopher Dubeau,
+   John Mulvany-Robbins, Kevin Saforo
+   Thursday, November 10
+
+   File: network.cc
+   Description: This file contains all the logic for sending packets
+   and how to handle recieved packets.
+   ####################################################################
+*/
+
 #include <stdbool.h>
 
 #include "sysio.h"
@@ -11,6 +24,7 @@
 
 #define MAX_P     56
 #define PING_LEN  2
+#define ACK_LEN   2
 #define MAX_RETRY 10
 
 #define PING      1
@@ -24,10 +38,10 @@ volatile int sfd, retries = 0;
 volatile char payload[MAX_P];
 volatile bool acknowledged, pong;
 // get id's from node_tools
-volatile int my_id = 2, parent = 1, child = 3;
+volatile int my_id = 2, parent_id = 1, child_id = 3;
 volatile int seq = 0;
 
-/* 
+/*
    sends the same packet continuously until an ack is received.
    After 10 retries, lost connection is assumed.
 */
@@ -36,9 +50,8 @@ fsm stream_data {
 	initial state SEND:
 		if (ack)
 			finish;
-		if (retries == MAX_RETRY) {
-			// lost connection
-		}
+		if (is_lost_con_retries())
+			leds(LED_RED, 1);
 		address packet;
 		sint plen = strnlen(payload, MAX_P);
 	        packet = tcv_wnp(SEND, sfd, plen);
@@ -49,7 +62,7 @@ fsm stream_data {
 }
 
 fsm send_pong {
-	
+
 	initial state SEND:
 		address packet;
 	        packet = tcv_wnp(SEND, sfd, PING_LEN);
@@ -58,18 +71,19 @@ fsm send_pong {
 }
 
 fsm send_ping {
-	
+
 	int ping_sequence = 0;
 	int ping_retries = 0;
 	initial state SEND:
-		if (pong)
+		if (pong) {
 			ping_sequence++;
-		else 
-			ping_retries++;
-		if (ping_retries == MAX_RETRY) {
-			// lost connection
+			ping_retries = 0;
 		}
-			
+		else
+			ping_retries++;
+		if (is_lost_con_ping(ping_retries))
+			leds(LED_RED, 1);
+
 		pong = false;
 		address packet;
 	        packet = tcv_wnp(SEND, sfd, PING_LEN);
@@ -86,23 +100,23 @@ fsm receive {
 		packet = tcv_rnp(RECV, sfd);
 	        plength = tcv_left(packet);
 		proceed EVALUATE;
-		
+
 	state EVALUATE:
 	        switch (get_opcode(packet)) {
-
 		case PING:
 			if (get_hop_id(packet) < my_id)
 				runfsm send_pong;
-			else 
+			else
 				pong = true;
 			break;
 		case DEPLOY:
-			// setup()
+			runfsm setup;
 			break;
 		case DEPLOYED:
-			// tell parent to shutup
+			// my_id++;
+			// parent_id++;
+			send_deployed_status();
 			break;
-
 		case STREAM:
 			// check sequence number for lost ack
 			// check if packet has reached it's destination
@@ -117,9 +131,36 @@ fsm receive {
 			break;
 		case COMMAND:
 			break;
-			
 		default:
 			break;
 		}
 }
 
+fsm send_ack {
+
+	int ack_sequence = 0;
+	initial state SEND:
+	        address packet = tcv_wnp(SEND, sfd, ACK_LEN);
+		make_packet(packet, my_id, ACK, ack_sequence, NULL);
+		tcv_endp(packet);
+		ack_sequence++;
+}
+
+fsm setup {
+
+	initial state SETUP:
+		finish;
+}
+
+// Tell parent to shutup
+void send_deployed_status(void) {
+	return;
+}
+
+bool is_lost_con_retries(void) {
+	return retries == MAX_RETRY;
+}
+
+bool is_lost_con_ping(int ping_retries) {
+	return ping_retries == MAX_RETRY;
+}
