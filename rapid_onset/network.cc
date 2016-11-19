@@ -25,6 +25,7 @@
 #define MAX_P     56
 #define PING_LEN  2
 #define ACK_LEN   2
+#define LOST_LEN  2
 #define MAX_RETRY 10
 
 #define PING      1
@@ -33,6 +34,7 @@
 #define STREAM    4
 #define ACK       5
 #define DEPLOYED  6
+#define CON_LOST  7
 
 volatile int sfd, retries = 0;
 volatile char payload[MAX_P];
@@ -50,8 +52,10 @@ fsm stream_data {
 	initial state SEND:
 		if (ack)
 			finish;
-		if (is_lost_con_retries())
+		if (is_lost_con_retries()) {
 			leds(LED_RED, 1);
+			runfsm send_con_lost;
+		}
 		address packet;
 		sint plen = strnlen(payload, MAX_P);
 	        packet = tcv_wnp(SEND, sfd, plen);
@@ -81,8 +85,10 @@ fsm send_ping {
 		}
 		else
 			ping_retries++;
-		if (is_lost_con_ping(ping_retries))
+		if (is_lost_con_ping(ping_retries)) {
 			leds(LED_RED, 1);
+			runfsm send_con_lost;
+		}
 
 		pong = false;
 		address packet;
@@ -113,8 +119,7 @@ fsm receive {
 			runfsm setup;
 			break;
 		case DEPLOYED:
-			// my_id++;
-			// parent_id++;
+			increment_all_node_ids();
 			send_deployed_status();
 			break;
 		case STREAM:
@@ -131,13 +136,27 @@ fsm receive {
 			break;
 		case COMMAND:
 			break;
+		case CON_LOST:
+			/*
+			 * If not sink
+			 * 	send again
+			 * else
+			 * 	print connection lost
+			 */
+			if (is_current_node_sink()) {
+				ser_outf(CON_LOST,
+					"Connection lost at node %d"
+					, get_packet_node_id(packet));
+			} else
+				runfsm send_con_lost;
+			break;
 		default:
 			break;
 		}
 }
 
 fsm send_ack {
-	
+
 	// ack sequence will match packet it is responding to
 	int ack_sequence = 0;
 	initial state SEND:
@@ -154,9 +173,29 @@ fsm setup {
 		finish;
 }
 
+fsm send_con_lost {
+
+	initial state SEND:
+		address packet = tcv_wnp(SEND, sfd, LOST_LEN);
+		build_packet(packet, my_id, CON_LOST, 0, NULL);
+		tcv_endp(packet);
+		finish;
+
+}
+
+void increment_all_node_ids(void) {
+	my_id++;
+	parent_id++;
+	child_id++;
+}
+
 // Tell parent to shutup
 void send_deployed_status(void) {
 	return;
+}
+
+bool is_current_node_sink(void) {
+	return my_id == 0;
 }
 
 bool is_lost_con_retries(void) {
