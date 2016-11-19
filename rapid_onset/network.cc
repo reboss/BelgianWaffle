@@ -11,8 +11,6 @@
    ####################################################################
 */
 
-//#include <string.h>
-
 #include "sysio.h"
 #include "serf.h"
 #include "ser.h"
@@ -23,6 +21,7 @@
 #include "node_tools.h"
 #include "packet_test.h"
 #include "rssi_test.h"
+#include "network_help.h"
 
 #define MAX_P     56
 #define PING_LEN  2
@@ -44,12 +43,14 @@
 #define FALSE 0
 
 char payload[MAX_P];
-bool ack = TRUE, pong;
-extern int ping_delay;
+bool ack = TRUE;
+bool pong;
 int seq = 0;
-extern int sfd;
 int retries = 0;//retries should be static for the fsm
 int my_id = 2, parent_id = 1, child_id = 3;
+
+extern int ping_delay;
+extern int sfd;
 
 // Tell parent to shutup
 void send_deployed_status() {
