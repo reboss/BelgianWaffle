@@ -27,6 +27,10 @@ void get_id(address packet) {
   child = my_id + 1;
 }
 
+int get_packet_node_id(address packet) {
+  return (packet[1] >> 8) & 15;
+}
+
 int get_hop_id(address packet) {
   int hop_id = (packet[1] >> 4) & 15;
   return hop_id;
