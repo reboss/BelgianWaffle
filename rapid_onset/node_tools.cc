@@ -23,6 +23,14 @@ void get_id(address packet) {
   child_id = my_id + 1;
 }
 
+int get_source(address packet) {
+    return packet[1] & 15;
+}
+
+int get_dest(address packet) {
+    return (packet[1] >> 4) & 15
+}
+
 int get_hop_id(address packet) {
   int hop_id = (packet[1] >> 4) & 15;
   return hop_id;

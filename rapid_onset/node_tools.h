@@ -6,6 +6,10 @@ extern int my_id, parent, child;
 
 void get_id(address);
 
+int get_source(address);
+
+int get_dest(address);
+
 int get_hop_id(address);
 
 int get_opcode(address);
