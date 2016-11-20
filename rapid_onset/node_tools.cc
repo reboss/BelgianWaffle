@@ -28,7 +28,7 @@ int get_source(address packet) {
 }
 
 int get_dest(address packet) {
-    return (packet[1] >> 4) & 15
+    return (packet[1] >> 4) & 15;
 }
 
 int get_hop_id(address packet) {
@@ -41,6 +41,10 @@ int get_opcode(address packet) {
   return opcode;
 }
 
+int get_end(address packet) {
+    return (packet[2] >> 1) % 1;
+}
+
 int get_length(address packet) {
   int length = (packet[2] << 2) >> 10;
   return length;
@@ -49,6 +53,10 @@ int get_length(address packet) {
 int get_seqnum(address packet) {
   int seqnum = (packet[2] << 8) >> 8;
   return seqnum;
+}
+
+char *get_payload(address packet) {
+    return packet[3];
 }
 
 int get_rssi(address packet) {

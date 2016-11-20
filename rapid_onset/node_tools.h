@@ -14,9 +14,13 @@ int get_hop_id(address);
 
 int get_opcode(address);
 
+int get_end(address);
+
 int get_length(address);
 
 int get_seqnum(address);
+
+char *get_payload(address);
 
 int get_rssi(address);
 
