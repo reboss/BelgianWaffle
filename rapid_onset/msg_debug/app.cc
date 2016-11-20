@@ -1,11 +1,18 @@
 #include "sysio.h"
 #include "serf.h"
+#include "ser.h"
 
-#include "phys_cc1100.h"
 #include "plug_null.h"
 #include "tcv.h"
+#include "phys_cc1100.h"
 
-#include "../node_tools.h"
+#include "node_tools.cc"
+
+#define MAX_P 56 /*from node_tools.cc*/
+
+int my_id, parent_id, child_id;//needed for node_tools to work
+
+int sfd;
 
 init_cc1100() { 
     phys_cc1100(0, 60);
@@ -13,16 +20,20 @@ init_cc1100() {
     sfd = tcv_open(WNONE, 0, 0);
 } 
 
-fsm reciever {
-    static address packet;
-    static sint plength;
+fsm root {
+    address packet;
+    sint plength;
     
-    static int source, dest, hop, opcode;
-    static int end, len, seq;
-    static char[MAX_P +1] payload;
-    static int rssi;
+    int source, dest, hop, opcode;
+    int end, len, seq;
+    char payload[MAX_P +1];
+    int rssi;
     
-    inital state RE_RECV:
+    initial state R_INIT:
+        init_cc1100();
+        proceed(RE_RECV);
+    
+    state RE_RECV:
         packet = tcv_rnp(RE_RECV, sfd);
         plength = tcv_left(packet);
         proceed(RE_SETUP);
@@ -59,11 +70,4 @@ fsm reciever {
             source, dest, hop, opcode, end, len, seq, payload, rssi);
         proceed(RE_RECV);
         
-}
-
-fsm root {
-    initial state R_INIT:
-        init_cc1100();
-        runfsm reciever;
-        finish;
 }
