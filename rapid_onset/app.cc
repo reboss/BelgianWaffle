@@ -19,6 +19,8 @@
 #include "plug_null.h"
 #include "tcvphys.h"
 #include "phys_cc1100.h"
+#include "network.h"
+#include "node_tools.h"
 
 int sfd;
 char message[30];
@@ -38,6 +40,16 @@ init_cc1100() {
   sfd = tcv_open(WNONE, 0, 0);
 }
 
+fsm node {
+  state NODE_INIT:
+	if (sink) {
+	  //send setup packet here
+	  ser_out(NODE_INIT, "Setup packet sent\r\n");
+
+	  //send_ping needs to keep retrying
+	  runfsm send_ping;
+	} 
+}
 
 fsm root {
 
@@ -122,15 +134,4 @@ fsm root {
 			proceed DISPLAY;
 			break;
 		}
-}
-
-fsm node {
-  state NODE_INIT:
-	if (sink) {
-	  //send setup packet here
-	  ser_out(NODE_INIT, "Setup packet sent\r\n");
-
-	  //send_ping needs to keep retrying
-	  runfsm send_ping;
-	} 
 }
