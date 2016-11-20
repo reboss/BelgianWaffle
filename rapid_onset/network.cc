@@ -52,17 +52,19 @@ int my_id = 2, parent_id = 1, child_id = 3;
 extern int ping_delay;
 extern int sfd;
 
-// Tell parent to shutup
-void send_deployed_status() {
-    return;
-}
-
 int is_lost_con_retries() {
     return retries >= MAX_RETRY;
 }
 
 int is_lost_con_ping(int ping_retries) {
     return ping_retries == MAX_RETRY;
+}
+
+fsm send_deployed {
+    
+    initial state SEND:
+        //send message and check for ack
+        finish;
 }
 
 // does this have to be called asynchronously?
@@ -146,7 +148,7 @@ fsm receive {
         case DEPLOYED:
             // my_id++;
             // parent_id++;
-            send_deployed_status();
+            runfsm send_deployed;
             break;
         case STREAM:
             // check sequence number for lost ack
