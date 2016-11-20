@@ -31,10 +31,12 @@ fsm root {
     
     initial state R_INIT:
         init_cc1100();
+        diag("radio setup");
         proceed(RE_RECV);
     
     state RE_RECV:
         packet = tcv_rnp(RE_RECV, sfd);
+        diag("\r\nRECIEVED PACKET");
         plength = tcv_left(packet);
         proceed(RE_SETUP);
     
