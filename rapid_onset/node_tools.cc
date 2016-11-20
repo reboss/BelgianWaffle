@@ -9,8 +9,6 @@
    Description: This file contains helper network functions.
    ####################################################################
 */
-#include <string.h>
-
 #include "sysio.h"
 
 #define MAX_P 56
