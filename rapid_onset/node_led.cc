@@ -19,6 +19,7 @@
 #include "plug_null.h"
 #include "tcvphys.h"
 #include "phys_cc1100.h"
+#include "node_led.h"
 
 #define LED_YELLOW 0
 #define LED_GREEN  1

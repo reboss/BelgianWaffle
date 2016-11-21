@@ -24,7 +24,7 @@
 
 int sfd;
 char message[30];
-my_id = 1, parent_id = ;
+int my_id = 1;
 int receiver = 0;
 word current_state;
 

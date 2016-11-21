@@ -20,7 +20,8 @@
 #include "phys_cc1100.h"
 
 #include "node_tools.h"
-#include "led.h"
+#include "network.h"
+#include "node_led.h"
 
 #define MAX_P      56
 #define PING_LEN   2
@@ -47,6 +48,7 @@ char payload[MAX_P];
 volatile bool acknowledged, pong;
 // get id's from node_tools
 extern int my_id, parent_id, child_id, dest_id;
+extern cur_state;
 volatile int seq = 0;
 
 //Variable that tells the node if it can keep sending deploys
@@ -56,30 +58,32 @@ int cont = 0;
    sends the same packet continuously until an ack is received.
    After 10 retries, lost connection is assumed.
 */
-// does this have to be called asynchronously?
+
+
 fsm send_deploy {
   initial state SEND_DEPLOY_INIT:
 	address packet;
     build_packet(packet, my_id, my_id + 1, DEPLOY, seq, NULL);
 	
 	//keep sending deploys
-	state SEND_DEPLOY_ACTIVE:
-	  if (cont) {
+  state SEND_DEPLOY_ACTIVE:
+	address packet;
+	if (cont) {
+	  tcv_endp(packet);
+	  delay(1000, SEND_DEPLOY_ACTIVE);
+	  proceed SEND_DEPLOY_ACTIVE;
+	} else {
+	  //Tell sink we are deployed
+	  if (my_id != 1) {
+		build_packet(packet, my_id, 1, DEPLOYED, seq, NULL);
 		tcv_endp(packet);
-		delay(1000, SEND_DEPLOY_ACTVE);
-		proceed SEND_DEPLOY_ACTIVE;
-	  } else {
-		//Tell sink we are deployed
-		  if (my_id != 1) {
-		    build_packet(packet, my_id, 1, DEPLOYED, seq, NULL);
-		    tcv_endp(packet);
-		  }
-		
-		/*TODO: Need state to wait for other nodes while they
-		   are setting up. Or start sending pings? */
-		
-		release;
 	  }
+	  
+	  /*TODO: Need state to wait for other nodes while they
+		are setting up. Or start sending pings? */
+	  
+	  release;
+	}
 }
 
 
@@ -176,7 +180,10 @@ fsm receive {
 			break;
 		case DEPLOY:
 		    set_ids(packet);
-			runfsm setup;
+			//Make LED flash yellow when packet received
+			cur_state = 0;
+			runfsm leds;
+			runfsm send_deploy;
 			break;
 
 			/* The DEPLOYED opcode is intended for the sink, nodes need to pass it on
