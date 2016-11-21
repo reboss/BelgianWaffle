@@ -20,6 +20,7 @@
 #include "phys_cc1100.h"
 
 #include "node_tools.h"
+#include "led.h"
 
 #define MAX_P      56
 #define PING_LEN   2
@@ -32,6 +33,7 @@
 #define STREAM     4
 #define ACK        5
 #define DEPLOYED   6
+#define STOP       7
 
 #define LED_YELLOW 0
 #define LED_GREEN  1
@@ -47,21 +49,42 @@ volatile bool acknowledged, pong;
 extern int my_id, parent_id, child_id, dest_id;
 volatile int seq = 0;
 
+//Variable that tells the node if it can keep sending deploys
+int cont = 0;
+
 /*
    sends the same packet continuously until an ack is received.
    After 10 retries, lost connection is assumed.
 */
 // does this have to be called asynchronously?
-fsm setup {
-
-  initial state SETUP:
-	finish;
+fsm send_deploy {
+  initial state SEND_DEPLOY_INIT:
+	address packet;
+    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, NULL);
+	
+	//keep sending deploys
+	state SEND_DEPLOY_ACTIVE:
+	  if (cont) {
+		tcv_endp(packet);
+		delay(1000, SEND_DEPLOY_ACTVE);
+		proceed SEND_DEPLOY_ACTIVE;
+	  } else {
+		//Tell sink we are deployed
+		  if (my_id != 1) {
+		    build_packet(packet, my_id, 1, DEPLOYED, seq, NULL);
+		    tcv_endp(packet);
+		  }
+		
+		/*TODO: Need state to wait for other nodes while they
+		   are setting up. Or start sending pings? */
+		
+		release;
+	  }
 }
 
 
-// Tell parent to shutup
 void send_deployed_status(void) {
-  //send status
+  //TODO: SEE DEPLOYED case in receive fsm
 }
 
 bool is_lost_con_retries(void) {
@@ -83,7 +106,6 @@ fsm send_ack {
   tcv_endp(packet);
   finish;
 }
-
 
 
 fsm stream_data {
@@ -146,14 +168,20 @@ fsm receive {
 	state EVALUATE:
 	        switch (get_opcode(packet)) {
 		case PING:
+		  //TODO: Can't nodes receive pings from their parent as well?
 			if (get_hop_id(packet) < my_id)
 				runfsm send_pong;
 			else
 				pong = TRUE;
 			break;
 		case DEPLOY:
+		    set_ids(packet);
 			runfsm setup;
 			break;
+
+			/* The DEPLOYED opcode is intended for the sink, nodes need to pass it on
+			   and the sink has to keep track of when every node is deployed, so it can
+			   begin streaming */
 		case DEPLOYED:
 			// my_id++;
 			// parent_id++;
@@ -173,6 +201,9 @@ fsm receive {
 			break;
 		case COMMAND:
 			break;
+		case STOP:
+		    cont = 0;
+		    break;
 		default:
 			break;
 		}
