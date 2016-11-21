@@ -49,159 +49,156 @@ volatile int seq = 0;
 */
 fsm stream_data {
 
-	initial state SEND:
-		if (ack)
-			finish;
-		if (is_lost_con_retries()) {
-			leds(LED_RED, 1);
-			runfsm send_con_lost;
-		}
-		address packet;
-		sint plen = strnlen(payload, MAX_P);
-	        packet = tcv_wnp(SEND, sfd, plen);
-		build_packet(packet, my_id, STREAM, seq, payload);
-		tcv_endp(packet);
-		retries++;
-		seq++;
+    initial state SEND:
+        if (ack)
+            finish;
+        if (is_lost_con_retries()) {
+            leds(LED_RED, 1);
+            runfsm send_con_lost;
+        }
+        address packet;
+        sint plen = strnlen(payload, MAX_P);
+        packet = tcv_wnp(SEND, sfd, plen);
+        build_packet(packet, my_id, STREAM, seq, payload);
+        tcv_endp(packet);
+        retries++;
+        seq++;
 }
 
 fsm send_pong {
 
-	initial state SEND:
-		address packet;
-	        packet = tcv_wnp(SEND, sfd, PING_LEN);
-		build_packet(packet, my_id, PING, seq, NULL);
-		finish;
+    initial state SEND:
+        address packet;
+        packet = tcv_wnp(SEND, sfd, PING_LEN);
+        build_packet(packet, my_id, PING, seq, NULL);
+        finish;
 }
 
 fsm send_ping {
 
-	int ping_sequence = 0;
-	int ping_retries = 0;
-	initial state SEND:
-		if (pong) {
-			ping_sequence++;
-			ping_retries = 0;
-		}
-		else
-			ping_retries++;
-		if (is_lost_con_ping(ping_retries)) {
-			leds(LED_RED, 1);
-			runfsm send_con_lost;
-		}
+    int ping_sequence = 0;
+    int ping_retries = 0;
+    initial state SEND:
+        if (pong) {
+            ping_sequence++;
+            ping_retries = 0;
+        }
+        else
+            ping_retries++;
+        if (is_lost_con_ping(ping_retries)) {
+            leds(LED_RED, 1);
+            runfsm send_con_lost;
+        }
 
-		pong = false;
-		address packet;
-	        packet = tcv_wnp(SEND, sfd, PING_LEN);
-		build_packet(packet, my_id, PING, ping_sequence, NULL);
-		delay(2000, SEND);
+        pong = false;
+        address packet;
+        packet = tcv_wnp(SEND, sfd, PING_LEN);
+        build_packet(packet, my_id, PING, ping_sequence, NULL);
+        delay(2000, SEND);
 }
 
 fsm receive {
 
-	address packet;
-	sint plength;
+    address packet;
+    sint plength;
 
-	initial state RECV:
-		packet = tcv_rnp(RECV, sfd);
-	        plength = tcv_left(packet);
-		proceed EVALUATE;
+    initial state RECV:
+        packet = tcv_rnp(RECV, sfd);
+        plength = tcv_left(packet);
+        proceed EVALUATE;
 
-	state EVALUATE:
-	        switch (get_opcode(packet)) {
-		case PING:
-			if (get_hop_id(packet) < my_id)
-				runfsm send_pong;
-			else
-				pong = true;
-			break;
-		case DEPLOY:
-			runfsm setup;
-			break;
-		case DEPLOYED:
-			increment_all_node_ids();
-			send_deployed_status();
-			break;
-		case STREAM:
-			// check sequence number for lost ack
-			// check if packet has reached it's destination
-			acknowledged = false;
-			strncpy(payload, packet+3, MAX_P);
-			runfsm stream_data;
-			runfsm send_ack;
-			break;
-		case ACK:
-			acknowledged = true;
-			retries = 0;
-			break;
-		case COMMAND:
-			break;
-		case CON_LOST:
-			/*
-			 * If not sink
-			 * 	send again
-			 * else
-			 * 	print connection lost
-			 */
-			if (is_current_node_sink()) {
-				ser_outf(CON_LOST,
-					"Connection lost at node %d"
-					, get_packet_node_id(packet));
-			} else
-				runfsm send_con_lost;
-			break;
-		default:
-			break;
-		}
+    state EVALUATE:
+        switch (get_opcode(packet)) {
+        case PING:
+            if (get_hop_id(packet) < my_id)
+                runfsm send_pong;
+            else
+                pong = true;
+            break;
+        case DEPLOY:
+            setup();
+            runfsm leds;
+            break;
+        case DEPLOYED:
+            increment_all_node_ids();
+            send_deployed_status(packet);
+            break;
+        case STREAM:
+            // check sequence number for lost ack
+            // check if packet has reached it's destination
+            acknowledged = false;
+            strncpy(payload, packet + 3, MAX_P);
+            runfsm stream_data;
+            runfsm send_ack;
+            break;
+        case ACK:
+            acknowledged = true;
+            retries = 0;
+            break;
+        case COMMAND:
+            break;
+        case CON_LOST:
+            if (is_current_node_sink()) {
+                ser_outf(CON_LOST,
+                "Connection lost at node %d"
+                , get_source_id(packet));
+            } else
+                runfsm send_con_lost;
+            break;
+        default:
+            break;
+        }
 }
 
 fsm send_ack {
 
-	// ack sequence will match packet it is responding to
-	int ack_sequence = 0;
-	initial state SEND:
-	        address packet = tcv_wnp(SEND, sfd, ACK_LEN);
-		build_packet(packet, my_id, ACK, ack_sequence, NULL);
-		tcv_endp(packet);
-		finish;
-}
-
-// does this have to be called asynchronously?
-fsm setup {
-
-	initial state SETUP:
-		finish;
+    // ack sequence will match packet it is responding to
+    int ack_sequence = 0;
+    initial state SEND:
+        address packet = tcv_wnp(SEND, sfd, ACK_LEN);
+        build_packet(packet, my_id, ACK, ack_sequence, NULL);
+        tcv_endp(packet);
+        finish;
 }
 
 fsm send_con_lost {
 
-	initial state SEND:
-		address packet = tcv_wnp(SEND, sfd, LOST_LEN);
-		build_packet(packet, my_id, CON_LOST, 0, NULL);
-		tcv_endp(packet);
-		finish;
+    initial state SEND:
+        address packet = tcv_wnp(SEND, sfd, LOST_LEN);
+        build_packet(packet, my_id, CON_LOST, 0, NULL);
+        tcv_endp(packet);
+        finish;
+}
 
+void setup(address packet) {
+    parent_id = get_source_id(packet);
+    my_id = parent_id + 1;
+    child_id = my_id + 1;
+    payload = "";
+    acknowledged = false;
+    pong = false;
+    retries = 0;
 }
 
 void increment_all_node_ids(void) {
-	my_id++;
-	parent_id++;
-	child_id++;
+    my_id++;
+    parent_id++;
+    child_id++;
 }
 
 // Tell parent to shutup
 void send_deployed_status(void) {
-	return;
+    return;
 }
 
 bool is_current_node_sink(void) {
-	return my_id == 0;
+    return my_id == 0;
 }
 
 bool is_lost_con_retries(void) {
-	return retries == MAX_RETRY;
+    return retries == MAX_RETRY;
 }
 
 bool is_lost_con_ping(int ping_retries) {
-	return ping_retries == MAX_RETRY;
+    return ping_retries == MAX_RETRY;
 }
