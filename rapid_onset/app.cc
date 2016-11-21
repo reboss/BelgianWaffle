@@ -12,7 +12,6 @@
    ####################################################################
 */
 
-
 #include "sysio.h"
 #include "serf.h"
 #include "ser.h"
@@ -34,21 +33,20 @@ int ping = 2;
 //Global that indicates if the node is the sink or not
 int sink = 0;
 
-init_cc1100() {
-    phys_cc1100(0, 60);
-    tcv_plug(0, &plug_null);
-    sfd = tcv_open(WNONE, 0, 0);
+void init_cc1100() {
+  phys_cc1100(0, 60);
+  tcv_plug(0, &plug_null);
+  sfd = tcv_open(WNONE, 0, 0);
 }
 
 fsm node {
-    state NODE_INIT:
-        if (sink) {
-            //send setup packet here
-            ser_out(NODE_INIT, "Setup packet sent\r\n");
 
-            //send_ping needs to keep retrying
-            runfsm send_ping;
-        }
+  state NODE_INIT:
+    if (sink) {
+      //send setup packet here
+      ser_out(NODE_INIT, "Sending DEPLOY packets..\r\n");
+      runfsm send_deploy;
+    }
 }
 
 fsm root {
@@ -58,13 +56,10 @@ fsm root {
     initial state INIT:
         init_cc1100();
         runfsm receive;
-        if (sfd < 0) {
-            runfsm node;
-            halt();
-        } else {
-            tcv_control(sfd, PHYSOPT_RXON, NULL);
-            sink = 1;
-            proceed DISPLAY;
+        if (sfd >= 0) {
+          tcv_control(sfd, PHYSOPT_RXON, NULL);
+          sink = 1;
+          proceed DISPLAY;
         }
 
     state DISPLAY:
@@ -76,6 +71,7 @@ fsm root {
         "Selection: ",
         my_id);
         proceed SELECTION;
+
     state SELECTION:
         switch (selection) {
         case 'C':
@@ -101,6 +97,7 @@ fsm root {
         }
         proceed PROMPT;
         release;
+
     state PROMPT:
         switch (selection) {
         case 'C':
