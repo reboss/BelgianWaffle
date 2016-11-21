@@ -44,7 +44,7 @@ volatile int sfd, retries = 0;
 char payload[MAX_P];
 volatile bool acknowledged, pong;
 // get id's from node_tools
-extern int my_id, parent_id, child_id;
+extern int my_id, parent_id, child_id, dest_id;
 volatile int seq = 0;
 
 /*
@@ -79,7 +79,7 @@ fsm send_ack {
   int ack_sequence = 0;
   initial state SEND:
 	address packet = tcv_wnp(SEND, sfd, ACK_LEN);
-  build_packet(packet, my_id, ACK, ack_sequence, NULL);
+  build_packet(packet, my_id, dest_id, ACK, ack_sequence, NULL);
   tcv_endp(packet);
   finish;
 }
@@ -96,7 +96,7 @@ fsm stream_data {
 		address packet;
 		sint plen = strlen(payload);
 	        packet = tcv_wnp(SEND, sfd, plen);
-		build_packet(packet, my_id, STREAM, seq, payload);
+			build_packet(packet, my_id, dest_id, STREAM, seq, payload);
 		tcv_endp(packet);
 		retries++;
 		seq++;
@@ -107,7 +107,7 @@ fsm send_pong {
 	initial state SEND:
 		address packet;
 	        packet = tcv_wnp(SEND, sfd, PING_LEN);
-		build_packet(packet, my_id, PING, seq, NULL);
+			build_packet(packet, my_id, dest_id, PING, seq, NULL);
 		finish;
 }
 
@@ -128,7 +128,7 @@ fsm send_ping {
 		pong = FALSE;
 		address packet;
 	        packet = tcv_wnp(SEND, sfd, PING_LEN);
-		build_packet(packet, my_id, PING, ping_sequence, NULL);
+			build_packet(packet, my_id, dest_id, PING, ping_sequence, NULL);
 		delay(2000, SEND);
 }
 
