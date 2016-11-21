@@ -32,7 +32,7 @@ void set_ids(address packet) {
 }
 
 /* get_destination() takes in a packet and returns the int value of
-   the destination node for the packet 
+   the destination node for the packet
 */
 int get_destination(address packet) {
         int destination = (packet[1] >> 8) & 15;
@@ -93,12 +93,11 @@ int get_rssi(address packet) {
 */
 void build_packet(address packet, int source_id, int destination, int opcode, int seqnum, char * payload) {
         packet[1] = source_id << 12 | destination << 8 | my_id << 4 | opcode;
-        if(payload){
+        if (payload) {
                 int length = strlen(payload) + 1;
                 packet[2] = 1 << 14 | ((length + (length % 2)) << 8) | seqnum;
                 strncpy((char *) (packet + 3), payload, MAX_P);
         }
-        else {
+        else
                 packet[2] = 1 << 14 | seqnum;
-        }
 }
