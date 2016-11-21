@@ -182,7 +182,7 @@ fsm receive {
 		    set_ids(packet);
 			//Make LED flash yellow when packet received
 			cur_state = 0;
-			runfsm leds;
+			runfsm node_leds;
 			runfsm send_deploy;
 			break;
 

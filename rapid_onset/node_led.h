@@ -1,3 +1,3 @@
 //+++ "node_led.cc"
 
-void leds(word __pi_st);
+void node_leds(word __pi_st);
