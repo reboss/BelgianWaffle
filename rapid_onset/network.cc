@@ -115,7 +115,7 @@ fsm send_ack {
 fsm stream_data {
 
     initial state SEND:
-        if (ACK)
+        if (acknowledged)
             finish;
         if (is_lost_con_retries())
             leds(LED_RED, 1);
