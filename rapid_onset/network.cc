@@ -88,6 +88,7 @@ fsm stream_data {
     	address packet;
     	sint plen = strlen(payload);
         packet = tcv_wnp(SEND, sfd, plen);
+        //should be forwarding not rebuilding
     	build_packet(packet, my_id, parent_id, STREAM, seq, payload);
     	tcv_endp(packet);
     	retries++;

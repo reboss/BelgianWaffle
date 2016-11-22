@@ -6,7 +6,7 @@
 #include "tcv.h"
 #include "phys_cc1100.h"
 
-#include "node_tools.cc"
+#include "node_tools.h"
 
 #define MAX_P 56 /*from node_tools.cc*/
 
@@ -41,8 +41,8 @@ fsm root {
         proceed(RE_SETUP);
     
     state RE_SETUP:
-        source = get_source(packet);
-        dest = get_dest(packet);
+        source = get_source_id(packet);
+        dest = get_destination(packet);
         hop = get_hop_id(packet);
         opcode = get_opcode(packet);
         
