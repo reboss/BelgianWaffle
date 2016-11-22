@@ -24,7 +24,7 @@
 
 int sfd;
 char message[30];
-my_id = 1;
+int my_id = 1;
 int receiver = 0;
 word current_state;
 
@@ -44,11 +44,9 @@ fsm node {
   state NODE_INIT:
 	if (sink) {
 	  //send setup packet here
-	  ser_out(NODE_INIT, "Setup packet sent\r\n");
-
-	  //send_ping needs to keep retrying
-	  runfsm send_ping;
-	} 
+	  ser_out(NODE_INIT, "Sending DEPLOY packets..\r\n");
+	  runfsm send_deploy;
+	}
 }
 
 fsm root {
@@ -58,10 +56,7 @@ fsm root {
 	initial state INIT:
 		init_cc1100();
 		runfsm receive;
-		if (sfd < 0) {
-		  runfsm node;
-		  halt();
-		} else {
+		if (sfd >= 0) {
 		  tcv_control(sfd, PHYSOPT_RXON, NULL);
 		  sink = 1;
 		  proceed DISPLAY;

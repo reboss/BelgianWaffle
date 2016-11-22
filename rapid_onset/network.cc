@@ -20,6 +20,8 @@
 #include "phys_cc1100.h"
 
 #include "node_tools.h"
+#include "network.h"
+#include "node_led.h"
 
 #define MAX_P      56
 #define PING_LEN   2
@@ -32,6 +34,7 @@
 #define STREAM     4
 #define ACK        5
 #define DEPLOYED   6
+#define STOP       7
 
 #define LED_YELLOW 0
 #define LED_GREEN  1
@@ -44,24 +47,48 @@ volatile int sfd, retries = 0;
 char payload[MAX_P];
 volatile bool acknowledged, pong;
 // get id's from node_tools
-extern int my_id, parent_id, child_id;
+extern int my_id, parent_id, child_id, dest_id;
+extern cur_state;
 volatile int seq = 0;
+
+//Variable that tells the node if it can keep sending deploys
+int cont = 0;
 
 /*
    sends the same packet continuously until an ack is received.
    After 10 retries, lost connection is assumed.
 */
-// does this have to be called asynchronously?
-fsm setup {
 
-  initial state SETUP:
-	finish;
+
+fsm send_deploy {
+  initial state SEND_DEPLOY_INIT:
+	address packet;
+    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, NULL);
+	
+	//keep sending deploys
+  state SEND_DEPLOY_ACTIVE:
+	address packet;
+	if (cont) {
+	  tcv_endp(packet);
+	  delay(1000, SEND_DEPLOY_ACTIVE);
+	  proceed SEND_DEPLOY_ACTIVE;
+	} else {
+	  //Tell sink we are deployed
+	  if (my_id != 1) {
+		build_packet(packet, my_id, 1, DEPLOYED, seq, NULL);
+		tcv_endp(packet);
+	  }
+	  
+	  /*TODO: Need state to wait for other nodes while they
+		are setting up. Or start sending pings? */
+	  
+	  release;
+	}
 }
 
 
-// Tell parent to shutup
 void send_deployed_status(void) {
-  //send status
+  //TODO: SEE DEPLOYED case in receive fsm
 }
 
 bool is_lost_con_retries(void) {
@@ -79,11 +106,10 @@ fsm send_ack {
   int ack_sequence = 0;
   initial state SEND:
 	address packet = tcv_wnp(SEND, sfd, ACK_LEN);
-  build_packet(packet, my_id, ACK, ack_sequence, NULL);
+  build_packet(packet, my_id, dest_id, ACK, ack_sequence, NULL);
   tcv_endp(packet);
   finish;
 }
-
 
 
 fsm stream_data {
@@ -96,7 +122,7 @@ fsm stream_data {
 		address packet;
 		sint plen = strlen(payload);
 	        packet = tcv_wnp(SEND, sfd, plen);
-		build_packet(packet, my_id, STREAM, seq, payload);
+			build_packet(packet, my_id, dest_id, STREAM, seq, payload);
 		tcv_endp(packet);
 		retries++;
 		seq++;
@@ -107,7 +133,7 @@ fsm send_pong {
 	initial state SEND:
 		address packet;
 	        packet = tcv_wnp(SEND, sfd, PING_LEN);
-		build_packet(packet, my_id, PING, seq, NULL);
+			build_packet(packet, my_id, dest_id, PING, seq, NULL);
 		finish;
 }
 
@@ -128,7 +154,7 @@ fsm send_ping {
 		pong = FALSE;
 		address packet;
 	        packet = tcv_wnp(SEND, sfd, PING_LEN);
-		build_packet(packet, my_id, PING, ping_sequence, NULL);
+			build_packet(packet, my_id, dest_id, PING, ping_sequence, NULL);
 		delay(2000, SEND);
 }
 
@@ -146,14 +172,23 @@ fsm receive {
 	state EVALUATE:
 	        switch (get_opcode(packet)) {
 		case PING:
+		  //TODO: Can't nodes receive pings from their parent as well?
 			if (get_hop_id(packet) < my_id)
 				runfsm send_pong;
 			else
 				pong = TRUE;
 			break;
 		case DEPLOY:
-			runfsm setup;
+		    set_ids(packet);
+			//Make LED flash yellow when packet received
+			cur_state = 0;
+			runfsm node_leds;
+			runfsm send_deploy;
 			break;
+
+			/* The DEPLOYED opcode is intended for the sink, nodes need to pass it on
+			   and the sink has to keep track of when every node is deployed, so it can
+			   begin streaming */
 		case DEPLOYED:
 			// my_id++;
 			// parent_id++;
@@ -173,6 +208,9 @@ fsm receive {
 			break;
 		case COMMAND:
 			break;
+		case STOP:
+		    cont = 0;
+		    break;
 		default:
 			break;
 		}
