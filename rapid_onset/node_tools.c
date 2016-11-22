@@ -20,7 +20,7 @@
 
 #define MAX_P 56
 
-extern int my_id, parent, child;
+int my_id, parent, child, dest_id;
 
 /* set_ids() is used during deployment to set the nodes own id, its
    parents id and its childs id

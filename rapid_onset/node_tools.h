@@ -10,6 +10,9 @@
    ####################################################################
 */
 
+#include "sysio.h"
+//+++ "node_tools.c"
+
 void set_ids(address packet);
 int get_destination(address packet);
 int get_source_id(address packet);
