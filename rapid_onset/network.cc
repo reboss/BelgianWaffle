@@ -28,6 +28,7 @@
 #define MAX_P      56
 #define PING_LEN   2
 #define ACK_LEN    2
+#define DEPLOY_LEN 2
 #define MAX_RETRY  10
 
 #define PING       1
@@ -64,13 +65,11 @@ int cont = 0;
 
 
 fsm send_deploy {
-  initial state SEND_DEPLOY_INIT:
-	address packet;
-    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, NULL);
+  initial state SEND_DEPLOY_ACTIVE:
+	address packet = tcv_wnp(SEND_DEPLOY_ACTIVE, sfd, DEPLOY_LEN);
+        build_packet(packet, my_id, my_id + 1, DEPLOY, seq, NULL);
 	
 	//keep sending deploys
-  state SEND_DEPLOY_ACTIVE:
-	address packet;
 	if (cont) {
 	  tcv_endp(packet);
 	  delay(1000, SEND_DEPLOY_ACTIVE);
@@ -109,9 +108,9 @@ fsm send_ack {
   int ack_sequence = 0;
   initial state SEND:
 	address packet = tcv_wnp(SEND, sfd, ACK_LEN);
-  build_packet(packet, my_id, dest_id, ACK, ack_sequence, NULL);
-  tcv_endp(packet);
-  finish;
+        build_packet(packet, my_id, dest_id, ACK, ack_sequence, NULL);
+	tcv_endp(packet);
+	finish; 
 }
 
 
