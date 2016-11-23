@@ -34,20 +34,19 @@ int ping_delay = 2;//2 Seconds default
 //Global that indicates if the node is the sink or not
 int sink = 0; 
 
-init_cc1100() {
-    phys_cc1100(0, 60);
-    tcv_plug(0, &plug_null);
-    sfd = tcv_open(WNONE, 0, 0);
+void init_cc1100() {
+  phys_cc1100(0, 60);
+  tcv_plug(0, &plug_null);
+  sfd = tcv_open(WNONE, 0, 0);
 }
 
 fsm node {
     state NODE_INIT:
-        if (sink) {
+    if (sink) {
         //send setup packet here
-        ser_out(NODE_INIT, "Setup packet sent\r\n");
-        //send_ping needs to keep retrying
-        runfsm send_ping;
-    } 
+        ser_out(NODE_INIT, "Sending DEPLOY packets..\r\n");
+        runfsm send_deploy;
+    }
 }
 
 fsm root {
@@ -57,10 +56,7 @@ fsm root {
 	initial state INIT:
 		init_cc1100();
 		runfsm receive;
-		if (sfd < 0) {
-		  runfsm node;
-		  halt();
-		} else {
+		if (sfd >= 0) {
 		  tcv_control(sfd, PHYSOPT_RXON, NULL);
 		  sink = 1;
 		  proceed DISPLAY;

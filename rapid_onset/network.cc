@@ -22,66 +22,103 @@
 #include "packet_test.h"
 #include "rssi_test.h"
 #include "network_help.h"
+#include "network.h"
+#include "node_led.h"
 
-#define MAX_P     56
-#define PING_LEN  2
-#define ACK_LEN   2
-#define MAX_RETRY 10
+#define MAX_P      56
+#define PING_LEN   2
+#define ACK_LEN    2
+#define MAX_RETRY  10
 
-#define PING      1
-#define DEPLOY    2
-#define COMMAND   3
-#define STREAM    4
-#define ACK       5
-#define DEPLOYED  6
+#define PING       1
+#define DEPLOY     2
+#define COMMAND    3 
+#define STREAM     4
+#define ACK        5
+#define DEPLOYED   6
+#define STOP       7
 
-#define LED_RED 0
-#define LED_GREEN 1
-#define LED_YELLOW 2
+#define LED_YELLOW 0
+#define LED_GREEN  1
+#define LED_RED    2
 
-#define TRUE 1
-#define FALSE 0
+#define TRUE       1
+#define FALSE      0
+
+volatile int sfd, retries = 0;
+volatile int seq = 0;
+volatile bool acknowledged, pong;
+// get id's from node_tools
+extern int my_id, parent_id, child_id, dest_id;
+extern cur_state;
+extern int ping_delay;
 
 char payload[MAX_P];
-bool ack = TRUE;
-bool pong;
-int seq = 0;
-int retries = 0;//retries should be static for the fsm
-int my_id = 2, parent_id = 1, child_id = 3;
-
-extern int ping_delay;
-extern int sfd;
-
-int is_lost_con_retries() {
-    return retries >= MAX_RETRY;
-}
-
-int is_lost_con_ping(int ping_retries) {
-    return ping_retries == MAX_RETRY;
-}
-
-fsm send_deployed {
-    
-    initial state SEND:
-        //send message and check for ack
-        finish;
-}
-
-// does this have to be called asynchronously?
-fsm setup {
-
-    initial state SETUP:
-        finish;
-}
+//Variable that tells the node if it can keep sending deploys
+int cont = 0;
 
 /*
    sends the same packet continuously until an ack is received.
    After 10 retries, lost connection is assumed.
 */
+
+
+fsm send_deploy {
+  initial state SEND_DEPLOY_INIT:
+	address packet;
+    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, NULL);
+	
+	//keep sending deploys
+  state SEND_DEPLOY_ACTIVE:
+	address packet;
+	if (cont) {
+	  tcv_endp(packet);
+	  delay(1000, SEND_DEPLOY_ACTIVE);
+	  proceed SEND_DEPLOY_ACTIVE;
+	} else {
+	  //Tell sink we are deployed
+	  if (my_id != 1) {
+		build_packet(packet, my_id, 1, DEPLOYED, seq, NULL);
+		tcv_endp(packet);
+	  }
+	  
+	  /*TODO: Need state to wait for other nodes while they
+		are setting up. Or start sending pings? */
+	  
+	  release;
+	}
+}
+
+
+void send_deployed_status(void) {
+  //TODO: SEE DEPLOYED case in receive fsm
+}
+
+bool is_lost_con_retries(void) {
+	return retries == MAX_RETRY;
+}
+
+bool is_lost_con_ping(int ping_retries) {
+	return ping_retries == MAX_RETRY;
+}
+
+
+fsm send_ack {
+
+  // ack sequence will match packet it is responding to
+  int ack_sequence = 0;
+  initial state SEND:
+	address packet = tcv_wnp(SEND, sfd, ACK_LEN);
+  build_packet(packet, my_id, dest_id, ACK, ack_sequence, NULL);
+  tcv_endp(packet);
+  finish;
+}
+
+
 fsm stream_data {
 
     initial state SEND:
-        if (ack)
+        if (acknowledged)
             finish;
         if (is_lost_con_retries())
             leds(LED_RED, 1);
@@ -89,10 +126,10 @@ fsm stream_data {
     	sint plen = strlen(payload);
         packet = tcv_wnp(SEND, sfd, plen);
         //should be forwarding not rebuilding
-    	build_packet(packet, my_id, parent_id, STREAM, seq, payload);
-    	tcv_endp(packet);
-    	retries++;
-    	seq++;
+        build_packet(packet, my_id, dest_id, STREAM, seq, payload);
+        tcv_endp(packet);
+        retries++;
+        seq++;
 }
 
 fsm send_pong {
@@ -100,7 +137,7 @@ fsm send_pong {
     initial state SEND:
         address packet;
         packet = tcv_wnp(SEND, sfd, PING_LEN);
-        build_packet(packet, my_id, parent_id, PING, seq, NULL);
+        build_packet(packet, my_id, dest_id, PING, seq, NULL);
         finish;
 }
 
@@ -121,63 +158,64 @@ fsm send_ping {
         pong = FALSE;
         address packet;
         packet = tcv_wnp(SEND, sfd, PING_LEN);
-        build_packet(packet, my_id, child_id, PING, ping_sequence, NULL);
+        build_packet(packet, my_id, dest_id, PING, ping_sequence, NULL);
         delay(2000, SEND);//should use define not magic number
 }
 
 fsm receive {
 
-    address packet;
-    sint plength;
+	address packet;
+	sint plength;
 
-    initial state RECV:
-        packet = tcv_rnp(RECV, sfd);
-            plength = tcv_left(packet);
-        proceed EVALUATE;
+	initial state RECV:
+		packet = tcv_rnp(RECV, sfd);
+	
+	        plength = tcv_left(packet);
+		proceed EVALUATE;
 
-    state EVALUATE:
+	state EVALUATE:
         switch (get_opcode(packet)) {
         case PING:
-            if (get_hop_id(packet) < my_id)
-                runfsm send_pong;
-            else
-                pong = TRUE;
-            break;
-        case DEPLOY:
-            runfsm setup;
-            break;
-        case DEPLOYED:
-            // my_id++;
-            // parent_id++;
-            runfsm send_deployed;
-            break;
-        case STREAM:
-            // check sequence number for lost ack
-            // check if packet has reached it's destination
-            ack = FALSE;
-            strncpy(payload, (char *) packet + 3, MAX_P);
-            runfsm stream_data;
-            //runfsm send_ack;
-            break;
-        case ACK:
-            ack = TRUE;
-            retries = 0;
-            break;
-        case COMMAND:
+		    //TODO: Can't nodes receive pings from their parent as well?
+		    if (get_hop_id(packet) < my_id)
+				runfsm send_pong;
+			else
+				pong = TRUE;
+			break;
+		case DEPLOY:
+		    set_ids(packet);
+			//Make LED flash yellow when packet received
+			cur_state = 0;
+			runfsm node_leds;
+			runfsm send_deploy;
+			break;
+
+            /* The DEPLOYED opcode is intended for the sink, nodes need to pass
+               it on and the sink has to keep track of when every node is
+               deployed, so it can begin streaming */
+		case DEPLOYED:
+			// my_id++;
+			// parent_id++;
+			send_deployed_status();
+			break;
+		case STREAM:
+			// check sequence number for lost ack
+			// check if packet has reached it's destination
+			acknowledged = FALSE;
+			strncpy(payload, (char *) packet+3, MAX_P);
+			runfsm stream_data;
+			runfsm send_ack;
+			break;
+		case ACK:
+			acknowledged = TRUE;
+			retries = 0;
+			break;
+		case COMMAND:
+			break;
+		case STOP:
+		    cont = 0;
             break;
         default:
             break;
         }
-}
-
-fsm send_ack {
-
-    // ack sequence will match packet it is responding to
-    int ack_seq = 0;
-    initial state SEND:
-        int dest = child_id;//what is it sending it to?
-        address packet = tcv_wnp(SEND, sfd, ACK_LEN);
-        build_packet(packet, my_id, dest, ACK, ack_seq, NULL);
-        tcv_endp(packet);
-        finish;
 }

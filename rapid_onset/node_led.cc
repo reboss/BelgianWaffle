@@ -19,6 +19,7 @@
 #include "plug_null.h"
 #include "tcvphys.h"
 #include "phys_cc1100.h"
+#include "node_led.h"
 
 #define LED_YELLOW 0
 #define LED_GREEN  1
@@ -27,21 +28,25 @@
 #define LED_OFF    0
 #define LED_ON     1
 
-bool led_is_on = false;
+#define FALSE      0
+#define TRUE       1
+
+bool led_is_on = FALSE;
 int cur_state = 0;
 enum states {YELLOW_FLASH, GREEN_SOLID, RED_FLASH, RED_SOLID};
+enum states led_state;
 
 
-fsm leds {
+fsm node_leds {
 
   /* Init switches to the needed led function based on what states is set to */ 
         initial state INIT:
-	        if(cur_state != states){
-		        cur_state = states;
+	        if(cur_state != led_state){
+		        cur_state = led_state;
 			leds_all(LED_OFF);
 		}
 		
-		switch(states) {
+		switch(led_state) {
 		        case GREEN_SOLID:
 			        proceed CONNECTED;
 		        case YELLOW_FLASH:
@@ -55,7 +60,7 @@ fsm leds {
 	state CONNECTED:
                 if(!led_is_on) {
 	                leds(LED_GREEN, LED_ON);
-	                led_is_on = true;
+	                led_is_on = TRUE;
 	        }
 	        delay(25, INIT);
 	        release;
@@ -65,11 +70,11 @@ fsm leds {
 	state CONNECTING:
 	        if(led_is_on) {
 	                leds(LED_YELLOW, LED_OFF);
-	                led_is_on = false;
+	                led_is_on = FALSE;
 	        }
 	        else{
 	                leds(LED_YELLOW, LED_ON);
-	                led_is_on = true;
+	                led_is_on = TRUE;
 	        }
 	        delay(100, INIT);
 	        release;
@@ -79,11 +84,11 @@ fsm leds {
 	state CHECKING:
 	        if(led_is_on) {
 	                leds(LED_RED, LED_OFF);
-	                led_is_on = false;
+	                led_is_on = FALSE;
 	        }
 	        else{
 	                leds(LED_RED, LED_ON);
-	                led_is_on = true;
+	                led_is_on = TRUE;
 	        }
 	        delay(100, INIT);
 	        release;
@@ -93,7 +98,7 @@ fsm leds {
 	state DISCONNECTED:
 	        if(!led_is_on) {
 	                leds(LED_RED, LED_ON);
-	                led_is_on = true;
+	                led_is_on = TRUE;
 	        }
 	        delay(25, INIT);
 	        release;

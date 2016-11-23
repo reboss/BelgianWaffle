@@ -17,7 +17,7 @@
 
 #define MAX_P 56
 
-extern int my_id, parent_id, child_id;
+int my_id, parent_id, child_id, dest_id;
 
 /* set_ids() is used during deployment to set the nodes own id, its
    parents id and its childs id
@@ -93,12 +93,12 @@ int get_rssi(address packet) {
 */
 void build_packet(address packet, int source_id, int destination,
                   int opcode, int seqnum, char * payload) {
-        packet[1] = source_id | destination << 4 | my_id << 8 | opcode << 12;
-        if(payload){
-                int length = strlen(payload);
-                packet[2] = 1 << 1 | length << 2 | seqnum << 8;
-                strncpy((char *) (packet + 3), payload, MAX_P);
-        } else {
-                packet[2] = 1 << 1 | seqnum << 12;
-        }
+    packet[1] = source_id | destination << 4 | my_id << 8 | opcode << 12;
+    if(payload){
+        int length = strlen(payload);
+        packet[2] = 1 << 1 | length << 2 | seqnum << 8;
+        strncpy((char *) (packet + 3), payload, MAX_P);
+    } else {
+        packet[2] = 1 << 1 | seqnum << 12;
+    }
 }
