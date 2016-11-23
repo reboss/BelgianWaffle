@@ -26,6 +26,8 @@
 #define MAX_P      56
 #define PING_LEN   2
 #define ACK_LEN    2
+#define DEPLOY_LEN 2
+#define DEPLOYED_LEN 17
 #define MAX_RETRY  10
 
 #define PING       1
@@ -43,13 +45,12 @@
 #define TRUE       1
 #define FALSE      0
 
-volatile int sfd, retries = 0;
 char payload[MAX_P];
+volatile int sfd, retries = 0, seq = 0;
 volatile bool acknowledged, pong;
 // get id's from node_tools
 extern int my_id, parent_id, child_id, dest_id;
 extern cur_state;
-volatile int seq = 0;
 
 //Variable that tells the node if it can keep sending deploys
 int cont = 0;
@@ -59,8 +60,8 @@ int cont = 0;
    After 10 retries, lost connection is assumed.
 */
 
-
 fsm send_deploy {
+
   initial state SEND_DEPLOY_INIT:
     address packet;
     build_packet(packet, my_id, my_id + 1, DEPLOY, seq, NULL);
@@ -86,11 +87,6 @@ fsm send_deploy {
     }
 }
 
-
-void send_deployed_status(void) {
-  //TODO: SEE DEPLOYED case in receive fsm
-}
-
 bool is_lost_con_retries(void) {
     return retries == MAX_RETRY;
 }
@@ -104,25 +100,26 @@ fsm send_ack {
 
   // ack sequence will match packet it is responding to
   int ack_sequence = 0;
+
   initial state SEND:
-  address packet = tcv_wnp(SEND, sfd, ACK_LEN);
-  build_packet(packet, my_id, dest_id, ACK, ack_sequence, NULL);
-  tcv_endp(packet);
-  finish;
+    address packet = tcv_wnp(SEND, sfd, ACK_LEN);
+    build_packet(packet, my_id, dest_id, ACK, ack_sequence, NULL);
+    tcv_endp(packet);
+    finish;
 }
 
 
 fsm stream_data {
 
     initial state SEND:
-        if (ACK)
+        if (acknowledged)
             finish;
         if (is_lost_con_retries())
             leds(LED_RED, 1);
         address packet;
         sint plen = strlen(payload);
-            packet = tcv_wnp(SEND, sfd, plen);
-            build_packet(packet, my_id, dest_id, STREAM, seq, payload);
+        packet = tcv_wnp(SEND, sfd, plen);
+        build_packet(packet, my_id, dest_id, STREAM, seq, payload);
         tcv_endp(packet);
         retries++;
         seq++;
@@ -132,8 +129,8 @@ fsm send_pong {
 
     initial state SEND:
         address packet;
-            packet = tcv_wnp(SEND, sfd, PING_LEN);
-            build_packet(packet, my_id, dest_id, PING, seq, NULL);
+        packet = tcv_wnp(SEND, sfd, PING_LEN);
+        build_packet(packet, my_id, dest_id, PING, seq, NULL);
         finish;
 }
 
@@ -141,6 +138,7 @@ fsm send_ping {
 
     int ping_sequence = 0;
     int ping_retries = 0;
+
     initial state SEND:
         if (pong) {
             ping_sequence++;
@@ -153,9 +151,26 @@ fsm send_ping {
 
         pong = FALSE;
         address packet;
-            packet = tcv_wnp(SEND, sfd, PING_LEN);
-            build_packet(packet, my_id, dest_id, PING, ping_sequence, NULL);
+        packet = tcv_wnp(SEND, sfd, PING_LEN);
+        build_packet(packet, my_id, dest_id, PING, ping_sequence, NULL);
         delay(2000, SEND);
+}
+
+fsm send_deployed {
+
+    char * payload;
+    snprintf(payload, DEPLOYED_LEN, "Node %d deployed\n", my_id);
+
+    initial state SEND:
+        if (acknowledged)
+          finish;
+        if (is_lost_con_retries())
+            leds(LED_RED, 1);
+        address packet = tcv_wnp(SEND, sfd, DEPLOYED_LEN);
+        build_packet(packet, my_id, dest_id, DEPLOYED, seq, payload);
+        tcv_endp(packet);
+        retries++;
+        seq++;
 }
 
 fsm receive {
@@ -185,13 +200,11 @@ fsm receive {
                 runfsm send_deploy;
                 break;
 
-                /* The DEPLOYED opcode is intended for the sink, nodes need to pass it on
-                   and the sink has to keep track of when every node is deployed, so it can
-                   begin streaming */
+            /* The DEPLOYED opcode is intended for the sink, nodes need to pass it on
+               and the sink has to keep track of when every node is deployed, so it can
+               begin streaming */
             case DEPLOYED:
-                // my_id++;
-                // parent_id++;
-                send_deployed_status();
+                runfsm send_deployed;
                 break;
             case STREAM:
                 // check sequence number for lost ack
