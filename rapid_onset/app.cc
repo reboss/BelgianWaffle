@@ -64,12 +64,12 @@ fsm root {
 
     state DISPLAY:
         ser_outf(DISPLAY, "Rapid Onset; Node id (%d)\r\n"
-        "(C)hange Ping Rate\r\n"
-        "(P)acket Deployment\r\n"
-        "(R)SSI Deployment\r\n"
-        "(S)ink Status\r\n"
-        "Selection: ",
-        my_id);
+          "(C)hange Ping Rate\r\n"
+          "(P)acket Deployment\r\n"
+          "(R)SSI Deployment\r\n"
+          "(S)ink Status\r\n"
+          "Selection: ",
+          my_id);
         proceed SELECTION;
 
     state SELECTION:
