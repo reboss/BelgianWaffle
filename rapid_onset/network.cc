@@ -64,7 +64,7 @@ int cont = 0;
 fsm send_deploy {
   initial state SEND_DEPLOY_ACTIVE:
 	address packet = tcv_wnp(SEND_DEPLOY_ACTIVE, sfd, DEPLOY_LEN);
-    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, NULL);
+        build_packet(packet, my_id, my_id + 1, DEPLOY, seq, NULL);
 	
 	//keep sending deploys
 	if (cont) {
@@ -105,9 +105,9 @@ fsm send_ack {
   int ack_sequence = 0;
   initial state SEND:
 	address packet = tcv_wnp(SEND, sfd, ACK_LEN);
-  build_packet(packet, my_id, dest_id, ACK, ack_sequence, NULL);
-  tcv_endp(packet);
-  finish;
+        build_packet(packet, my_id, dest_id, ACK, ack_sequence, NULL);
+	tcv_endp(packet);
+	finish; 
 }
 
 
@@ -121,7 +121,7 @@ fsm stream_data {
 		address packet;
 		sint plen = strlen(payload);
 	        packet = tcv_wnp(SEND, sfd, plen);
-			build_packet(packet, my_id, dest_id, STREAM, seq, payload);
+		build_packet(packet, my_id, dest_id, STREAM, seq, payload);
 		tcv_endp(packet);
 		retries++;
 		seq++;
@@ -132,7 +132,7 @@ fsm send_pong {
 	initial state SEND:
 		address packet;
 	        packet = tcv_wnp(SEND, sfd, PING_LEN);
-			build_packet(packet, my_id, dest_id, PING, seq, NULL);
+		build_packet(packet, my_id, dest_id, PING, seq, NULL);
 		finish;
 }
 
@@ -153,7 +153,7 @@ fsm send_ping {
 		pong = FALSE;
 		address packet;
 	        packet = tcv_wnp(SEND, sfd, PING_LEN);
-			build_packet(packet, my_id, dest_id, PING, ping_sequence, NULL);
+		build_packet(packet, my_id, dest_id, PING, ping_sequence, NULL);
 		delay(2000, SEND);
 }
 
@@ -208,8 +208,8 @@ fsm receive {
 		case COMMAND:
 			break;
 		case STOP:
-		    cont = 0;
-		    break;
+			cont = 0;
+			break;
 		default:
 			break;
 		}
