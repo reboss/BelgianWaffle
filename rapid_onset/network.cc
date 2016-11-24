@@ -158,7 +158,8 @@ fsm send_deployed {
   char message[2];
 
     initial state SEND:
-      sprintf(messgae, "%d", my_id);
+      message[0] = my_id;
+      message[1] = '\0';
         if (acknowledged)
           finish;
         if (is_lost_con_retries())
