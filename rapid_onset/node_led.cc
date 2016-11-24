@@ -40,12 +40,12 @@ fsm node_leds {
 
         /* Init switches to the needed led function based on what states is set to */
         initial state INIT:
-            if (cur_state != states) {
-                cur_state = states;
+            if (cur_state != led_state) {
+                cur_state = led_state;
                 leds_all(LED_OFF);
             }
 
-        switch(states) {
+        switch(led_state) {
         case GREEN_SOLID:
             proceed CONNECTED;
             break;
@@ -65,7 +65,7 @@ fsm node_leds {
     state CONNECTED:
                 if (!led_is_on) {
                     leds(LED_GREEN, LED_ON);
-                    led_is_on = true;
+                    led_is_on = TRUE;
                 }
             delay(25, INIT);
             release;
@@ -75,10 +75,10 @@ fsm node_leds {
     state CONNECTING:
             if (led_is_on) {
                     leds(LED_YELLOW, LED_OFF);
-                    led_is_on = false;
+                    led_is_on = FALSE;
             } else {
                     leds(LED_YELLOW, LED_ON);
-                    led_is_on = true;
+                    led_is_on = TRUE;
             }
             delay(100, INIT);
             release;
@@ -88,10 +88,10 @@ fsm node_leds {
     state CHECKING:
             if (led_is_on) {
                     leds(LED_RED, LED_OFF);
-                    led_is_on = false;
+                    led_is_on = FALSE;
             } else {
                     leds(LED_RED, LED_ON);
-                    led_is_on = true;
+                    led_is_on = TRUE;
             }
             delay(100, INIT);
             release;
@@ -101,7 +101,7 @@ fsm node_leds {
     state DISCONNECTED:
             if (!led_is_on) {
                     leds(LED_RED, LED_ON);
-                    led_is_on = true;
+                    led_is_on = TRUE;
             }
             delay(25, INIT);
             release;
