@@ -56,7 +56,7 @@ extern int ping_delay;
 
 char payload[MAX_P];
 //Variable that tells the node if it can keep sending deploys
-int cont = 0;
+int cont = 1;
 
 /*
    sends the same packet continuously until an ack is received.
@@ -67,24 +67,24 @@ int cont = 0;
 fsm send_deploy {
   initial state SEND_DEPLOY_ACTIVE:
 	address packet = tcv_wnp(SEND_DEPLOY_ACTIVE, sfd, DEPLOY_LEN);
-        build_packet(packet, my_id, my_id + 1, DEPLOY, seq, NULL);
 	
 	//keep sending deploys
 	if (cont) {
-	  tcv_endp(packet);
-	  delay(1000, SEND_DEPLOY_ACTIVE);
-	  proceed SEND_DEPLOY_ACTIVE;
+		build_packet(packet, my_id, my_id + 1, DEPLOY, seq, NULL);
+		tcv_endp(packet);
+		delay(1000, SEND_DEPLOY_ACTIVE);
+		release;
 	} else {
 	  //Tell sink we are deployed
-	  if (my_id != 1) {
-		build_packet(packet, my_id, 1, DEPLOYED, seq, NULL);
-		tcv_endp(packet);
-	  }
+		if (my_id != 1) {
+			build_packet(packet, my_id, 1, DEPLOYED, seq, NULL);
+			tcv_endp(packet);
+		}
 	  
-	  /*TODO: Need state to wait for other nodes while they
-		are setting up. Or start sending pings? */
-	  
-	  release;
+		/*TODO: Need state to wait for other nodes while they
+		  are setting up. Or start sending pings? */
+		
+		release;
 	}
 }
 

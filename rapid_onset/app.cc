@@ -114,7 +114,7 @@ fsm root {
 		case 'R':
 			ser_out(PROMPT, "Beginning RSSI Deployment... \r\n");
 			//TODO: Add RSSI Deployment functions
-			runfsm node;
+			runfsm send_deploy;
 			// deploy_rssi();
 			selection = ' ';
 			break;
