@@ -28,10 +28,7 @@
 #define LED_OFF    0
 #define LED_ON     1
 
-#define FALSE      0
-#define TRUE       1
-
-bool led_is_on = FALSE;
+bool led_is_on = NO;
 int cur_state = 0;
 enum states {YELLOW_FLASH, GREEN_SOLID, RED_FLASH, RED_SOLID};
 enum states led_state;
@@ -65,7 +62,7 @@ fsm node_leds {
     state CONNECTED:
                 if (!led_is_on) {
                     leds(LED_GREEN, LED_ON);
-                    led_is_on = TRUE;
+                    led_is_on = YES;
                 }
             delay(25, INIT);
             release;
@@ -75,10 +72,10 @@ fsm node_leds {
     state CONNECTING:
             if (led_is_on) {
                     leds(LED_YELLOW, LED_OFF);
-                    led_is_on = FALSE;
+                    led_is_on = NO;
             } else {
                     leds(LED_YELLOW, LED_ON);
-                    led_is_on = TRUE;
+                    led_is_on = YES;
             }
             delay(100, INIT);
             release;
@@ -88,10 +85,10 @@ fsm node_leds {
     state CHECKING:
             if (led_is_on) {
                     leds(LED_RED, LED_OFF);
-                    led_is_on = FALSE;
+                    led_is_on = NO;
             } else {
                     leds(LED_RED, LED_ON);
-                    led_is_on = TRUE;
+                    led_is_on = YES;
             }
             delay(100, INIT);
             release;
@@ -101,7 +98,7 @@ fsm node_leds {
     state DISCONNECTED:
             if (!led_is_on) {
                     leds(LED_RED, LED_ON);
-                    led_is_on = TRUE;
+                    led_is_on = YES;
             }
             delay(25, INIT);
             release;
