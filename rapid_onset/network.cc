@@ -27,7 +27,7 @@
 #define PING_LEN   2
 #define ACK_LEN    2
 #define DEPLOY_LEN 2
-#define DEPLOYED_LEN 17
+#define DEPLOYED_LEN 2
 #define MAX_RETRY  10
 
 #define PING       1
@@ -41,9 +41,6 @@
 #define LED_YELLOW 0
 #define LED_GREEN  1
 #define LED_RED    2
-
-#define TRUE       1
-#define FALSE      0
 
 char payload[MAX_P];
 volatile int sfd, retries = 0, seq = 0;
@@ -149,7 +146,7 @@ fsm send_ping {
         if (is_lost_con_ping(ping_retries))
             leds(LED_RED, 1);
 
-        pong = FALSE;
+        pong = NO;
         address packet;
         packet = tcv_wnp(SEND, sfd, PING_LEN);
         build_packet(packet, my_id, dest_id, PING, ping_sequence, NULL);
@@ -161,8 +158,7 @@ fsm send_deployed {
   char message[2];
 
     initial state SEND:
-      message[0] = my_id;
-    message[1] = '\0';
+      sprintf(messgae, "%d", my_id);
         if (acknowledged)
           finish;
         if (is_lost_con_retries())
@@ -191,7 +187,7 @@ fsm receive {
                 if (get_hop_id(packet) < my_id)
                     runfsm send_pong;
                else
-                    pong = TRUE;
+                    pong = YES;
                 break;
             case DEPLOY:
                 set_ids(packet);
@@ -210,13 +206,13 @@ fsm receive {
             case STREAM:
                 // check sequence number for lost ack
                 // check if packet has reached it's destination
-                acknowledged = FALSE;
+                acknowledged = NO;
                 strncpy(payload, (char *) packet+3, MAX_P);
                 runfsm stream_data;
                 runfsm send_ack;
                 break;
             case ACK:
-                acknowledged = TRUE;
+                acknowledged = YES;
                 retries = 0;
                 break;
             case COMMAND:
