@@ -61,7 +61,7 @@ int cont = 0;
 */
 
 fsm send_deploy {
-
+  
   initial state SEND_DEPLOY_INIT:
     address packet;
     build_packet(packet, my_id, my_id + 1, DEPLOY, seq, NULL);
@@ -110,8 +110,8 @@ fsm send_ack {
 
 
 fsm stream_data {
-
-    initial state SEND:
+  
+  initial state SEND:
         if (acknowledged)
             finish;
         if (is_lost_con_retries())
@@ -126,8 +126,8 @@ fsm stream_data {
 }
 
 fsm send_pong {
-
-    initial state SEND:
+  
+  initial state SEND:
         address packet;
         packet = tcv_wnp(SEND, sfd, PING_LEN);
         build_packet(packet, my_id, dest_id, PING, seq, NULL);
@@ -136,7 +136,7 @@ fsm send_pong {
 
 fsm send_ping {
 
-    int ping_sequence = 0;
+  int ping_sequence = 0;
     int ping_retries = 0;
 
     initial state SEND:
@@ -158,16 +158,17 @@ fsm send_ping {
 
 fsm send_deployed {
 
-    char * payload;
-    snprintf(payload, DEPLOYED_LEN, "Node %d deployed\n", my_id);
+  char message[2];
 
     initial state SEND:
+      message[0] = my_id;
+    message[1] = '\0';
         if (acknowledged)
           finish;
         if (is_lost_con_retries())
             leds(LED_RED, 1);
-        address packet = tcv_wnp(SEND, sfd, DEPLOYED_LEN);
-        build_packet(packet, my_id, dest_id, DEPLOYED, seq, payload);
+        address packet = tcv_wnp(SEND, sfd, DEPLOYED_LEN);//fix len
+        build_packet(packet, my_id, dest_id, DEPLOYED, seq, message);
         tcv_endp(packet);
         retries++;
         seq++;
