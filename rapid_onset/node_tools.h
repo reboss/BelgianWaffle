@@ -29,6 +29,8 @@ int get_length(address);
 
 int get_seqnum(address);
 
+char * get_payload(address packet);
+
 int get_rssi(address);
 
 void build_packet(address, int, int, int, int, char *);

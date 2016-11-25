@@ -12,7 +12,7 @@ int num_cutoff(byte rssi) {
     return low;
 }
 
-int rssi_setup_test(address *packet) {
+int rssi_setup_test(address packet) {
     //which packets in the last 16 droped below the rssi threshold
     static word prev_rssi = 0;
     
@@ -24,7 +24,7 @@ int rssi_setup_test(address *packet) {
         prev_rssi &= ~1;
     
     //if to many were low
-    if (num_cutoff >= RSSI_LOW_CUTOFF)
+    if (num_cutoff(prev_rssi) >= RSSI_LOW_CUTOFF)
         return 1;
     return 0;
 }
