@@ -29,16 +29,17 @@
 #define PACKET_TEST 1
 #define RSSI_TEST 2
 
-int sfd;
 char message[30];
-extern int my_id;
+extern int my_id, sfd;
 int receiver = 0;
 word current_state;
 
 int ping_delay = 2000;//2 Seconds default
 
+
 //Global that indicates if the node is the sink or not
 int sink = 0;
+
 
 extern int (*test_func)(address *);
 
@@ -56,6 +57,7 @@ fsm root {
     initial state INIT:
         init_cc1100();
         runfsm receive;
+	proceed DISPLAY;
 
     state DISPLAY:
         ser_outf(DISPLAY, "Rapid Onset; Node id (%d)\r\n"
@@ -67,7 +69,7 @@ fsm root {
           my_id);
         proceed SELECTION;
 
-	state SELECTION:
+    state SELECTION:
         ser_inf(SELECTION, "%c", &selection);
         proceed PROMPT;
 
@@ -78,26 +80,26 @@ fsm root {
             break;
         case 'P':
             if (sink) {
-                ser_out(PROMPT, "This node is already the sink\r\n");
+                diag("This node is already the sink\r\n");
                 break;
             }
-            ser_out(PROMPT, "Beginning Packet Deployment...\r\n");
+            diag("Beginning Packet Deployment...\r\n");
             test_func = &packet_setup_test;
             sink = 1;
             runfsm send_deploy(PACKET_TEST);
             break;
         case 'R':
             if (sink) {
-                ser_out(PROMPT, "This node is already the sink\r\n");
+                diag("This node is already the sink\r\n");
                 break;
             }
-            ser_out(PROMPT, "Beginning RSSI Deployment...\r\n");
+            diag("Beginning RSSI Deployment...\r\n");
             test_func = &rssi_setup_test;
             sink = 1;
             runfsm send_deploy(RSSI_TEST);
             break;
         case 'S':
-            ser_outf(PROMPT, "Sink set to: %d\r\n", sink);
+	    diag("Sink set to: %d\r\n", sink);
             //TODO: Do we need this?
             break;
         default:
@@ -116,4 +118,5 @@ fsm root {
     state PING_CONFIRM:
         ser_outf(PING_CONFIRM, "New ping delay %d\r\n\r\n", ping_delay);
         proceed DISPLAY;
+	
 }
