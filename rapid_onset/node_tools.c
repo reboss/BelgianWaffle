@@ -32,7 +32,7 @@ void set_ids(address packet) {
    the destination node for the packet
 */
 int get_destination(address packet) {
-        return (packet[1] >> 8) & 15;
+        return (packet[1] >> 4) & 15;
 }
 
 /* get_source_id() takes in a packet and returns the int value of
@@ -46,14 +46,14 @@ int get_source_id(address packet) {
    node that last relayed the packet
 */
 int get_hop_id(address packet) {
-        return (packet[1] >> 4) & 15;
+        return (packet[1] >> 8) & 15;
 }
 
 /* get_opcode() takes in a packet and returns the int value of the
    operation code that coresponds to the packet
 */
 int get_opcode(address packet) {
-        return (packet[1]) & 15;
+        return (packet[1] >> 12) & 15;
 }
 
 /* get_end() returns the end bit of the packet

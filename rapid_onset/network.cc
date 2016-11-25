@@ -43,6 +43,7 @@
 #define LED_YELLOW 0
 #define LED_GREEN  1
 #define LED_RED    2
+#define LED_RED_S  3
 
 #define TRUE       1
 #define FALSE      0
@@ -147,7 +148,7 @@ fsm stream_data {
         if (acknowledged)
             finish;
         if (is_lost_con_retries())
-            leds(LED_RED, 1);
+	  set_led(LED_REDS);
         address packet;
         sint plen = strlen(payload);
         packet = tcv_wnp(SEND, sfd, plen);
@@ -180,7 +181,7 @@ fsm send_ping {
         else
             ping_retries++;
         if (is_lost_con_ping(ping_retries))
-            leds(LED_RED, 1);
+	    set_led(LED_REDS);
 
         pong = FALSE;
         address packet;
@@ -205,15 +206,13 @@ fsm receive {
 	state EVALUATE:
 		switch (get_opcode(packet)) {
 		case PING:
-			//TODO: Can't nodes receive pings from their parent as well?
 			if (get_hop_id(packet) < my_id)
 				runfsm send_pong;
 			break;
 		case DEPLOY:
 			set_ids(packet);
-			//Make LED flash yellow when packet receivedy
+			// led yellow flash
 			cur_state = 0;
-			//runfsm node_leds;
 			runfsm send_deploy;
 			break;
 		
