@@ -56,11 +56,6 @@ fsm root {
     initial state INIT:
         init_cc1100();
         runfsm receive;
-        if (sfd >= 0) {
-          tcv_control(sfd, PHYSOPT_RXON, NULL);
-          sink = 0;//nodes are only sinks if set
-          proceed DISPLAY;
-        }
 
     state DISPLAY:
         ser_outf(DISPLAY, "Rapid Onset; Node id (%d)\r\n"
