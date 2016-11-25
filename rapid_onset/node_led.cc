@@ -34,7 +34,24 @@
 bool led_is_on = FALSE;
 int cur_state = 0;
 enum states {YELLOW_FLASH, GREEN_SOLID, RED_FLASH, RED_SOLID};
-enum states led_state;
+enum states led_state = YELLOW_FLASH;
+
+void set_states(int cur_state) {
+        switch(cur_state) {
+        case 0:
+                led_state = YELLOW_FLASH;
+                break;
+        case 1:
+                led_state = GREEN_SOLID;
+                break;
+        case 2:
+                led_state = RED_FLASH;
+                break;
+        case 3:
+                led_state = RED_SOLID;
+                break;
+        }
+}
 
 fsm node_leds {
 
