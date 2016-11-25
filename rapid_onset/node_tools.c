@@ -29,7 +29,7 @@ void set_ids(address packet) {
 }
 
 /* get_destination() takes in a packet and returns the int value of
-   the destination node for the packet 
+   the destination node for the packet
 */
 int get_destination(address packet) {
         return (packet[1] >> 8) & 15;

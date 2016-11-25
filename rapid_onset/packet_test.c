@@ -2,6 +2,15 @@
 
 #define PACKET_LOSS_THRESHOLD 8
 
+int num_lost(word losses) {
+    int i, lost = 0;
+    for (i = 0; i < 15; i++) {
+        if ((losses >> i) & 1 == 1)
+            lost++;
+    }
+    return lost;
+}
+
 int packet_setup_test(address *packet) {
     static int last_seq = 0;//deal with initial setup
     static word prev_lost;//last 15 packets and a setup bit
@@ -24,16 +33,6 @@ int packet_setup_test(address *packet) {
     if (num_lost(prev_lost) >= PACKET_LOSS_THRESHOLD)
         return 1;
     return 0;
-}
-
-
-int num_lost(word losses) {
-    int i, lost = 0;
-    for (i = 0; i < 15; i++) {
-        if ((losses >> i) & 1 == 1)
-            lost++;
-    }
-    return lost;
 }
 
 
