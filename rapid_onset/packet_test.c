@@ -11,7 +11,7 @@ int num_lost(word losses) {
     return lost;
 }
 
-int packet_setup_test(address *packet) {
+int packet_setup_test(address packet) {
     static int last_seq = 0;//deal with initial setup
     static word prev_lost;//last 15 packets and a setup bit
     int i;

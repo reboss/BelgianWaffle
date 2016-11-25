@@ -26,9 +26,6 @@
 #include "rssi_test.h"
 #include "packet_test.h"
 
-#define PACKET_TEST 1
-#define RSSI_TEST 2
-
 char message[30];
 extern int my_id, sfd;
 int receiver = 0;

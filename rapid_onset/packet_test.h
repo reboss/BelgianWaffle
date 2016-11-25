@@ -10,6 +10,6 @@
  * Return: 1 if the number of lost packets in the last 15 packets exceeds a
  *  thresholds
  */
-int packet_setup_test(address *);
+int packet_setup_test(address);
 
 #endif /*PACKET_TEST_H*/
