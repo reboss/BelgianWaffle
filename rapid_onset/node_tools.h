@@ -9,22 +9,30 @@
    Description: The header file for node_tools.c
    ####################################################################
 */
-#include "sysio.h"
-
 #ifndef NODE_TOOLS_H
 #define NODE_TOOLS_H
 
 #include "sysio.h"
+//+++ "node_tools.c"
 
+void set_ids(address);
 
-void set_ids(address packet);
-int get_destination(address packet);
-int get_source_id(address packet);
-int get_hop_id(address packet);
-int get_opcode(address packet);
-int get_length(address packet);
-int get_seqnum(address packet);
-int get_rssi(address packet);
-void build_packet(address packet, int source_id, int destination, int opcode, int seqnum, char * payload);
+int get_destination(address);
+
+int get_source_id(address);
+
+int get_hop_id(address);
+
+int get_opcode(address);
+
+int get_length(address);
+
+int get_seqnum(address);
+
+int get_rssi(address);
+
+void build_packet(address, int, int, int, int, char *);
+
+int get_end(address);
 
 #endif /*NODE_TOOLS_H*/
