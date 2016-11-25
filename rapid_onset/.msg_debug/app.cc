@@ -18,6 +18,7 @@ init_cc1100() {
     phys_cc1100(0, 60);
     tcv_plug(0, &plug_null);
     sfd = tcv_open(WNONE, 0, 0);
+    tcv_control(sfd, PHYSOPT_ON, NULL);
 } 
 
 fsm root {
@@ -31,16 +32,18 @@ fsm root {
     
     initial state R_INIT:
         init_cc1100();
-        diag("radio setup");
+        diag("radio setup\r\n");
         proceed(RE_RECV);
     
     state RE_RECV:
+        diag("before tvc_rnp\r\n");
         packet = tcv_rnp(RE_RECV, sfd);
-        diag("\r\nRECIEVED PACKET");
+        diag("\r\nRECIEVED PACKET\r\n");
         plength = tcv_left(packet);
         proceed(RE_SETUP);
     
     state RE_SETUP:
+        diag("RE_SETUP start\r\n");
         source = get_source_id(packet);
         dest = get_destination(packet);
         hop = get_hop_id(packet);
