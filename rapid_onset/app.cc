@@ -57,11 +57,7 @@ fsm root {
     initial state INIT:
         init_cc1100();
         runfsm receive;
-        if (sfd >= 0) {
-          tcv_control(sfd, PHYSOPT_RXON, NULL);
-          sink = 0;//nodes are only sinks if set
-          proceed DISPLAY;
-        }
+	proceed DISPLAY;
 
     state DISPLAY:
         ser_outf(DISPLAY, "Rapid Onset; Node id (%d)\r\n"
@@ -84,26 +80,26 @@ fsm root {
             break;
         case 'P':
             if (sink) {
-                ser_out(PROMPT, "This node is already the sink\r\n");
+                diag("This node is already the sink\r\n");
                 break;
             }
-            ser_out(PROMPT, "Beginning Packet Deployment...\r\n");
+            diag("Beginning Packet Deployment...\r\n");
             test_func = &packet_setup_test;
             sink = 1;
             runfsm send_deploy(PACKET_TEST);
             break;
         case 'R':
             if (sink) {
-                ser_out(PROMPT, "This node is already the sink\r\n");
+                diag("This node is already the sink\r\n");
                 break;
             }
-            ser_out(PROMPT, "Beginning RSSI Deployment...\r\n");
+            diag("Beginning RSSI Deployment...\r\n");
             test_func = &rssi_setup_test;
             sink = 1;
             runfsm send_deploy(RSSI_TEST);
             break;
         case 'S':
-            ser_outf(PROMPT, "Sink set to: %d\r\n", sink);
+	    diag("Sink set to: %d\r\n", sink);
             //TODO: Do we need this?
             break;
         default:

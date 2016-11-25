@@ -26,9 +26,9 @@
 #include "node_led.h"
 
 #define MAX_P      56
-#define PING_LEN   2
-#define ACK_LEN    2
-#define DEPLOY_LEN 2
+#define PING_LEN   4
+#define ACK_LEN    4
+#define DEPLOY_LEN 6
 #define DEPLOYED_LEN 17
 #define MAX_RETRY  10
 
@@ -99,21 +99,27 @@ fsm send_deployed {
 
 	//TODO: SEE DEPLOYED case in receive fsm
 fsm send_deploy(int test) {
-    
-    address packet;
 
+	//address packet;
+    char msg[2];
+	 
     initial state SEND_DEPLOY_INIT:
-        char msg[2];
-        msg[0] = test;
-        msg[1] = '\0';
-        build_packet(packet, my_id, my_id + 1, DEPLOY, seq, msg);
-        proceed SEND_DEPLOY_ACTIVE;
-
+	    msg[0] = test;
+            msg[1] = '\0';
+	    proceed SEND_DEPLOY_ACTIVE;
+        
     //keep sending deploys
     state SEND_DEPLOY_ACTIVE:
         if (cont) {
+	    address packet;
+	    //diag("sfd = %d\r\n", sfd);	
+	    packet = tcv_wnp(SEND_DEPLOY_ACTIVE, sfd, DEPLOY_LEN);
+	    //diag("packet written\r\n");
+	    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, msg);
+	    //diag("packet built\r\n");
             tcv_endp(packet);
-            delay(1000, SEND_DEPLOY_ACTIVE);//TODO use define?
+	    //diag("packet sent\r\n");
+            delay(500, SEND_DEPLOY_ACTIVE);
             release;
         } else {
             runfsm send_deployed;
@@ -189,11 +195,6 @@ fsm receive {
 	sint plength;
 
 	initial state INIT_CC1100:
-		phys_cc1100(0, 60);
-	        tcv_plug(0, &plug_null);
-		sfd = tcv_open(WNONE, 0, 0);
-		tcv_control(sfd, PHYSOPT_ON, NULL);	
-		
 		proceed RECV;
 	
 	state RECV:
