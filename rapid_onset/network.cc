@@ -58,6 +58,8 @@ extern int ping_delay;
 char payload[MAX_P];
 //Variable that tells the node if it can keep sending deploys
 int cont = 0;
+//function pointer for deployment type
+int (*test_func)(address *);
 
 /*
    sends the same packet continuously until an ack is received.
@@ -158,7 +160,7 @@ fsm send_ping {
         address packet;
         packet = tcv_wnp(SEND, sfd, PING_LEN);
         build_packet(packet, my_id, dest_id, PING, ping_sequence, NULL);
-        delay(2000, SEND);
+        delay(ping_delay, SEND);
         release;
 }
 

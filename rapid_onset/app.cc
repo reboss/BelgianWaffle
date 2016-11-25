@@ -22,16 +22,22 @@
 #include "network.h"
 #include "node_tools.h"
 
+//testfiles
+#include "rssi_test.h"
+#include "packet_test.h"
+
 int sfd;
 char message[30];
 extern int my_id;
 int receiver = 0;
 word current_state;
 
-int ping_delay = 2;//2 Seconds default
+int ping_delay = 2000;//2 Seconds default
 
 //Global that indicates if the node is the sink or not
 int sink = 0;
+
+extern int (*test_func)(address *);
 
 void init_cc1100() {
   phys_cc1100(0, 60);
@@ -50,14 +56,14 @@ fsm node {
 
 fsm root {
 
-    char selection = ' ';
+    char selection = '\0';
 
     initial state INIT:
         init_cc1100();
         runfsm receive;
         if (sfd >= 0) {
           tcv_control(sfd, PHYSOPT_RXON, NULL);
-          sink = 1;
+          sink = 1;//TODO should not do this, b/c sets all nodes to sink
           proceed DISPLAY;
         }
 
@@ -72,61 +78,42 @@ fsm root {
         proceed SELECTION;
 
 	state SELECTION:
-		switch (selection) {
-		case 'C':
-			ser_outf(SELECTION, "The current ping rate is: %d\r\n", ping_delay);
-			proceed PROMPT;
-			break;
-		case 'P':
-			selection = 'P';
-			proceed PROMPT;
-			break;
-		case 'R':
-			selection = 'R';
-			proceed PROMPT;
- 			break;
-		case 'S':
-			selection = 'S';
-			proceed PROMPT;
-			break;
-		default:
-			ser_inf(SELECTION, "%c", &selection);
-			proceed PROMPT;
-			break;
-		}
-		proceed PROMPT;
+        ser_inf(SELECTION, "%c", &selection);
+        proceed PROMPT;
 
 	state PROMPT:
         switch (selection) {
         case 'C':
-            ser_inf(PROMPT, "%d", &ping_delay);
-            ser_outf(PROMPT, "New ping: %d\r\n", ping_delay);
-            selection = ' ';
-            proceed DISPLAY;
+            proceed PING_PROMPT;
             break;
         case 'P':
             ser_out(PROMPT, "Beginning Packet Deployment... \r\n");
-            //TODO: Add Packet Deployment functions
-            // deploy_packet();
-            selection = ' ';
-            proceed DISPLAY;
+            test_func = &packet_setup_test;
+            //TODO start sending?
             break;
         case 'R':
             ser_out(PROMPT, "Beginning RSSI Deployment... \r\n");
-            //TODO: Add RSSI Deployment functions
-            runfsm node;
-            // deploy_rssi();
-            selection = ' ';
+            test_func = &rssi_setup_test;
+            //TODO start sending?
             break;
         case 'S':
-            ser_out(PROMPT, "Checking Sink Status... \r\n");
+            ser_outf(PROMPT, "Sink set to: %d\r\n", sink);
             //TODO: Do we need this?
-            selection = ' ';
-            proceed DISPLAY;
             break;
         default:
-            selection = ' ';
-            proceed DISPLAY;
             break;
         }
+        proceed DISPLAY;
+
+    state PING_PROMPT:
+        ser_outf(PING_PROMPT, "Enter new ping delay in milliseconds: ");
+        proceed PING_SELECT;
+
+    state PING_SELECT:
+        ser_inf(PROMPT, "%d", &ping_delay);
+        proceed PING_CONFIRM;
+
+    state PING_CONFIRM:
+        ser_outf(PING_CONFIRM, "New ping delay %d\r\n\r\n", ping_delay);
+        proceed DISPLAY;
 }
