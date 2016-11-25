@@ -66,31 +66,27 @@ int (*test_func)(address *);
    After 10 retries, lost connection is assumed.
 */
 
-fsm send_deploy {
-
-  initial state SEND_DEPLOY_INIT:
+fsm send_deploy(int test) {
+    
     address packet;
-    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, NULL);
+
+    initial state SEND_DEPLOY_INIT:
+        char msg[2];
+        msg[0] = test;
+        msg[1] = '\0';
+        build_packet(packet, my_id, my_id + 1, DEPLOY, seq, msg);
+        proceed SEND_DEPLOY_ACTIVE;
 
     //keep sending deploys
-  state SEND_DEPLOY_ACTIVE:
-    address packet;
-    if (cont) {
-      tcv_endp(packet);
-      delay(1000, SEND_DEPLOY_ACTIVE);
-      proceed SEND_DEPLOY_ACTIVE;
-    } else {
-      //Tell sink we are deployed
-      if (my_id != 1) {
-        build_packet(packet, my_id, 1, DEPLOYED, seq, NULL);
-        tcv_endp(packet);
-      }
-
-      /*TODO: Need state to wait for other nodes while they
-        are setting up. Or start sending pings? */
-
-      release;
-    }
+    state SEND_DEPLOY_ACTIVE:
+        if (cont) {
+            tcv_endp(packet);
+            delay(1000, SEND_DEPLOY_ACTIVE);//TODO use define?
+            release;
+        } else {
+            runfsm send_deployed;
+            finish;
+        }
 }
 
 bool is_lost_con_retries(void) {

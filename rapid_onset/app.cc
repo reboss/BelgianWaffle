@@ -22,9 +22,12 @@
 #include "network.h"
 #include "node_tools.h"
 
-//testfiles
+/* test files */
 #include "rssi_test.h"
 #include "packet_test.h"
+
+#define PACKET_TEST 1
+#define RSSI_TEST 2
 
 int sfd;
 char message[30];
@@ -45,15 +48,6 @@ void init_cc1100() {
   sfd = tcv_open(WNONE, 0, 0);
 }
 
-fsm node {
-    state NODE_INIT:
-    if (sink) {
-        //send setup packet here
-        ser_out(NODE_INIT, "Sending DEPLOY packets..\r\n");
-        runfsm send_deploy;
-    }
-}
-
 fsm root {
 
     char selection = '\0';
@@ -63,7 +57,7 @@ fsm root {
         runfsm receive;
         if (sfd >= 0) {
           tcv_control(sfd, PHYSOPT_RXON, NULL);
-          sink = 1;//TODO should not do this, b/c sets all nodes to sink
+          sink = 0;//nodes are only sinks if set
           proceed DISPLAY;
         }
 
@@ -87,14 +81,24 @@ fsm root {
             proceed PING_PROMPT;
             break;
         case 'P':
-            ser_out(PROMPT, "Beginning Packet Deployment... \r\n");
+            if (sink) {
+                ser_out(PROMPT, "This node is already the sink\r\n");
+                break;
+            }
+            ser_out(PROMPT, "Beginning Packet Deployment...\r\n");
             test_func = &packet_setup_test;
-            //TODO start sending?
+            sink = 1;
+            runfsm send_deploy(PACKET_TEST);
             break;
         case 'R':
-            ser_out(PROMPT, "Beginning RSSI Deployment... \r\n");
+            if (sink) {
+                ser_out(PROMPT, "This node is already the sink\r\n");
+                break;
+            }
+            ser_out(PROMPT, "Beginning RSSI Deployment...\r\n");
             test_func = &rssi_setup_test;
-            //TODO start sending?
+            sink = 1;
+            runfsm send_deploy(RSSI_TEST);
             break;
         case 'S':
             ser_outf(PROMPT, "Sink set to: %d\r\n", sink);
