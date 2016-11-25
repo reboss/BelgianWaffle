@@ -24,18 +24,12 @@
 #include "node_tools.h"
 
 char message[30];
-int my_id, sfd;
+extern int my_id, sfd;
 int receiver = 0;
 word current_state;
 
 int ping_delay = 2;//2 Seconds default
 
-void init_cc1100() {
-	phys_cc1100(0, 60);
-	tcv_plug(0, &plug_null);
-	sfd = tcv_open(WNONE, 0, 0);
-	tcv_control(sfd, PHYSOPT_RXON, NULL);
-}
 
 //Global that indicates if the node is the sink or not
 int sink = 0; 
@@ -46,7 +40,6 @@ fsm root {
 
 	initial state INIT:
 		runfsm receive;
-	//init_cc1100();
 		sink = 1;
 		proceed DISPLAY;
 		
@@ -101,7 +94,7 @@ fsm root {
 			proceed DISPLAY;
 			break;
 		case 'R':
-			ser_out(PROMPT, "\r\nBeginning RSSI Deployment... \r\n");
+			diag("\r\nBeginning RSSI Deployment... \r\n");
 			//TODO: Add RSSI Deployment functions
 			runfsm send_deploy;
 			selection = ' ';
