@@ -119,7 +119,7 @@ fsm send_deploy(int test) {
 	    //diag("packet built\r\n");
             tcv_endp(packet);
 	    //diag("packet sent\r\n");
-            delay(500, SEND_DEPLOY_ACTIVE);
+            delay(1000, SEND_DEPLOY_ACTIVE);
             release;
         } else {
             runfsm send_deployed;
@@ -198,11 +198,8 @@ fsm receive {
 		proceed RECV;
 	
 	state RECV:
-		// tcv_wnp(RECV, sfd, DEPLOY_LEN);
-	        // build_packet(packet, my_id, my_id + 1, DEPLOY, seq, NULL);
-		// tcv_endp(packet);
 		packet = tcv_rnp(RECV, sfd);
-	    plength = tcv_left(packet);
+	        plength = tcv_left(packet);
 		proceed EVALUATE;
 
 	state EVALUATE:
@@ -248,4 +245,5 @@ fsm receive {
 		default:
 			break;
 		}
+		proceed RECV;
 }
