@@ -47,6 +47,8 @@
 #define TRUE       1
 #define FALSE      0
 
+#define DONE diag("\r\ndone\r\n")
+
 volatile int sfd, retries = 0;
 volatile int seq = 0;
 volatile bool acknowledged, pong;
@@ -56,40 +58,11 @@ extern cur_state;
 extern int ping_delay;
 
 char payload[MAX_P];
+
 //Variable that tells the node if it can keep sending deploys
-int cont = 0;
-
-/*
-   sends the same packet continuously until an ack is received.
-   After 10 retries, lost connection is assumed.
-*/
-
-fsm send_deploy {
-
-  initial state SEND_DEPLOY_INIT:
-    address packet;
-    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, NULL);
-
-    //keep sending deploys
-  state SEND_DEPLOY_ACTIVE:
-    address packet;
-    if (cont) {
-      tcv_endp(packet);
-      delay(1000, SEND_DEPLOY_ACTIVE);
-      proceed SEND_DEPLOY_ACTIVE;
-    } else {
-      //Tell sink we are deployed
-      if (my_id != 1) {
-        build_packet(packet, my_id, 1, DEPLOYED, seq, NULL);
-        tcv_endp(packet);
-      }
-
-      /*TODO: Need state to wait for other nodes while they
-        are setting up. Or start sending pings? */
-
-      release;
-    }
-}
+int cont = 1;
+//function pointer for deployment type
+int (*test_func)(address *);
 
 bool is_lost_con_retries(void) {
     return retries == MAX_RETRY;
@@ -97,6 +70,55 @@ bool is_lost_con_retries(void) {
 
 bool is_lost_con_ping(int ping_retries) {
     return ping_retries == MAX_RETRY;
+}
+
+/*
+   sends the same packet continuously until an ack is received.
+   After 10 retries, lost connection is assumed.
+*/
+
+
+fsm send_deployed {
+
+    char * payload;
+
+    initial state SEND:
+	    //sprintf(payload, "Node %d deployed\n", my_id);
+        if (acknowledged)
+          finish;
+        if (is_lost_con_retries())
+            leds(LED_RED, 1);
+        address packet = tcv_wnp(SEND, sfd, DEPLOYED_LEN);
+        build_packet(packet, my_id, dest_id, DEPLOYED, seq, payload);
+        tcv_endp(packet);
+        retries++;
+        seq++;
+        delay(2000, SEND);//should use define not magic number
+        release;
+}
+
+	//TODO: SEE DEPLOYED case in receive fsm
+fsm send_deploy(int test) {
+    
+    address packet;
+
+    initial state SEND_DEPLOY_INIT:
+        char msg[2];
+        msg[0] = test;
+        msg[1] = '\0';
+        build_packet(packet, my_id, my_id + 1, DEPLOY, seq, msg);
+        proceed SEND_DEPLOY_ACTIVE;
+
+    //keep sending deploys
+    state SEND_DEPLOY_ACTIVE:
+        if (cont) {
+            tcv_endp(packet);
+            delay(1000, SEND_DEPLOY_ACTIVE);//TODO use define?
+            release;
+        } else {
+            runfsm send_deployed;
+            finish;
+        }
 }
 
 
@@ -158,26 +180,7 @@ fsm send_ping {
         address packet;
         packet = tcv_wnp(SEND, sfd, PING_LEN);
         build_packet(packet, my_id, dest_id, PING, ping_sequence, NULL);
-        delay(2000, SEND);
-        release;
-}
-
-fsm send_deployed {
-
-    char * payload;
-
-    initial state SEND:
-        sprintf(payload, "Node %d deployed\n", my_id);
-        if (acknowledged)
-          finish;
-        if (is_lost_con_retries())
-            leds(LED_RED, 1);
-        address packet = tcv_wnp(SEND, sfd, DEPLOYED_LEN);
-        build_packet(packet, my_id, dest_id, DEPLOYED, seq, payload);
-        tcv_endp(packet);
-        retries++;
-        seq++;
-        delay(2000, SEND);//should use define not magic number
+        delay(ping_delay, SEND);
         release;
 }
 
@@ -185,33 +188,44 @@ fsm receive {
 	address packet;
 	sint plength;
 
-	initial state RECV:
+	initial state INIT_CC1100:
+		phys_cc1100(0, 60);
+	        tcv_plug(0, &plug_null);
+		sfd = tcv_open(WNONE, 0, 0);
+		tcv_control(sfd, PHYSOPT_ON, NULL);	
+		
+		proceed RECV;
+	
+	state RECV:
+		// tcv_wnp(RECV, sfd, DEPLOY_LEN);
+	        // build_packet(packet, my_id, my_id + 1, DEPLOY, seq, NULL);
+		// tcv_endp(packet);
 		packet = tcv_rnp(RECV, sfd);
 	    plength = tcv_left(packet);
 		proceed EVALUATE;
 
 	state EVALUATE:
-        switch (get_opcode(packet)) {
-        case PING:
-		    //TODO: Can't nodes receive pings from their parent as well?
-		    if (get_hop_id(packet) < my_id)
+		switch (get_opcode(packet)) {
+		case PING:
+			//TODO: Can't nodes receive pings from their parent as well?
+			if (get_hop_id(packet) < my_id)
 				runfsm send_pong;
 			else
 				pong = TRUE;
 			break;
 		case DEPLOY:
-		    set_ids(packet);
+			set_ids(packet);
 			//Make LED flash yellow when packet received
 			cur_state = 0;
-			runfsm node_leds;
+			//runfsm node_leds;
 			runfsm send_deploy;
 			break;
-
-            /* The DEPLOYED opcode is intended for the sink, nodes need to pass
-               it on and the sink has to keep track of when every node is
-               deployed, so it can begin streaming */
+		
+			/* The DEPLOYED opcode is intended for the sink, nodes need to pass
+			   it on and the sink has to keep track of when every node is
+			   deployed, so it can begin streaming */
 		case DEPLOYED:
-            runfsm send_deployed;
+			runfsm send_deployed;
 			break;
 		case STREAM:
 			// check sequence number for lost ack
@@ -228,9 +242,9 @@ fsm receive {
 		case COMMAND:
 			break;
 		case STOP:
-		    cont = 0;
-            break;
-        default:
-            break;
-        }
+			cont = 0;
+			break;
+		default:
+			break;
+		}
 }
