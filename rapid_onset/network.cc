@@ -44,9 +44,6 @@
 #define LED_GREEN  1
 #define LED_RED    2
 
-#define TRUE       1
-#define FALSE      0
-
 #define DONE diag("\r\ndone\r\n")
 
 volatile int sfd, retries = 0;
@@ -207,7 +204,7 @@ fsm receive {
 			if (get_hop_id(packet) < my_id)
 				runfsm send_pong;
 			else
-				pong = TRUE;
+				pong = YES;
 			break;
 		case DEPLOY:
 			set_ids(packet);
@@ -226,13 +223,13 @@ fsm receive {
 		case STREAM:
 			// check sequence number for lost ack
 			// check if packet has reached it's destination
-			acknowledged = FALSE;
+			acknowledged = NO;
 			strncpy(payload, (char *) packet+3, MAX_P);
 			runfsm stream_data;
 			runfsm send_ack;
 			break;
 		case ACK:
-			acknowledged = TRUE;
+			acknowledged = YES;
 			retries = 0;
 			break;
 		case COMMAND:
