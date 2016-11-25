@@ -46,7 +46,9 @@
 #define TRUE       1
 #define FALSE      0
 
-volatile int sfd, retries = 0;
+#define DONE diag("\r\ndone\r\n")
+
+volatile int sfd = 1, retries = 0;
 volatile int seq = 0;
 volatile bool acknowledged, pong;
 // get id's from node_tools
@@ -58,22 +60,28 @@ char payload[MAX_P];
 //Variable that tells the node if it can keep sending deploys
 int cont = 1;
 
+
 /*
    sends the same packet continuously until an ack is received.
    After 10 retries, lost connection is assumed.
 */
 
-
 fsm send_deploy {
   initial state SEND_DEPLOY_ACTIVE:
-	address packet = tcv_wnp(SEND_DEPLOY_ACTIVE, sfd, DEPLOY_LEN);
+	  address packet;
+          tcv_wnp(SEND_DEPLOY_ACTIVE, sfd, DEPLOY_LEN);
 	
 	//keep sending deploys
-	if (cont) {
+	  if (cont) {
+		diag("\r\n%d - %d\r\n", sfd, my_id);
 		build_packet(packet, my_id, my_id + 1, DEPLOY, seq, NULL);
+		DONE;
 		tcv_endp(packet);
-		delay(1000, SEND_DEPLOY_ACTIVE);
+		DONE;
+		delay(10, SEND_DEPLOY_ACTIVE);
+		DONE;
 		release;
+		DONE;
 	} else {
 	  //Tell sink we are deployed
 		if (my_id != 1) {
@@ -166,7 +174,14 @@ fsm receive {
 	address packet;
 	sint plength;
 
-	initial state RECV:
+	initial state INIT_CC1100:
+		phys_cc1100(0, 60);
+	        tcv_plug(0, &plug_null);
+		sfd = tcv_open(WNONE, 0, 0);
+		tcv_control(sfd, PHYSOPT_RXON, NULL);
+		proceed RECV;
+	
+	state RECV:
 		packet = tcv_rnp(RECV, sfd);
 	
 	        plength = tcv_left(packet);
@@ -176,45 +191,45 @@ fsm receive {
         switch (get_opcode(packet)) {
         case PING:
 		    //TODO: Can't nodes receive pings from their parent as well?
-		    if (get_hop_id(packet) < my_id)
-				runfsm send_pong;
-			else
-				pong = TRUE;
-			break;
-		case DEPLOY:
-		    set_ids(packet);
-			//Make LED flash yellow when packet received
-			cur_state = 0;
-			runfsm node_leds;
-			runfsm send_deploy;
-			break;
-
-            /* The DEPLOYED opcode is intended for the sink, nodes need to pass
-               it on and the sink has to keep track of when every node is
-               deployed, so it can begin streaming */
-		case DEPLOYED:
-			// my_id++;
-			// parent_id++;
-			send_deployed_status();
-			break;
-		case STREAM:
-			// check sequence number for lost ack
-			// check if packet has reached it's destination
-			acknowledged = FALSE;
-			strncpy(payload, (char *) packet+3, MAX_P);
-			runfsm stream_data;
-			runfsm send_ack;
-			break;
-		case ACK:
-			acknowledged = TRUE;
-			retries = 0;
-			break;
-		case COMMAND:
-			break;
-		case STOP:
-		    cont = 0;
-            break;
-        default:
-            break;
-        }
+		if (get_hop_id(packet) < my_id)
+			runfsm send_pong;
+		else
+			pong = TRUE;
+		break;
+	case DEPLOY:
+		set_ids(packet);
+		//Make LED flash yellow when packet received
+		cur_state = 0;
+		runfsm node_leds;
+		runfsm send_deploy;
+		break;
+		
+		/* The DEPLOYED opcode is intended for the sink, nodes need to pass
+		   it on and the sink has to keep track of when every node is
+		   deployed, so it can begin streaming */
+	case DEPLOYED:
+		// my_id++;
+		// parent_id++;
+		send_deployed_status();
+		break;
+	case STREAM:
+		// check sequence number for lost ack
+		// check if packet has reached it's destination
+		acknowledged = FALSE;
+		strncpy(payload, (char *) packet+3, MAX_P);
+		runfsm stream_data;
+		runfsm send_ack;
+		break;
+	case ACK:
+		acknowledged = TRUE;
+		retries = 0;
+		break;
+	case COMMAND:
+		break;
+	case STOP:
+		cont = 0;
+		break;
+	default:
+		break;
+	}
 }
