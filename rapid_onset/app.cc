@@ -43,9 +43,10 @@ int sink = 0;
 extern int (*test_func)(address *);
 
 void init_cc1100() {
-  phys_cc1100(0, 60);
-  tcv_plug(0, &plug_null);
-  sfd = tcv_open(WNONE, 0, 0);
+    phys_cc1100(0, 60);
+    tcv_plug(0, &plug_null);
+    sfd = tcv_open(WNONE, 0, 0);
+    tcv_control(sfd, PHYSOPT_ON, NULL);
 }
 
 fsm root {
