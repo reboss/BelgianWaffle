@@ -11,7 +11,6 @@
    ####################################################################
 */
 
-
 #include "sysio.h"
 #include "serf.h"
 #include "ser.h"
@@ -20,6 +19,9 @@
 #include "phys_cc1100.h"
 
 #include "node_tools.h"
+#include "packet_test.h"
+#include "rssi_test.h"
+#include "network_help.h"
 #include "network.h"
 #include "node_led.h"
 
@@ -45,13 +47,15 @@
 #define TRUE       1
 #define FALSE      0
 
-char payload[MAX_P];
-volatile int sfd, retries = 0, seq = 0;
+volatile int sfd, retries = 0;
+volatile int seq = 0;
 volatile bool acknowledged, pong;
 // get id's from node_tools
 extern int my_id, parent_id, child_id, dest_id;
 extern cur_state;
+extern int ping_delay;
 
+char payload[MAX_P];
 //Variable that tells the node if it can keep sending deploys
 int cont = 0;
 
@@ -119,6 +123,7 @@ fsm stream_data {
         address packet;
         sint plen = strlen(payload);
         packet = tcv_wnp(SEND, sfd, plen);
+        //should be forwarding not rebuilding
         build_packet(packet, my_id, dest_id, STREAM, seq, payload);
         tcv_endp(packet);
         retries++;
@@ -154,14 +159,15 @@ fsm send_ping {
         packet = tcv_wnp(SEND, sfd, PING_LEN);
         build_packet(packet, my_id, dest_id, PING, ping_sequence, NULL);
         delay(2000, SEND);
+        release;
 }
 
 fsm send_deployed {
 
     char * payload;
-    snprintf(payload, DEPLOYED_LEN, "Node %d deployed\n", my_id);
 
     initial state SEND:
+        sprintf(payload, "Node %d deployed\n", my_id);
         if (acknowledged)
           finish;
         if (is_lost_con_retries())
@@ -171,59 +177,60 @@ fsm send_deployed {
         tcv_endp(packet);
         retries++;
         seq++;
+        delay(2000, SEND);//should use define not magic number
+        release;
 }
 
 fsm receive {
+	address packet;
+	sint plength;
 
-    address packet;
-    sint plength;
+	initial state RECV:
+		packet = tcv_rnp(RECV, sfd);
+	    plength = tcv_left(packet);
+		proceed EVALUATE;
 
-    initial state RECV:
-        packet = tcv_rnp(RECV, sfd);
-        plength = tcv_left(packet);
-        proceed EVALUATE;
+	state EVALUATE:
+        switch (get_opcode(packet)) {
+        case PING:
+		    //TODO: Can't nodes receive pings from their parent as well?
+		    if (get_hop_id(packet) < my_id)
+				runfsm send_pong;
+			else
+				pong = TRUE;
+			break;
+		case DEPLOY:
+		    set_ids(packet);
+			//Make LED flash yellow when packet received
+			cur_state = 0;
+			runfsm node_leds;
+			runfsm send_deploy;
+			break;
 
-    state EVALUATE:
-            switch (get_opcode(packet)) {
-            case PING:
-              //TODO: Can't nodes receive pings from their parent as well?
-                if (get_hop_id(packet) < my_id)
-                    runfsm send_pong;
-               else
-                    pong = TRUE;
-                break;
-            case DEPLOY:
-                set_ids(packet);
-                //Make LED flash yellow when packet received
-                cur_state = 0;
-                runfsm node_leds;
-                runfsm send_deploy;
-                break;
-
-            /* The DEPLOYED opcode is intended for the sink, nodes need to pass it on
-               and the sink has to keep track of when every node is deployed, so it can
-               begin streaming */
-            case DEPLOYED:
-                runfsm send_deployed;
-                break;
-            case STREAM:
-                // check sequence number for lost ack
-                // check if packet has reached it's destination
-                acknowledged = FALSE;
-                strncpy(payload, (char *) packet+3, MAX_P);
-                runfsm stream_data;
-                runfsm send_ack;
-                break;
-            case ACK:
-                acknowledged = TRUE;
-                retries = 0;
-                break;
-            case COMMAND:
-                break;
-            case STOP:
-                cont = 0;
-                break;
-            default:
-                break;
-            }
+            /* The DEPLOYED opcode is intended for the sink, nodes need to pass
+               it on and the sink has to keep track of when every node is
+               deployed, so it can begin streaming */
+		case DEPLOYED:
+            runfsm send_deployed;
+			break;
+		case STREAM:
+			// check sequence number for lost ack
+			// check if packet has reached it's destination
+			acknowledged = FALSE;
+			strncpy(payload, (char *) packet+3, MAX_P);
+			runfsm stream_data;
+			runfsm send_ack;
+			break;
+		case ACK:
+			acknowledged = TRUE;
+			retries = 0;
+			break;
+		case COMMAND:
+			break;
+		case STOP:
+		    cont = 0;
+            break;
+        default:
+            break;
+        }
 }
