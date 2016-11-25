@@ -33,97 +33,27 @@
 
 bool led_is_on = FALSE;
 int cur_state = 0;
-enum states {YELLOW_FLASH, GREEN_SOLID, RED_FLASH, RED_SOLID};
-enum states led_state = YELLOW_FLASH;
 
-void set_states(int cur_state) {
+//Inplement into .h? then dont send it literal 0,1,2,3
+//enum states {YELLOW_FLASH, GREEN_SOLID, RED_FLASH, RED_SOLID};
+//enum states led_state = YELLOW_FLASH;
+
+void set_led(int cur_state) {
+        leds_all(LED_OFF);
         switch(cur_state) {
         case 0:
-                led_state = YELLOW_FLASH;
+	        leds(LED_YELLOW,LED_ON);
+		fastblink(FALSE);
                 break;
         case 1:
-                led_state = GREEN_SOLID;
+	        leds(LED_GREEN,LED_ON);
                 break;
         case 2:
-                led_state = RED_FLASH;
+	        leds(LED_RED,LED_ON);
+		fastblink(FALSE);
                 break;
         case 3:
-                led_state = RED_SOLID;
+	        leds(LED_RED,LED_ON);
                 break;
         }
-}
-
-fsm node_leds {
-
-        /* Init switches to the needed led function based on what states is set to */
-        initial state INIT:
-            if (cur_state != led_state) {
-                cur_state = led_state;
-                leds_all(LED_OFF);
-            }
-
-        switch(led_state) {
-        case GREEN_SOLID:
-            proceed CONNECTED;
-            break;
-        case YELLOW_FLASH:
-            proceed CONNECTING;
-            break;
-        case RED_FLASH:
-            proceed CHECKING;
-            break;
-        case RED_SOLID:
-            proceed DISCONNECTED;
-            break;
-        default:
-            break;
-        }
-    /* CONNECTED is the state that controls the green led when the node is
-       communicating
-    */
-    state CONNECTED:
-                if (!led_is_on) {
-                    leds(LED_GREEN, LED_ON);
-                    led_is_on = TRUE;
-                }
-            delay(25, INIT);
-            release;
-
-    /* CONNECTING is the state that controls the flashing yellow led as the node
-     *  attemps to   connect to the network
-     */
-    state CONNECTING:
-            if (led_is_on) {
-                    leds(LED_YELLOW, LED_OFF);
-                    led_is_on = FALSE;
-            } else {
-                    leds(LED_YELLOW, LED_ON);
-                    led_is_on = TRUE;
-            }
-            delay(100, INIT);//should be defined not magic
-            release;
-
-    /* CHECKING is the state that controls the flashing red led as the node
-     *  checks its con  nection to the sink
-     */
-    state CHECKING:
-            if (led_is_on) {
-                    leds(LED_RED, LED_OFF);
-                    led_is_on = FALSE;
-            } else {
-                    leds(LED_RED, LED_ON);
-                    led_is_on = TRUE;
-            }
-            delay(100, INIT);
-            release;
-
-    /* DISCONNECTED is the state that controls the solid red led that indicates the node has  lost connection to the network after deployment
-    */
-    state DISCONNECTED:
-            if (!led_is_on) {
-                    leds(LED_RED, LED_ON);
-                    led_is_on = TRUE;
-            }
-            delay(25, INIT);
-            release;
 }

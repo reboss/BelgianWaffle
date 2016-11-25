@@ -208,12 +208,10 @@ fsm receive {
 			//TODO: Can't nodes receive pings from their parent as well?
 			if (get_hop_id(packet) < my_id)
 				runfsm send_pong;
-			else
-				pong = TRUE;
 			break;
 		case DEPLOY:
 			set_ids(packet);
-			//Make LED flash yellow when packet received
+			//Make LED flash yellow when packet receivedy
 			cur_state = 0;
 			//runfsm node_leds;
 			runfsm send_deploy;
