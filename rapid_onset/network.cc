@@ -147,7 +147,7 @@ fsm stream_data {
         if (acknowledged)
             finish;
         if (is_lost_con_retries())
-	  set_led(LED_REDS);
+	  set_led(LED_RED_S);
         address packet;
         sint plen = strlen(payload);
         packet = tcv_wnp(SEND, sfd, plen);
@@ -180,7 +180,7 @@ fsm send_ping {
         else
             ping_retries++;
         if (is_lost_con_ping(ping_retries))
-	    set_led(LED_REDS);
+	    set_led(LED_RED_S);
 
         pong = FALSE;
         address packet;
