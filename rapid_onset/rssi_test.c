@@ -24,7 +24,7 @@ int rssi_setup_test(address packet) {
         prev_rssi &= ~1;
     
     //if to many were low
-    if (num_cutoff >= RSSI_LOW_CUTOFF)
+    if (num_cutoff(prev_rssi) >= RSSI_LOW_CUTOFF)
         return 1;
     return 0;
 }
