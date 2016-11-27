@@ -81,15 +81,16 @@ bool is_lost_con_ping(int ping_retries) {
 */
 
 
-fsm send_stop(int dest) {
+fsm send_stop(int dest) {//refactor this is ugly
 
     initial state SEND:
+        diag("send stop fsm\r\n");
 	  if (acknowledged) {
 		runfsm send_deploy(test);
           finish;
 	  }
-        if (is_lost_con_retries())
-		  set_led(LED_RED_S);
+        //if (is_lost_con_retries())
+		  //set_led(LED_RED_S);
         address packet = tcv_wnp(SEND, sfd, STOP_LEN);
         build_packet(packet, my_id, dest, STOP, seq, payload);//payload wrong?
         tcv_endp(packet);
@@ -229,16 +230,20 @@ fsm receive {
 			cur_state = 0;
 			switch(get_payload(packet)[0]) {
 			case RSSI_TEST:
+                diag("RSSI: %x\r\n", get_rssi(packet));
 			  test = RSSI_TEST;
 			  if (rssi_setup_test(packet)) {
+                    set_ids(packet);//set ids
 			        seq = 0;
 					runfsm send_stop(my_id - 1);
 			  }
 			break;
 
 			case PACKET_TEST:
+                diag("P TEST SEQ: %x\r\n", get_seqnum(packet));
 			  test = PACKET_TEST;
 			  if (packet_setup_test(packet) == 1) {
+                    set_ids(packet);//set id
 			        seq = 0;
 					runfsm send_stop(my_id - 1);
 			  }
