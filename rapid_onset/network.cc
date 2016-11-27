@@ -29,7 +29,7 @@
 #define PING_LEN   4
 #define STOP_LEN   4
 #define ACK_LEN    4
-#define DEPLOY_LEN 6
+#define DEPLOY_LEN 2
 #define DEPLOYED_LEN 17
 #define MAX_RETRY  10
 
@@ -147,7 +147,7 @@ fsm stream_data {
         if (acknowledged)
             finish;
         if (is_lost_con_retries())
-	  set_led(LED_RED_S);
+	    set_led(LED_RED_S);
         address packet;
         sint plen = strlen(payload);
         packet = tcv_wnp(SEND, sfd, plen);
@@ -210,9 +210,9 @@ fsm receive {
 			break;
 		case DEPLOY:
 			set_ids(packet);
-			// led yellow flash
+			set_led(LED_YELLOW);
 			cur_state = 0;
-			//runfsm node_leds;
+			diag(get_payload(packet)[0]);
 			switch(get_payload(packet)[0]) {
 			case RSSI_TEST:
 			  if (rssi_setup_test(packet))
@@ -225,7 +225,7 @@ fsm receive {
 			break;
 
 			default:
-			  //TODO: Implement error LEDs
+			  set_led(LED_RED_S);
 			  diag("Unrecognized deployment type");
 			  break;
 			}
@@ -235,7 +235,7 @@ fsm receive {
 			   it on and the sink has to keep track of when every node is
 			   deployed, so it can begin streaming */
 		case DEPLOYED:
-		  //runfsm send_deployed;
+		        //runfsm send_deployed;
 			break;
 		case STREAM:
 			// check sequence number for lost ack
@@ -252,8 +252,8 @@ fsm receive {
 		case COMMAND:
 			break;
 		case STOP:
-		  if (get_destination(packet) == my_id)
-			runfsm send_ack(parent_id); 
+		        if (get_destination(packet) == my_id)
+		          runfsm send_ack(parent_id); 
 			break;
 		default:
 			break;

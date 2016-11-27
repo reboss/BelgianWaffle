@@ -77,7 +77,7 @@ int get_seqnum(address packet) {
 }
 
 char * get_payload(address packet) {
-  return (char *) (packet + 2);
+        return (char *) (packet + 3);
 }
 
 /* get_rssi() takes in a packet and returns the rssi value as an
