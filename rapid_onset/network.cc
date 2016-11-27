@@ -86,7 +86,8 @@ fsm send_stop(int dest) {
     initial state SEND:
 	  if (acknowledged) {
 		runfsm send_deploy(test);
-          finish;
+		set_led(LED_GREEN);
+                finish;
 	  }
         if (is_lost_con_retries())
 		  set_led(LED_RED_S);
