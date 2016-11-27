@@ -87,7 +87,8 @@ fsm send_stop(int dest) {//refactor this is ugly
         diag("send stop fsm\r\n");
 	  if (acknowledged) {
 		runfsm send_deploy(test);
-          finish;
+		set_led(LED_GREEN);
+                finish;
 	  }
         //if (is_lost_con_retries())
 		  //set_led(LED_RED_S);

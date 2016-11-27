@@ -43,14 +43,14 @@ void set_led(int cur_state) {
         switch(cur_state) {
         case 0:
 	        leds(LED_YELLOW,LED_ON);
-		fastblink(FALSE);
+		fastblink(TRUE);
                 break;
         case 1:
 	        leds(LED_GREEN,LED_ON);
                 break;
         case 2:
 	        leds(LED_RED,LED_ON);
-		fastblink(FALSE);
+		fastblink(TRUE);
                 break;
         case 3:
 	        leds(LED_RED,LED_ON);
