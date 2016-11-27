@@ -26,10 +26,12 @@
 #include "node_led.h"
 
 #define MAX_P      56
-#define PING_LEN   4
-#define STOP_LEN   4
-#define ACK_LEN    4
-#define DEPLOY_LEN 6
+
+//TODO: FIX LENGTHS
+#define PING_LEN   10
+#define STOP_LEN   10
+#define ACK_LEN    10
+#define DEPLOY_LEN 10
 #define DEPLOYED_LEN 17
 #define MAX_RETRY  10
 
@@ -118,8 +120,16 @@ fsm send_deploy(int test) {
 	    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, msg);
         diag("\r\npacket built\r\nword1: %x\r\nword2:%x\r\n",
               packet[1], packet[2]);
+		diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n"
+			 "Hop_ID: %x\r\nOpCode: %x\r\nEnd: %x\r\nLength: %x\r\n"
+			 "SeqNum: %x\r\nPayload: %x\r\nRSSI: %x\r\n", get_destination(packet),
+			 get_source_id(packet), get_hop_id(packet), get_opcode(packet), get_end(packet),
+			 get_length(packet), get_seqnum(packet), get_payload(packet));
 	    //diag("packet built\r\n");
             tcv_endp(packet);
+
+			//temporary increment
+			seq = (seq + 1) % 256;
 	    //diag("packet sent\r\n");
             delay(1000, SEND_DEPLOY_ACTIVE);
             release;
