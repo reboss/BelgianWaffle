@@ -48,9 +48,6 @@
 #define LED_RED    2
 #define LED_RED_S  3
 
-#define TRUE       1
-#define FALSE      0
-
 
 #define DONE diag("\r\ndone\r\n")
 
@@ -231,6 +228,7 @@ fsm receive {
 			        if (rssi_setup_test(packet)) {
                         set_ids(packet);//set ids
 			            seq = 0;
+                        deployed = TRUE;
 					    runfsm send_stop(my_id - 1);
 			        }
 			        break;
@@ -240,6 +238,7 @@ fsm receive {
 			        if (packet_setup_test(packet) == 1) {
                         set_ids(packet);//set id
 			            seq = 0;
+                        deployed = TRUE;
 					    runfsm send_stop(my_id - 1);
 			        }
 			        break;
