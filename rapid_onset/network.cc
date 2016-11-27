@@ -112,15 +112,12 @@ fsm send_deploy(int test) {
     state SEND_DEPLOY_ACTIVE:
         if (cont) {
 	    address packet;
-	    //diag("sfd = %d\r\n", sfd);	
 	    packet = tcv_wnp(SEND_DEPLOY_ACTIVE, sfd, DEPLOY_LEN);
-	    //diag("packet written\r\n");
 	    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, msg);
         diag("\r\npacket built\r\nword1: %x\r\nword2:%x\r\n",
               packet[1], packet[2]);
-	    //diag("packet built\r\n");
-            tcv_endp(packet);
-	    //diag("packet sent\r\n");
+	    tcv_endp(packet);
+	    seq += 1;
             delay(1000, SEND_DEPLOY_ACTIVE);
             release;
         } else {
