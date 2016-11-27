@@ -23,8 +23,8 @@ int my_id, parent_id, child_id, dest_id;
    parents id and its childs id
 */
 void set_ids(address packet) {
-        my_id = (packet[1] >> 8) & 15;
-        parent_id = (packet[1] >> 12) & 15;
+        my_id = (packet[1] >> 4) & 15;
+        parent_id = (packet[1] >> 8) & 15;
         child_id = my_id + 1;
 }
 
