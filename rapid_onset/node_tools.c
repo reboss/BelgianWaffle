@@ -76,8 +76,8 @@ int get_seqnum(address packet) {
         return (packet[2] >> 8) & 255;
 }
 
-char * get_payload(address packet) {
-  return (char *) (packet + 3);
+byte * get_payload(address packet) {
+  return (byte *) (packet + 3);
 }
 
 /* get_rssi() takes in a packet and returns the rssi value as an
@@ -101,7 +101,7 @@ void payload_cpy(byte* packet, char* payload, int len) {
    it into a full package at the address it was sent
 */
 void build_packet(address packet, int source_id, int destination,
-                  int opcode, int seqnum, char * payload) {
+                  int opcode, int seqnum, byte* payload) {
     int length = strlen(payload) + 1;
 	diag("\r\nLength in build_packet is: %d\r\n", length);
 	

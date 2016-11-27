@@ -102,27 +102,30 @@ fsm send_stop(int dest) {
 fsm send_deploy(int test) {
 
 	//address packet;
-    char msg[2];
+    byte pl[2];
 	 
     initial state SEND_DEPLOY_INIT:
-	    msg[0] = test;
-            msg[1] = '\0';
+	    pl[0] = test;
+        pl[1] = '\0';
 	    proceed SEND_DEPLOY_ACTIVE;
         
 
     //keep sending deploys
     state SEND_DEPLOY_ACTIVE:
         if (cont) {
+
+		  diag("\r\nmsg is: %d\r\nNull Terminator is: %x\r\nWhole Thing: %x\r\n", pl[0], pl[1], *pl);
+		  diag("\r\nMSG[2] is: %x\r\nMSG[3] is %:%x\r\n", pl[2], pl[3]);
 	    address packet;
 	    packet = tcv_wnp(SEND_DEPLOY_ACTIVE, sfd, DEPLOY_LEN);
-	    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, msg);
+	    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, pl);
         diag("\r\npacket built\r\nword1: %x\r\nword2:%x\r\n",
               packet[1], packet[2]);
 		diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n"
 			 "Hop_ID: %x\r\nOpCode: %x\r\nEnd: %x\r\nLength: %x\r\n"
 			 "SeqNum: %x\r\nPayload: %x\r\nRSSI: %x\r\n", get_destination(packet),
 			 get_source_id(packet), get_hop_id(packet), get_opcode(packet), get_end(packet),
-			 get_length(packet), get_seqnum(packet), get_payload(packet));
+			 get_length(packet), get_seqnum(packet), *get_payload(packet), get_rssi(packet));
 	    //diag("packet built\r\n");
             tcv_endp(packet);
 			
