@@ -85,8 +85,8 @@ char * get_payload(address packet) {
 */
 int get_rssi(address packet) {
         int length = (3 + (get_length(packet) / 2));
-        if(get_length(packet) % 2 == 1){
-          int lenght += 1;
+        if (get_length(packet) % 2 == 1) {
+          length += 1;
         }
         return (packet[length] >> 8) & 255;
 }
