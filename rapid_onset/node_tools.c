@@ -77,7 +77,7 @@ int get_seqnum(address packet) {
 }
 
 char * get_payload(address packet) {
-  return (char*) (packet + 3);
+  return (char *) (packet + 3);
 }
 
 /* get_rssi() takes in a packet and returns the rssi value as an
@@ -85,6 +85,9 @@ char * get_payload(address packet) {
 */
 int get_rssi(address packet) {
         int length = (3 + (get_length(packet) / 2));
+        if(get_length(packet) % 2 == 1){
+          int lenght += 1;
+        }
         return (packet[length] >> 8) & 255;
 }
 
