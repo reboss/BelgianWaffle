@@ -60,19 +60,20 @@ fsm root {
         proceed(RE_PRINT);
         
     state RE_PRINT:
-        ser_outf(RE_PRINT, "word 1:\r\n"
+        ser_outf(RE_PRINT, "word 1: %x\r\n"
             "  source: %x\r\n"
             "  dest:   %x\r\n"
             "  hop:    %x\r\n"
             "  opcode: %x\r\n"//conver to string?
-            "word 2:\r\n"
+            "word 2: %x\r\n"
             "  end:    %x\r\n"
             "  len:    %x\r\n"
             "  seqnum: %x\r\n"
             "payload:\r\n"
             "  |%s|\r\n"
             "rssi:     %x\r\n",
-            source, dest, hop, opcode, end, len, seq, payload, rssi);
+            packet[1], source, dest, hop, opcode, packet[2], end, len, seq,
+            payload, rssi);
         proceed(RE_RECV);
         
 }

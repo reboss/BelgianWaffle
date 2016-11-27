@@ -89,7 +89,7 @@ fsm send_stop(int dest) {
         if (is_lost_con_retries())
             leds(LED_RED, 1);
         address packet = tcv_wnp(SEND, sfd, STOP_LEN);
-        build_packet(packet, my_id, dest, STOP, seq, payload);
+        build_packet(packet, my_id, dest, STOP, seq, payload);//payload wrong?
         tcv_endp(packet);
         //retries++;
         delay(2000, SEND);//should use define not magic number
@@ -116,6 +116,8 @@ fsm send_deploy(int test) {
 	    packet = tcv_wnp(SEND_DEPLOY_ACTIVE, sfd, DEPLOY_LEN);
 	    //diag("packet written\r\n");
 	    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, msg);
+        diag("\r\npacket built\r\nword1: %x\r\nword2:%x\r\n",
+              packet[1], packet[2]);
 	    //diag("packet built\r\n");
             tcv_endp(packet);
 	    //diag("packet sent\r\n");
