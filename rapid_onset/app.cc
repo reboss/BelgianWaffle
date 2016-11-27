@@ -28,7 +28,7 @@
 
 char message[30];
 extern int my_id, sfd;
-int receiver = 0;
+int receiver = 0, test;
 word current_state;
 
 int ping_delay = 2000;//2 Seconds default
@@ -81,7 +81,8 @@ fsm root {
             }
             diag("Beginning Packet Deployment...\r\n");
             sink = 1;
-            runfsm send_deploy(PACKET_TEST);
+			test = PACKET_TEST;
+            runfsm send_deploy(test);
             break;
         case 'R':
             if (sink) {
@@ -90,7 +91,8 @@ fsm root {
             }
             diag("Beginning RSSI Deployment...\r\n");
             sink = 1;
-            runfsm send_deploy(RSSI_TEST);
+			test = RSSI_TEST;
+            runfsm send_deploy(test);
             break;
         case 'S':
 	    diag("Sink set to: %d\r\n", sink);

@@ -60,7 +60,7 @@ volatile bool acknowledged, pong;
 // get id's from node_tools
 extern int my_id, parent_id, child_id, dest_id;
 extern cur_state;
-extern int ping_delay;
+extern int ping_delay, test;
 
 char payload[MAX_P];
 
@@ -84,10 +84,12 @@ bool is_lost_con_ping(int ping_retries) {
 fsm send_stop(int dest) {
 
     initial state SEND:
-        if (acknowledged)
+	  if (acknowledged) {
+		runfsm send_deploy(test);
           finish;
+	  }
         if (is_lost_con_retries())
-	  set_led(LED_RED_S);
+		  set_led(LED_RED_S);
         address packet = tcv_wnp(SEND, sfd, STOP_LEN);
         build_packet(packet, my_id, dest, STOP, seq, payload);//payload wrong?
         tcv_endp(packet);
@@ -97,7 +99,7 @@ fsm send_stop(int dest) {
 }
 
 	//TODO: SEE DEPLOYED case in receive fsm
-fsm send_deploy(int test) {
+fsm send_deploy {
 
 	//address packet;
     byte pl[2];
@@ -227,15 +229,19 @@ fsm receive {
 			cur_state = 0;
 			switch(get_payload(packet)[0]) {
 			case RSSI_TEST:
-			  if (rssi_setup_test(packet))
+			  test = RSSI_TEST;
+			  if (rssi_setup_test(packet)) {
 			        seq = 0;
-				runfsm send_stop(my_id - 1);
+					runfsm send_stop(my_id - 1);
+			  }
 			break;
 
 			case PACKET_TEST:
-			  if (packet_setup_test(packet) == 1)
+			  test = PACKET_TEST;
+			  if (packet_setup_test(packet) == 1) {
 			        seq = 0;
-				runfsm send_stop(my_id - 1);
+					runfsm send_stop(my_id - 1);
+			  }
 			break;
 
 			default:
@@ -266,8 +272,11 @@ fsm receive {
 		case COMMAND:
 			break;
 		case STOP:
-		        if (get_destination(packet) == my_id)
-		          runfsm send_ack(parent_id); 
+		  if (get_destination(packet) == my_id) {
+			runfsm send_ack(parent_id);
+			cont = 0;
+			diag("\r\nRECEIVED STOP...\r\n");
+		  }
 			break;
 		default:
 			break;
