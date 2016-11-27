@@ -26,10 +26,10 @@
 #include "node_led.h"
 
 #define MAX_P      56
-#define PING_LEN   4
-#define STOP_LEN   4
-#define ACK_LEN    4
-#define DEPLOY_LEN 2
+#define PING_LEN   8
+#define STOP_LEN   8
+#define ACK_LEN    8
+#define DEPLOY_LEN 10
 #define DEPLOYED_LEN 17
 #define MAX_RETRY  10
 
@@ -117,7 +117,7 @@ fsm send_deploy(int test) {
         diag("\r\npacket built\r\nword1: %x\r\nword2:%x\r\n",
               packet[1], packet[2]);
 	    tcv_endp(packet);
-	    seq += 1;
+	    seq = (seq + 1) % 256;
             delay(1000, SEND_DEPLOY_ACTIVE);
             release;
         } else {
@@ -205,6 +205,7 @@ fsm receive {
 		switch (get_opcode(packet)) {
 		case PING:
 			if (get_hop_id(packet) < my_id)
+			        seq = 0;
 				runfsm send_pong;
 			break;
 		case DEPLOY:
@@ -214,11 +215,13 @@ fsm receive {
 			switch(get_payload(packet)[0]) {
 			case RSSI_TEST:
 			  if (rssi_setup_test(packet))
+			        seq = 0;
 				runfsm send_stop(my_id - 1);
 			break;
 
 			case PACKET_TEST:
 			  if (packet_setup_test(packet) == 1)
+			        seq = 0;
 				runfsm send_stop(my_id - 1);
 			break;
 
