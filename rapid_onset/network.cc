@@ -66,8 +66,6 @@ char payload[MAX_P];
 
 //Variable that tells the node if it can keep sending deploys
 int cont = 1;
-//function pointer for deployment type
-int (*test_func)(address *);
 
 bool is_lost_con_retries(void) {
     return retries == MAX_RETRY;

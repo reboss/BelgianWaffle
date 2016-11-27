@@ -38,8 +38,6 @@ int ping_delay = 2000;//2 Seconds default
 int sink = 0;
 
 
-extern int (*test_func)(address *);
-
 void init_cc1100() {
     phys_cc1100(0, 60);
     tcv_plug(0, &plug_null);
@@ -82,7 +80,6 @@ fsm root {
                 break;
             }
             diag("Beginning Packet Deployment...\r\n");
-            test_func = &packet_setup_test;
             sink = 1;
             runfsm send_deploy(PACKET_TEST);
             break;
@@ -92,7 +89,6 @@ fsm root {
                 break;
             }
             diag("Beginning RSSI Deployment...\r\n");
-            test_func = &rssi_setup_test;
             sink = 1;
             runfsm send_deploy(RSSI_TEST);
             break;
