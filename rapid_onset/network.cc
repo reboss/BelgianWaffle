@@ -87,7 +87,7 @@ fsm send_stop(int dest) {
         if (acknowledged)
           finish;
         if (is_lost_con_retries())
-            leds(LED_RED, 1);
+	  set_led(LED_RED_S);
         address packet = tcv_wnp(SEND, sfd, STOP_LEN);
         build_packet(packet, my_id, dest, STOP, seq, payload);
         tcv_endp(packet);
