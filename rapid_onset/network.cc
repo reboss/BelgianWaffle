@@ -167,11 +167,22 @@ fsm stream_data {
         seq++;
 }
 
+
 fsm indicate_reset {
 
-	initial state RESET:
-		
-		finish;
+	initial state YELLOW:
+		set_led(0);
+	        delay(300, GREEN);
+		release;
+
+	state GREEN:
+		set_led(1);
+		delay(300, RED);
+		release;
+	state RED:
+		set_led(2);
+	        delay(300, YELLOW);
+		release;
 }
 
 
