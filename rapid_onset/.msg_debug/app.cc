@@ -27,7 +27,7 @@ fsm root {
     
     int source, dest, hop, opcode;
     int end, len, seq;
-    char payload[MAX_P +1];
+    byte *payload;
     int rssi;
     
     initial state R_INIT:
@@ -52,27 +52,29 @@ fsm root {
         end = get_end(packet);
         len = get_length(packet);
         seq = get_seqnum(packet);
-        
-        strcpy(payload, get_payload(packet));
-        payload[MAX_P] = '\0';
+       
+        payload = get_payload(packet);
+        //payload[MAX_P] = '\0';
         
         rssi = get_rssi(packet);
         proceed(RE_PRINT);
         
     state RE_PRINT:
-        ser_outf(RE_PRINT, "word 1:\r\n"
+        ser_outf(RE_PRINT, "word 1: %x\r\n"
             "  source: %x\r\n"
             "  dest:   %x\r\n"
             "  hop:    %x\r\n"
             "  opcode: %x\r\n"//conver to string?
-            "word 2:\r\n"
+            "word 2: %x\r\n"
             "  end:    %x\r\n"
             "  len:    %x\r\n"
             "  seqnum: %x\r\n"
-            "payload:\r\n"
-            "  |%s|\r\n"
+            /*"payload:\r\n"
+            "  |%s|\r\n"*/
+            "*payload: %x\r\n"
             "rssi:     %x\r\n",
-            source, dest, hop, opcode, end, len, seq, payload, rssi);
+            packet[1], source, dest, hop, opcode, packet[2], end, len, seq,
+            /*payload,*/ *payload, rssi);
         proceed(RE_RECV);
         
 }

@@ -14,7 +14,6 @@
 #define NODE_LED_H
 
 //+++ "node_led.cc"
-
-void node_leds(word __pi_st);
+void set_led(int);
 
 #endif /* End NODE_LED_H */

@@ -26,9 +26,12 @@
 #include "node_led.h"
 
 #define MAX_P      56
-#define PING_LEN   4
-#define ACK_LEN    4
-#define DEPLOY_LEN 6
+
+//TODO: FIX LENGTHS
+#define PING_LEN   10
+#define STOP_LEN   10
+#define ACK_LEN    10
+#define DEPLOY_LEN 10
 #define DEPLOYED_LEN 17
 #define MAX_RETRY  10
 
@@ -43,6 +46,7 @@
 #define LED_YELLOW 0
 #define LED_GREEN  1
 #define LED_RED    2
+#define LED_RED_S  3
 
 #define DONE diag("\r\ndone\r\n")
 
@@ -52,14 +56,12 @@ volatile bool acknowledged, pong;
 // get id's from node_tools
 extern int my_id, parent_id, child_id, dest_id;
 extern cur_state;
-extern int ping_delay;
+extern int ping_delay, test;
 
 char payload[MAX_P];
-
 //Variable that tells the node if it can keep sending deploys
 int cont = 1;
-//function pointer for deployment type
-int (*test_func)(address *);
+bool deployed = FALSE;
 
 bool is_lost_con_retries(void) {
     return retries == MAX_RETRY;
@@ -74,64 +76,78 @@ bool is_lost_con_ping(int ping_retries) {
    After 10 retries, lost connection is assumed.
 */
 
-fsm send_deployed {
 
-    char * payload;
+fsm send_stop(int dest) {//refactor this is ugly
 
     initial state SEND:
-	    //sprintf(payload, "Node %d deployed\n", my_id);
-        if (acknowledged)
-          finish;
-        if (is_lost_con_retries())
-            leds(LED_RED, 1);
-        address packet = tcv_wnp(SEND, sfd, DEPLOYED_LEN);
-        build_packet(packet, my_id, dest_id, DEPLOYED, seq, payload);
+        diag("send stop fsm\r\n");
+	  if (acknowledged) {
+		runfsm send_deploy(test);
+		set_led(LED_GREEN);
+                finish;
+	  }
+        //if (is_lost_con_retries())
+		  //set_led(LED_RED_S);
+        address packet = tcv_wnp(SEND, sfd, STOP_LEN);
+        build_packet(packet, my_id, dest, STOP, seq, payload);//payload wrong?
         tcv_endp(packet);
-        retries++;
-        seq++;
+        //retries++;
         delay(2000, SEND);//should use define not magic number
         release;
 }
 
 	//TODO: SEE DEPLOYED case in receive fsm
-fsm send_deploy(int test) {
+fsm send_deploy {
 
 	//address packet;
-    char msg[2];
+    byte pl[2];
 	 
     initial state SEND_DEPLOY_INIT:
-	    msg[0] = test;
-            msg[1] = '\0';
+	    pl[0] = test;
+        pl[1] = '\0';
 	    proceed SEND_DEPLOY_ACTIVE;
         
+
     //keep sending deploys
     state SEND_DEPLOY_ACTIVE:
         if (cont) {
+
+		  diag("\r\nmsg is: %d\r\nNull Terminator is: %x\r\nWhole Thing: %x\r\n", pl[0], pl[1], *pl);
+		  diag("\r\nMSG[2] is: %x\r\nMSG[3] is %:%x\r\n", pl[2], pl[3]);
 	    address packet;
-	    //diag("sfd = %d\r\n", sfd);	
 	    packet = tcv_wnp(SEND_DEPLOY_ACTIVE, sfd, DEPLOY_LEN);
-	    //diag("packet written\r\n");
-	    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, msg);
+	    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, pl);
+        diag("\r\npacket built\r\nword1: %x\r\nword2:%x\r\n",
+              packet[1], packet[2]);
+		diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n"
+			 "Hop_ID: %x\r\nOpCode: %x\r\nEnd: %x\r\nLength: %x\r\n"
+			 "SeqNum: %x\r\nPayload: %x\r\nRSSI: %x\r\n", get_destination(packet),
+			 get_source_id(packet), get_hop_id(packet), get_opcode(packet), get_end(packet),
+			 get_length(packet), get_seqnum(packet), *get_payload(packet), get_rssi(packet));
 	    //diag("packet built\r\n");
             tcv_endp(packet);
-	    //diag("packet sent\r\n");
-            delay(1000, SEND_DEPLOY_ACTIVE);
-            release;
+			
+		//temporary increment
+		seq = (seq + 1) % 256;
+		//diag("packet sent\r\n");
+	    tcv_endp(packet);
+        delay(1000, SEND_DEPLOY_ACTIVE);
+        release;
         } else {
-            runfsm send_deployed;
-            finish;
+		  //runfsm send_stop(my_id - 1);
+          finish;
         }
 }
 
 
-fsm send_ack {
+fsm send_ack(int dest) {
 
   // ack sequence will match packet it is responding to
   int ack_sequence = 0;
 
   initial state SEND:
     address packet = tcv_wnp(SEND, sfd, ACK_LEN);
-    build_packet(packet, my_id, dest_id, ACK, ack_sequence, NULL);
+    build_packet(packet, my_id, dest, ACK, ack_sequence, NULL);
     tcv_endp(packet);
     finish;
 }
@@ -143,7 +159,7 @@ fsm stream_data {
         if (acknowledged)
             finish;
         if (is_lost_con_retries())
-            leds(LED_RED, 1);
+	    set_led(LED_RED_S);
         address packet;
         sint plen = strlen(payload);
         packet = tcv_wnp(SEND, sfd, plen);
@@ -176,7 +192,7 @@ fsm send_ping {
         else
             ping_retries++;
         if (is_lost_con_ping(ping_retries))
-            leds(LED_RED, 1);
+	    set_led(LED_RED_S);
 
         pong = NO;
         address packet;
@@ -200,25 +216,53 @@ fsm receive {
 	state EVALUATE:
 		switch (get_opcode(packet)) {
 		case PING:
-			//TODO: Can't nodes receive pings from their parent as well?
 			if (get_hop_id(packet) < my_id)
+			        seq = 0;
 				runfsm send_pong;
 			else
 				pong = YES;
 			break;
 		case DEPLOY:
+            if (deployed)
+                break;
 			set_ids(packet);
-			//Make LED flash yellow when packet received
+			set_led(LED_YELLOW);
 			cur_state = 0;
-			//runfsm node_leds;
-			runfsm send_deploy;
+			switch(get_payload(packet)[0]) {
+			case RSSI_TEST:
+                diag("RSSI: %x\r\n", get_rssi(packet));
+			  test = RSSI_TEST;
+			  if (rssi_setup_test(packet)) {
+                    set_ids(packet);//set ids
+			        seq = 0;
+                    deployed = TRUE;
+					runfsm send_stop(my_id - 1);
+			  }
 			break;
-		
+
+			case PACKET_TEST:
+                diag("P TEST SEQ: %x\r\n", get_seqnum(packet));
+			  test = PACKET_TEST;
+			  if (packet_setup_test(packet) == 1) {
+                    set_ids(packet);//set id
+			        seq = 0;
+                    deployed = TRUE;
+					runfsm send_stop(my_id - 1);
+			  }
+			break;
+
+			default:
+			  set_led(LED_RED_S);
+			  diag("Unrecognized deployment type");
+			  break;
+			}
+			break;
+			  
 			/* The DEPLOYED opcode is intended for the sink, nodes need to pass
 			   it on and the sink has to keep track of when every node is
 			   deployed, so it can begin streaming */
 		case DEPLOYED:
-			runfsm send_deployed;
+		        //runfsm send_deployed;
 			break;
 		case STREAM:
 			// check sequence number for lost ack
@@ -226,7 +270,7 @@ fsm receive {
 			acknowledged = NO;
 			strncpy(payload, (char *) packet+3, MAX_P);
 			runfsm stream_data;
-			runfsm send_ack;
+			runfsm send_ack(dest_id);
 			break;
 		case ACK:
 			acknowledged = YES;
@@ -235,10 +279,15 @@ fsm receive {
 		case COMMAND:
 			break;
 		case STOP:
+		  if (get_destination(packet) == my_id) {
+			runfsm send_ack(parent_id);
 			cont = 0;
+			diag("\r\nRECEIVED STOP...\r\n");
+		  }
 			break;
 		default:
 			break;
 		}
+		tcv_endp(packet);
 		proceed RECV;
 }

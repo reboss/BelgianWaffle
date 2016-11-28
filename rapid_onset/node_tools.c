@@ -23,8 +23,8 @@ int my_id, parent_id, child_id, dest_id;
    parents id and its childs id
 */
 void set_ids(address packet) {
-        my_id = (packet[1] >> 8) & 15;
-        parent_id = (packet[1] >> 12) & 15;
+        my_id = (packet[1] >> 4) & 15;
+        parent_id = (packet[1] >> 8) & 15;
         child_id = my_id + 1;
 }
 
@@ -32,7 +32,7 @@ void set_ids(address packet) {
    the destination node for the packet
 */
 int get_destination(address packet) {
-        return (packet[1] >> 8) & 15;
+        return (packet[1] >> 4) & 15;
 }
 
 /* get_source_id() takes in a packet and returns the int value of
@@ -46,14 +46,14 @@ int get_source_id(address packet) {
    node that last relayed the packet
 */
 int get_hop_id(address packet) {
-        return (packet[1] >> 4) & 15;
+        return (packet[1] >> 8) & 15;
 }
 
 /* get_opcode() takes in a packet and returns the int value of the
    operation code that coresponds to the packet
 */
 int get_opcode(address packet) {
-        return (packet[1]) & 15;
+        return (packet[1] >> 12) & 15;
 }
 
 /* get_end() returns the end bit of the packet
@@ -76,8 +76,8 @@ int get_seqnum(address packet) {
         return (packet[2] >> 8) & 255;
 }
 
-char * get_payload(address packet) {
-    return packet + 2;
+byte * get_payload(address packet) {
+  return (byte *) (packet + 3);
 }
 
 /* get_rssi() takes in a packet and returns the rssi value as an
@@ -85,20 +85,35 @@ char * get_payload(address packet) {
 */
 int get_rssi(address packet) {
         int length = (3 + (get_length(packet) / 2));
+        if (get_length(packet) % 2 == 1) {
+          length += 1;
+        }
         return (packet[length] >> 8) & 255;
+}
+
+void payload_cpy(byte* packet, char* payload, int len) {
+  int i;
+  diag("\r\nB:PAYLOAD=%x\r\n", *payload);
+  for (i = 0; i < len; i++)
+	packet[i] = payload[i];
+  packet = '\0';
 }
 
 /* build_packet() takes in the components of a package and assembles
    it into a full package at the address it was sent
 */
 void build_packet(address packet, int source_id, int destination,
-                  int opcode, int seqnum, char * payload) {
-    packet[1] = source_id | destination << 4 | my_id << 8 | opcode << 12;
-    if(payload){
-        int length = strlen(payload);
-        packet[2] = 1 << 1 | length << 2 | seqnum << 8;
-        strncpy((char *) (packet + 3), payload, MAX_P);
+                  int opcode, int seqnum, byte* payload) {
+    int length = strlen(payload) + 1;
+	diag("\r\nA:PAYLOAD=%x\r\n", *payload);
+	diag("\r\nLength in build_packet is: %d\r\n", length);
+	
+    packet[1] = source_id | (destination << 4) | (my_id << 8) | (opcode << 12);
+    
+    if (length) {
+	  payload_cpy((byte *) (packet + 3), payload, length);
+        packet[2] = (1 << 1) | (length << 2) | (seqnum << 8);
     } else {
-        packet[2] = 1 << 1 | seqnum << 12;
+        packet[2] = (1 << 1) | (seqnum << 8);
     }
 }

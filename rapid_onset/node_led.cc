@@ -30,33 +30,28 @@
 
 bool led_is_on = NO;
 int cur_state = 0;
-enum states {YELLOW_FLASH, GREEN_SOLID, RED_FLASH, RED_SOLID};
-enum states led_state;
 
-fsm node_leds {
+//Inplement into .h? then dont send it literal 0,1,2,3
+//enum states {YELLOW_FLASH, GREEN_SOLID, RED_FLASH, RED_SOLID};
+//enum states led_state = YELLOW_FLASH;
 
-        /* Init switches to the needed led function based on what states is set to */
-        initial state INIT:
-            if (cur_state != led_state) {
-                cur_state = led_state;
-                leds_all(LED_OFF);
-            }
-
-        switch(led_state) {
-        case GREEN_SOLID:
-            proceed CONNECTED;
-            break;
-        case YELLOW_FLASH:
-            proceed CONNECTING;
-            break;
-        case RED_FLASH:
-            proceed CHECKING;
-            break;
-        case RED_SOLID:
-            proceed DISCONNECTED;
-            break;
-        default:
-            break;
+void set_led(int cur_state) {
+        leds_all(LED_OFF);
+        switch(cur_state) {
+        case 0:
+	        leds(LED_YELLOW,LED_ON);
+		fastblink(TRUE);
+                break;
+        case 1:
+	        leds(LED_GREEN,LED_ON);
+                break;
+        case 2:
+	        leds(LED_RED,LED_ON);
+		fastblink(TRUE);
+                break;
+        case 3:
+	        leds(LED_RED,LED_ON);
+                break;
         }
     /* CONNECTED is the state that controls the green led when the node is
        communicating

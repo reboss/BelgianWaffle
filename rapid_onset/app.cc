@@ -26,12 +26,10 @@
 #include "rssi_test.h"
 #include "packet_test.h"
 
-#define PACKET_TEST 1
-#define RSSI_TEST 2
-
-char message[30];
 extern int my_id, sfd;
-int receiver = 0;
+extern bool deployed;
+char message[30];
+int receiver = 0, test;
 word current_state;
 
 int ping_delay = 2000;//2 Seconds default
@@ -40,8 +38,6 @@ int ping_delay = 2000;//2 Seconds default
 //Global that indicates if the node is the sink or not
 int sink = 0;
 
-
-extern int (*test_func)(address *);
 
 void init_cc1100() {
     phys_cc1100(0, 60);
@@ -85,9 +81,10 @@ fsm root {
                 break;
             }
             diag("Beginning Packet Deployment...\r\n");
-            test_func = &packet_setup_test;
             sink = 1;
-            runfsm send_deploy(PACKET_TEST);
+            deployed = TRUE;
+			test = PACKET_TEST;
+            runfsm send_deploy(test);
             break;
         case 'R':
             if (sink) {
@@ -95,9 +92,10 @@ fsm root {
                 break;
             }
             diag("Beginning RSSI Deployment...\r\n");
-            test_func = &rssi_setup_test;
             sink = 1;
-            runfsm send_deploy(RSSI_TEST);
+            deployed = TRUE;
+			test = RSSI_TEST;
+            runfsm send_deploy(test);
             break;
         case 'S':
 	    diag("Sink set to: %d\r\n", sink);
