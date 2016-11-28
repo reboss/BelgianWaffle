@@ -211,7 +211,6 @@ fsm send_ping {
             ping_retries++;
         
         if (is_lost_con_ping(ping_retries)) {
-	        set_led(LED_RED_S);
 	        
 	        if (!sink) {
 		        killall(receive);
@@ -220,7 +219,9 @@ fsm send_ping {
 		        runfsm indicate_reset;
 		        finish;
 		}
-	        runfsm send_deploy;
+	        diag("Network shutdown\r\n");
+		cont = 1;
+		runfsm send_deploy;
 	        finish;
 	}
 	
