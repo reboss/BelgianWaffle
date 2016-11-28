@@ -43,11 +43,6 @@
 #define DEPLOYED   6
 #define STOP       7
 
-#define LED_YELLOW 0
-#define LED_GREEN  1
-#define LED_RED    2
-#define LED_RED_S  3
-
 #define DONE diag("\r\ndone\r\n")
 
 volatile int sfd, retries = 0;

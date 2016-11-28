@@ -27,8 +27,6 @@
 #include "rssi_test.h"
 #include "packet_test.h"
 
-#define LED_GREEN   1
-
 extern int my_id, sfd;
 extern bool deployed;
 
