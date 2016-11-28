@@ -121,11 +121,11 @@ fsm root {
 	
     state NODE_PROMPT:
         ser_outf(PING_PROMPT, "Enter new number of nodes: ");
-	proceed PING_SELECT;
+	proceed NODE_SELECT;
 
     state NODE_SELECT:
         ser_inf(PROMPT, "%d", &max_nodes);
-        proceed PING_CONFIRM;
+        proceed NODE_CONFIRM;
 
     state NODE_CONFIRM:
         ser_outf(PING_CONFIRM, "New max nodes: %d\r\n\r\n", max_nodes);
