@@ -120,7 +120,7 @@ fsm root {
         proceed DISPLAY;
 	
     state NODE_PROMPT:
-        ser_outf(PING_PROMPT, "Enter new number of nodes: ");
+        ser_outf(PING_PROMPT, "Enter new number of nodes: \r\n");
 	proceed NODE_SELECT;
 
     state NODE_SELECT:

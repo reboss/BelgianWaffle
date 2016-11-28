@@ -48,7 +48,7 @@
 #define LED_RED    2
 #define LED_RED_S  3
 
-#define DONE diag("\r\ndone\r\n")
+#define SINK_ID     0 //move to .h so can be used else where
 
 volatile int sfd, retries = 0;
 volatile int seq = 0;
@@ -77,6 +77,18 @@ bool is_lost_con_ping(int ping_retries) {
    After 10 retries, lost connection is assumed.
 */
 
+
+//sends the test messages to sink
+fsm final_deploy {
+    address packet;
+    
+    initial state INIT:
+        packet = tcv_wnp(INIT, sfd, 8 + 20);
+	    build_packet(packet, my_id, SINK_ID, STREAM, seq,
+                     "TEAM FLABBERGASTED\0");
+        tcv_endp(packet);
+        finish;
+}
 
 fsm send_stop(int dest) {//refactor this is ugly
 
@@ -122,9 +134,11 @@ fsm send_deploy {
 	    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, pl);
 		diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n"
 			 "Hop_ID: %x\r\nOpCode: %x\r\nEnd: %x\r\nLength: %x\r\n"
-			 "SeqNum: %x\r\nPayload: %x\r\nRSSI: %x\r\n", get_destination(packet),
-			 get_source_id(packet), get_hop_id(packet), get_opcode(packet), get_end(packet),
-			 get_length(packet), get_seqnum(packet), *get_payload(packet), get_rssi(packet));
+			 "SeqNum: %x\r\nPayload: %x\r\nMaxnodes: %x\r\nRSSI: %x\r\n",
+             get_destination(packet), get_source_id(packet), get_hop_id(packet),
+             get_opcode(packet), get_end(packet), get_length(packet),
+             get_seqnum(packet), *get_payload(packet), get_payload(packet)[1],
+             get_rssi(packet));
 	    //diag("packet built\r\n");
 		tcv_endp(packet);
 			
@@ -137,12 +151,6 @@ fsm send_deploy {
 		  //runfsm send_stop(my_id - 1);
           finish;
         }
-}
-
-//sends the test messages to sink
-fsm final_deploy {
-    initial state INIT:
-        finish;
 }
 
 fsm send_ack(int dest) {
@@ -270,12 +278,22 @@ fsm receive {
 		        //runfsm send_deployed;
 			break;
 		case STREAM:
+            diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
 			// check sequence number for lost ack
 			// check if packet has reached it's destination
 			acknowledged = NO;
-			strncpy(payload, (char *) packet+3, MAX_P);
-			runfsm stream_data;
-			runfsm send_ack(dest_id);
+			//runfsm stream_data;
+            address hop_packet;
+            hop_packet = tcv_wnp(EVALUATE, sfd,
+                                 strlen(get_payload(packet)) + 1 + 8);
+            build_packet(hop_packet, get_source_id(packet),
+                         get_destination(packet), get_opcode(packet), seq++,
+                         get_payload(packet));
+            tcv_endp(hop_packet);
+        //packet = tcv_wnp(INIT, sfd, 8 + 20);
+	    //build_packet(packet, my_id, SINK_ID, STREAM, seq,
+                     //"TEAM FLABBERGASTED\0");
+			runfsm send_ack(get_hop_id(packet));
 			break;
 		case ACK://deal w/ type
 			acknowledged = YES;
