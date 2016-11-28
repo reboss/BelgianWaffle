@@ -85,14 +85,13 @@ fsm send_stop(int dest) {//refactor this is ugly
         //if (is_lost_con_retries())
 		  //set_led(LED_RED_S);
         address packet = tcv_wnp(SEND, sfd, STOP_LEN);
-        build_packet(packet, my_id, dest, STOP, seq, payload);//payload wrong?
+        build_packet(packet, my_id, dest, STOP, seq, payload);
         tcv_endp(packet);
         //retries++;
         delay(2000, SEND);//should use define not magic number
         release;
 }
 
-	//TODO: SEE DEPLOYED case in receive fsm
 fsm send_deploy {
 
 	//address packet;
@@ -115,12 +114,10 @@ fsm send_deploy {
 			 "SeqNum: %x\r\nPayload: %x\r\nRSSI: %x\r\n", get_destination(packet),
 			 get_source_id(packet), get_hop_id(packet), get_opcode(packet), get_end(packet),
 			 get_length(packet), get_seqnum(packet), *get_payload(packet), get_rssi(packet));
-	    //diag("packet built\r\n");
 		tcv_endp(packet);
 			
 		//temporary increment
 		seq = (seq + 1) % 256;
-		//diag("packet sent\r\n");
         delay(1000, SEND_DEPLOY_ACTIVE);
         release;
         } else {
