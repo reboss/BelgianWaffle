@@ -167,11 +167,22 @@ fsm stream_data {
         seq++;
 }
 
+
 fsm indicate_reset {
 
-	initial state RESET:
-		
-		finish;
+	initial state YELLOW:
+		set_led(0);
+	        delay(300, GREEN);
+		release;
+
+	state GREEN:
+		set_led(1);
+		delay(300, RED);
+		release;
+	state RED:
+		set_led(2);
+	        delay(300, YELLOW);
+		release;
 }
 
 
@@ -235,37 +246,40 @@ fsm receive {
 		switch (get_opcode(packet)) {
 		case PING:
 		    if (get_destination(packet) == my_id) {
-                if (get_source_id(packet) == parent_id)
+			    if (get_source_id(packet) == parent_id) {
+				    diag("sending pong");
 				    runfsm send_pong;
-                else
-                    pong = YES;
+			    } else {
+				    diag("received pong");
+				    pong = YES;
+			    }
 		    }
-			break;
+		    break;
 		case DEPLOY://turn into funciton to long/complicated
-            if (deployed)
-                break;
+			if (deployed)
+				break;
 			set_ids(packet);
 			set_led(LED_YELLOW);
 			cur_state = 0;
 			switch(get_payload(packet)[0]) {
 			case RSSI_TEST:
-                diag("RSSI: %x\r\n", get_rssi(packet));
-			  test = RSSI_TEST;
-			  if (rssi_setup_test(packet)) {
-                    set_ids(packet);//set ids
-			        seq = 0;
-                    deployed = TRUE;
+				diag("RSSI: %x\r\n", get_rssi(packet));
+				test = RSSI_TEST;
+				if (rssi_setup_test(packet)) {
+					set_ids(packet);//set ids
+					seq = 0;
+					deployed = TRUE;
 					runfsm send_stop(my_id - 1);
-			  }
-			break;
-
+				}
+				break;
+			
 			case PACKET_TEST:
-                diag("P TEST SEQ: %x\r\n", get_seqnum(packet));
-			  test = PACKET_TEST;
-			  if (packet_setup_test(packet) == 1) {
-                    set_ids(packet);//set id
-			        seq = 0;
-                    deployed = TRUE;
+				diag("P TEST SEQ: %x\r\n", get_seqnum(packet));
+				test = PACKET_TEST;
+				if (packet_setup_test(packet) == 1) {
+					set_ids(packet);//set id
+					seq = 0;
+					deployed = TRUE;
 					runfsm send_stop(my_id - 1);
 			  }
 			break;
