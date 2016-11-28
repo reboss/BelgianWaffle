@@ -228,7 +228,7 @@ fsm send_ping {
 	diag("about to send ping\r\n");
         pong = NO;
         packet = tcv_wnp(SEND, sfd, PING_LEN);
-        build_packet(packet, my_id, dest_id, PING, 0, NULL);
+        build_packet(packet, my_id, child_id, PING, 0, NULL);
 	diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n"
 	     "Hop_ID: %x\r\nOpCode: %x\r\nEnd: %x\r\nLength: %x\r\n"
 	     "SeqNum: %x\r\nPayload: %x\r\nRSSI: %x\r\n", get_destination(packet),
