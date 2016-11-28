@@ -246,12 +246,12 @@ fsm receive {
 	state EVALUATE:
 		switch (get_opcode(packet)) {
 		case PING:
-		  if (get_hop_id(packet) < my_id) {
-			        seq = 0;
-				runfsm send_pong;
-		  } else {
-				pong = YES;
-		  }
+		    if (get_destination(packet) == my_id) {
+                if (get_source_id(packet) == parent_id)
+				    runfsm send_pong;
+                else
+                    pong = YES;
+		    }
 			break;
 		case DEPLOY://turn into funciton to long/complicated
             if (deployed)
