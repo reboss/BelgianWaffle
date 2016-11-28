@@ -31,7 +31,7 @@
 #define PING_LEN   8
 #define STOP_LEN   8
 #define ACK_LEN    8
-#define DEPLOY_LEN 10
+#define DEPLOY_LEN 12
 #define DEPLOYED_LEN 17
 #define MAX_RETRY  10
 
@@ -83,7 +83,8 @@ fsm send_stop(int dest) {//refactor this is ugly
     initial state SEND:
         diag("Entered send_stop FSM\r\n");
 	  if (acknowledged) {
-		runfsm send_deploy(test);
+        if (my_id < max_nodes - 1)
+		    runfsm send_deploy(test);
 		set_led(LED_GREEN);
                 finish;
 	  }
@@ -101,11 +102,12 @@ fsm send_stop(int dest) {//refactor this is ugly
 fsm send_deploy {
 
 	//address packet;
-    byte pl[2];
+    byte pl[3];
 	 
     initial state SEND_DEPLOY_INIT:
 	    pl[0] = test;
-        pl[1] = '\0';
+        pl[1] = max_nodes;
+        pl[2] = '\0';
 	    proceed SEND_DEPLOY_ACTIVE;
         
 
@@ -224,6 +226,7 @@ fsm receive {
 			set_ids(packet);
 			set_led(LED_YELLOW);
 			cur_state = 0;
+            max_nodes = get_payload(packet)[1];//set max nodes
 			switch(get_payload(packet)[0]) {
 			case RSSI_TEST:
                 diag("RSSI: %x\r\n", get_rssi(packet));
