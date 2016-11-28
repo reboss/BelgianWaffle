@@ -56,7 +56,7 @@ volatile bool acknowledged, pong;
 // get id's from node_tools
 extern int my_id, parent_id, child_id, dest_id;
 extern cur_state;
-extern int ping_delay, test;
+extern int ping_delay, test, max_nodes;
 
 char payload[MAX_P];
 //Variable that tells the node if it can keep sending deploys
