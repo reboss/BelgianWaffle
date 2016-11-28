@@ -38,7 +38,7 @@ int ping_delay = 2000;//2 Seconds default
 
 
 //Global that indicates if the node is the sink or not
-int sink = 0;
+bool sink = NO;
 
 
 void init_cc1100() {
@@ -83,7 +83,7 @@ fsm root {
                 break;
             }
             diag("Beginning Packet Deployment...\r\n");
-            sink = 1;
+            sink = YES;
             deployed = TRUE;
 			test = PACKET_TEST;
             runfsm send_deploy(test);
@@ -94,9 +94,9 @@ fsm root {
                 break;
             }
             diag("Beginning RSSI Deployment...\r\n");
-            sink = 1;
+            sink = YES;
             deployed = TRUE;
-			test = RSSI_TEST;
+	    test = RSSI_TEST;
             runfsm send_deploy(test);
             break;
         case 'S':
