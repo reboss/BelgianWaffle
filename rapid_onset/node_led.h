@@ -1,3 +1,3 @@
-//+++ "node_led.cc"
+//+++ "node_led.c"
 
 void set_led(int);

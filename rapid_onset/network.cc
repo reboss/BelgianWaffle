@@ -28,9 +28,9 @@
 #define MAX_P      56
 
 //TODO: FIX LENGTHS
-#define PING_LEN   10
-#define STOP_LEN   10
-#define ACK_LEN    10
+#define PING_LEN   8
+#define STOP_LEN   8
+#define ACK_LEN    8
 #define DEPLOY_LEN 10
 #define DEPLOYED_LEN 17
 #define MAX_RETRY  10
