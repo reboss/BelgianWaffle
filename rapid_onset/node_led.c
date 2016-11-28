@@ -28,10 +28,7 @@
 #define LED_OFF    0
 #define LED_ON     1
 
-#define FALSE      0
-#define TRUE       1
-
-bool led_is_on = FALSE;
+bool led_is_on = NO;
 int cur_state = 0;
 
 //Inplement into .h? then dont send it literal 0,1,2,3
@@ -56,4 +53,52 @@ void set_led(int cur_state) {
 	        leds(LED_RED,LED_ON);
                 break;
         }
+    /* CONNECTED is the state that controls the green led when the node is
+       communicating
+    */
+    state CONNECTED:
+                if (!led_is_on) {
+                    leds(LED_GREEN, LED_ON);
+                    led_is_on = YES;
+                }
+            delay(25, INIT);
+            release;
+
+    /* CONNECTING is the state that controls the flashing yellow led as the node
+     *  attemps to   connect to the network
+     */
+    state CONNECTING:
+            if (led_is_on) {
+                    leds(LED_YELLOW, LED_OFF);
+                    led_is_on = NO;
+            } else {
+                    leds(LED_YELLOW, LED_ON);
+                    led_is_on = YES;
+            }
+            delay(100, INIT);//should be defined not magic
+            release;
+
+    /* CHECKING is the state that controls the flashing red led as the node
+     *  checks its con  nection to the sink
+     */
+    state CHECKING:
+            if (led_is_on) {
+                    leds(LED_RED, LED_OFF);
+                    led_is_on = NO;
+            } else {
+                    leds(LED_RED, LED_ON);
+                    led_is_on = YES;
+            }
+            delay(100, INIT);
+            release;
+
+    /* DISCONNECTED is the state that controls the solid red led that indicates the node has  lost connection to the network after deployment
+    */
+    state DISCONNECTED:
+            if (!led_is_on) {
+                    leds(LED_RED, LED_ON);
+                    led_is_on = YES;
+            }
+            delay(25, INIT);
+            release;
 }

@@ -48,8 +48,6 @@
 #define LED_RED    2
 #define LED_RED_S  3
 
-
-
 #define DONE diag("\r\ndone\r\n")
 
 volatile int sfd, retries = 0;
@@ -150,8 +148,8 @@ fsm send_ack(int dest) {
 
 
 fsm stream_data {
-
-    initial state SEND:
+  
+  initial state SEND:
         if (acknowledged)
             finish;
         if (is_lost_con_retries())
@@ -167,8 +165,8 @@ fsm stream_data {
 }
 
 fsm send_pong {
-
-    initial state SEND:
+  
+  initial state SEND:
         address packet;
         packet = tcv_wnp(SEND, sfd, PING_LEN);
         build_packet(packet, my_id, dest_id, PING, seq, NULL);
@@ -177,7 +175,7 @@ fsm send_pong {
 
 fsm send_ping {
 
-    int ping_sequence = 0;
+  int ping_sequence = 0;
     int ping_retries = 0;
 
     initial state SEND:
@@ -190,11 +188,10 @@ fsm send_ping {
         if (is_lost_con_ping(ping_retries))
 	    set_led(LED_RED_S);
 
-        pong = FALSE;
+        pong = NO;
         address packet;
         packet = tcv_wnp(SEND, sfd, PING_LEN);
-        build_packet(packet, my_id, dest_id, PING, ping_sequence, NULL);
-        delay(ping_delay, SEND);
+        build_packet(packet, my_id, dest_id, PING, ping_sequence, NULL);        delay(ping_delay, SEND);
         release;
 }
 
@@ -216,6 +213,8 @@ fsm receive {
 			if (get_hop_id(packet) < my_id)
 			        seq = 0;
 				runfsm send_pong;
+			else
+				pong = YES;
 			break;
 		case DEPLOY://turn into funciton to long/complicated
             if (deployed)
@@ -262,13 +261,13 @@ fsm receive {
 		case STREAM:
 			// check sequence number for lost ack
 			// check if packet has reached it's destination
-			acknowledged = FALSE;
+			acknowledged = NO;
 			strncpy(payload, (char *) packet+3, MAX_P);
 			runfsm stream_data;
 			runfsm send_ack(dest_id);
 			break;
 		case ACK://deal w/ type
-			acknowledged = TRUE;
+			acknowledged = YES;
 			retries = 0;
 			break;
 		case COMMAND:
