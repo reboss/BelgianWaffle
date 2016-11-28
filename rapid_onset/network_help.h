@@ -10,10 +10,9 @@
    ####################################################################
 */
 
-#ifndef NODE_LED_H
-#define NODE_LED_H
+#ifndef NETWORK_HELP_H
+#define NETWORK_HELP_H
 
-//+++ "node_led.c"
-void set_led(int);
+void set_power(int sfd, int power);
 
-#endif /* End NODE_LED_H */
+#endif /*NETWORK_HELP_H*/

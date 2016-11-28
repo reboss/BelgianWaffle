@@ -10,10 +10,12 @@
    ####################################################################
 */
 
-#ifndef NODE_LED_H
-#define NODE_LED_H
+#include "phys_cc1100.h"
+#include "tcv.h"
 
-//+++ "node_led.c"
-void set_led(int);
+#include "network_help.h"
 
-#endif /* End NODE_LED_H */
+void set_power(int sfd, int power) {
+    tcv_control(sfd, PHYSOPT_SETPOWER, power);
+}
+
