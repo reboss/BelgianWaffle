@@ -26,7 +26,7 @@
 #include "node_led.h"
 
 #define MAX_P      56
-#define SINK_ID    1
+#define SINK_ID    0
 
 //TODO: FIX LENGTHS
 #define PING_LEN   8
@@ -60,6 +60,7 @@ extern int my_id, parent_id, child_id, dest_id;
 extern cur_state;
 extern int ping_delay, test;
 extern int max_nodes;
+extern bool sink;
 
 char payload[MAX_P];
 //Variable that tells the node if it can keep sending deploys
@@ -212,18 +213,16 @@ fsm send_ping {
         if (is_lost_con_ping(ping_retries)) {
 	        set_led(LED_RED_S);
 	        
-	        if (my_id != SINK_ID) {
+	        if (!sink) {
 		        killall(receive);
 		        killall(send_pong);
 		        killall(stream_data);
 		        runfsm indicate_reset;
 		        finish;
-	        } else {
-		        // do something else
-	        }
-	        // runfsm send_deploy;
+		}
+	        runfsm send_deploy;
 	        finish;
-	    }
+	}
 	
 	diag("about to send ping\r\n");
         pong = NO;
