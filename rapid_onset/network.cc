@@ -166,6 +166,7 @@ fsm send_ack(int dest) {
 }
 
 
+
 fsm stream_data {
   
   initial state SEND:
@@ -222,8 +223,9 @@ fsm receive {
 		proceed RECV;
 	
 	state RECV:
+	  diag("F");
 		packet = tcv_rnp(RECV, sfd);
-	        plength = tcv_left(packet);
+	    plength = tcv_left(packet);
 		proceed EVALUATE;
 
 	state EVALUATE:
@@ -278,22 +280,27 @@ fsm receive {
 		        //runfsm send_deployed;
 			break;
 		case STREAM:
-            diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
+		  diag("G");
+		    diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
 			// check sequence number for lost ack
 			// check if packet has reached it's destination
 			acknowledged = NO;
 			//runfsm stream_data;
             address hop_packet;
+			diag("A");
             hop_packet = tcv_wnp(EVALUATE, sfd,
                                  strlen(get_payload(packet)) + 1 + 8);
             build_packet(hop_packet, get_source_id(packet),
                          get_destination(packet), get_opcode(packet), seq++,
                          get_payload(packet));
+			diag("B");
             tcv_endp(hop_packet);
+			diag("C");
         //packet = tcv_wnp(INIT, sfd, 8 + 20);
 	    //build_packet(packet, my_id, SINK_ID, STREAM, seq,
                      //"TEAM FLABBERGASTED\0");
 			runfsm send_ack(get_hop_id(packet));
+			diag("D");
 			break;
 		case ACK://deal w/ type
 			acknowledged = YES;
@@ -312,5 +319,6 @@ fsm receive {
 			break;
 		}
 		tcv_endp(packet);
+		diag("E");
 		proceed RECV;
 }
