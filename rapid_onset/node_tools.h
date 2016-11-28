@@ -9,6 +9,7 @@
    Description: The header file for node_tools.c
    ####################################################################
 */
+
 #ifndef NODE_TOOLS_H
 #define NODE_TOOLS_H
 

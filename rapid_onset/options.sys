@@ -1,0 +1,4 @@
+#ifdef BANNER
+#undef BANNER
+#endif /* End BANNER */
+#define BANNER ""
