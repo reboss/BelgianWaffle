@@ -191,47 +191,54 @@ fsm send_pong {
   initial state SEND:
         address packet;
         packet = tcv_wnp(SEND, sfd, PING_LEN);
-        build_packet(packet, my_id, dest_id, PING, seq, NULL);
+        build_packet(packet, my_id, child_id, PING, 0, NULL);
+	tcv_endp(packet);
+	diag("sent pong\r\n");
         finish;
 }
 
 fsm send_ping {
 
-	int ping_sequence = 0;
-	int ping_retries = 0;
-	address packet;
+    int ping_retries = 0;
+    bool pong_atf = FALSE;
+    address packet;
 
     initial state SEND:
-	    diag("entered send ping");
-        if (pong) {
-            ping_sequence++;
+        if (pong)
             ping_retries = 0;
-        } else
+        else
             ping_retries++;
+        
         if (is_lost_con_ping(ping_retries)) {
-	    set_led(LED_RED_S);
-	    
-	    if (my_id != SINK_ID) {
-		    killall(receive);
-		    killall(send_pong);
-		    killall(stream_data);
-		    runfsm indicate_reset;
-		    finish;
-	    } else {
-		    // do something else
+	        set_led(LED_RED_S);
+	        
+	        if (my_id != SINK_ID) {
+		        killall(receive);
+		        killall(send_pong);
+		        killall(stream_data);
+		        runfsm indicate_reset;
+		        finish;
+	        } else {
+		        // do something else
+	        }
+	        // runfsm send_deploy;
+	        finish;
 	    }
-	    // runfsm send_deploy;
-	    finish;
-	}
-
+	
 	diag("about to send ping\r\n");
         pong = NO;
         packet = tcv_wnp(SEND, sfd, PING_LEN);
-        build_packet(packet, my_id, dest_id, PING, ping_sequence, NULL);
+        build_packet(packet, my_id, dest_id, PING, 0, NULL);
+	diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n"
+	     "Hop_ID: %x\r\nOpCode: %x\r\nEnd: %x\r\nLength: %x\r\n"
+	     "SeqNum: %x\r\nPayload: %x\r\nRSSI: %x\r\n", get_destination(packet),
+	     get_source_id(packet), get_hop_id(packet), get_opcode(packet), get_end(packet),
+	     get_length(packet), get_seqnum(packet), *get_payload(packet), get_rssi(packet));
 	tcv_endp(packet);
 	diag("ping sent\r\n");
 	delay(ping_delay, SEND);
-        release;
+	release;
+
 }
 
 fsm receive {
