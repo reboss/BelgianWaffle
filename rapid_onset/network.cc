@@ -161,7 +161,7 @@ fsm stream_data {
         sint plen = strlen(payload);
         packet = tcv_wnp(SEND, sfd, plen);
         //should be forwarding not rebuilding
-        build_packet(packet, my_id, dest_id, STREAM, seq, payload);
+        build_packet(packet, my_id, child_id, STREAM, seq, payload);
         tcv_endp(packet);
         retries++;
         seq++;
