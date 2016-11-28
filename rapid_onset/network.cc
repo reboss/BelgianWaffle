@@ -223,7 +223,7 @@ fsm receive {
 			        seq = 0;
 				runfsm send_pong;
 			break;
-		case DEPLOY:
+		case DEPLOY://turn into funciton to long/complicated
             if (deployed)
                 break;
 			set_ids(packet);
@@ -273,7 +273,7 @@ fsm receive {
 			runfsm stream_data;
 			runfsm send_ack(dest_id);
 			break;
-		case ACK:
+		case ACK://deal w/ type
 			acknowledged = TRUE;
 			retries = 0;
 			break;
@@ -281,7 +281,7 @@ fsm receive {
 			break;
 		case STOP:
 		  if (get_destination(packet) == my_id) {
-			runfsm send_ack(parent_id);
+			runfsm send_ack(get_source_id(packet));
 			cont = 0;
 			diag("\r\nRECEIVED STOP...\r\n");
 		  }
