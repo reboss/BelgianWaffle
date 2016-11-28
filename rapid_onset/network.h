@@ -10,17 +10,24 @@
    ####################################################################
 */
 
-#ifndef RSSI_TEST_H
-#define RSSI_TEST_H
+#ifndef NETWORK_H
+#define NETWORK_H
 
-#include "sysio.h"
-//+++ rssi_test.c
+//+++ "network.cc"
 
-/* Records how many on the last 16 packets dropped below the rssi threshold, and
- *  returns if too many were lost.
- * Parameters: the packet address being assessed
- * Return: 1 if the number of low rssi values equals or exceeds threshold
- */
-int rssi_setup_test(address);
+#define RSSI_TEST       1
+#define PACKET_TEST     2
 
-#endif /*RSSI_TEST_H*/
+#define TRUE            1
+#define FALSE           0
+
+#define TRUE       1
+#define FALSE      0
+
+void receive(word __pi_st);
+
+void send_ping(word __pi_st);
+
+void send_deploy(word __pi_st);
+
+#endif /* End NETWORK_H */
