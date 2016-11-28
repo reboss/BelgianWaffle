@@ -26,8 +26,9 @@
 #include "rssi_test.h"
 #include "packet_test.h"
 
-char message[30];
 extern int my_id, sfd;
+extern bool deployed;
+char message[30];
 int receiver = 0, test;
 word current_state;
 
@@ -81,6 +82,7 @@ fsm root {
             }
             diag("Beginning Packet Deployment...\r\n");
             sink = 1;
+            deployed = TRUE;
 			test = PACKET_TEST;
             runfsm send_deploy(test);
             break;
@@ -91,6 +93,7 @@ fsm root {
             }
             diag("Beginning RSSI Deployment...\r\n");
             sink = 1;
+            deployed = TRUE;
 			test = RSSI_TEST;
             runfsm send_deploy(test);
             break;
