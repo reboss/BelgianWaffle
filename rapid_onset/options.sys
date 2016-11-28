@@ -7,3 +7,6 @@
 #undef DIAG_MESSAGES
 #endif /* End DIAG_MESSAGES */
 #define DIAG_MESSAGES ""
+
+#undef RADIO_USE_LEDS
+#define RADIO_USE_LEDS 0

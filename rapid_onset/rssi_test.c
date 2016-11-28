@@ -11,6 +11,7 @@
 */
 
 #include "sysio.h"
+#include "node_led.h"
 
 #define RSSI_THRESHOLD  0xF0
 #define RSSI_LOW_CUTOFF 10
@@ -21,7 +22,11 @@ int num_cutoff(word rssi) {
         if ((rssi >> i) & 1 == 1)
             low++;
     }
-    diag("num low: %x\r\n", low);
+    if (low >= (RSSI_LOW_CUTOFF /2))
+        set_led(LED_RED);
+    else
+        set_led(LED_YELLOW);
+    diag("Low = %d/r/n",low);
     return low;
 }
 

@@ -13,6 +13,11 @@
 #ifndef NODE_LED_H
 #define NODE_LED_H
 
+#define LED_YELLOW 0
+#define LED_GREEN  1
+#define LED_RED    2
+#define LED_RED_S  3
+
 //+++ "node_led.c"
 void set_led(int);
 
