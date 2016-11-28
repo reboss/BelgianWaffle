@@ -191,7 +191,7 @@ fsm send_pong {
   initial state SEND:
         address packet;
         packet = tcv_wnp(SEND, sfd, PING_LEN);
-        build_packet(packet, my_id, my_child, PING, 0, NULL);
+        build_packet(packet, my_id, child_id, PING, 0, NULL);
         finish;
 }
 
