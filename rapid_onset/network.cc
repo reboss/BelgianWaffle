@@ -180,43 +180,42 @@ fsm send_pong {
   initial state SEND:
         address packet;
         packet = tcv_wnp(SEND, sfd, PING_LEN);
-        build_packet(packet, my_id, dest_id, PING, seq, NULL);
+        build_packet(packet, my_id, my_child, PING, 0, NULL);
         finish;
 }
 
 fsm send_ping {
 
-  int ping_sequence = 0;
     int ping_retries = 0;
     bool pong_atf = FALSE;
     address packet;
 
     initial state SEND:
-        if (pong) {
-            ping_sequence++;
+        if (pong)
             ping_retries = 0;
-        } else
+        else
             ping_retries++;
+        
         if (is_lost_con_ping(ping_retries)) {
-	    set_led(LED_RED_S);
-	    
-	    if (my_id != SINK_ID) {
-		    killall(receive);
-		    killall(send_pong);
-		    killall(stream_data);
-		    runfsm indicate_reset;
-		    finish;
-	    } else {
-		    // do something else
+	        set_led(LED_RED_S);
+	        
+	        if (my_id != SINK_ID) {
+		        killall(receive);
+		        killall(send_pong);
+		        killall(stream_data);
+		        runfsm indicate_reset;
+		        finish;
+	        } else {
+		        // do something else
+	        }
+	        // runfsm send_deploy;
+	        finish;
 	    }
-	    // runfsm send_deploy;
-	    finish;
-	}
 	
         pong = NO;
         packet = tcv_wnp(SEND, sfd, PING_LEN);
-        build_packet(packet, my_id, dest_id, PING, ping_sequence, NULL);
-	delay(ping_delay, SEND);
+        build_packet(packet, my_id, dest_id, PING, 0, NULL);
+	    delay(ping_delay, SEND);
         release;
 }
 
