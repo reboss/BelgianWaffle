@@ -1,0 +1,7 @@
+#ifdef BANNER
+#undef BANNER
+#endif /* End BANNER */
+#define BANNER ""
+
+#undef    RADIO_USE_LEDS
+#define   RADIO_USE_LEDS  0 

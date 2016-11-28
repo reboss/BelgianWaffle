@@ -1,10 +1,31 @@
+/* ####################################################################
+   CMPT 464
+   Ad Hoc Network Deployment
+   Authors: Aidan Bush, Elliott Sobek, Christopher Dubeau,
+   John Mulvany-Robbins, Kevin Saforo
+   Thursday, November 10
+
+   File: node_tools.h
+   Description: The header file for node_tools.c
+   ####################################################################
+*/
+
 #include "sysio.h"
 
 #define PACKET_LOSS_THRESHOLD 8
 
-int packet_setup_test(address *packet) {
-    static int last_seq = 0;//deal with initial setup
-    static word prev_lost;//last 15 packets and a setup bit
+int num_lost(word losses) {
+    int i, lost = 0;
+    for (i = 0; i < 15; i++) {
+        if ((losses >> i) & 1 == 1)
+            lost++;
+    }
+    return lost;
+}
+
+int packet_setup_test(address packet) {
+    static int last_seq;//deal with initial setup
+    static word prev_lost = 0;//last 15 packets and a setup bit
     int i;
     int cur_seq = get_seqnum(packet);
     
@@ -20,20 +41,11 @@ int packet_setup_test(address *packet) {
     //deal with current since its valid
     prev_lost <<= 1;
     prev_lost &= ~1;
-    
+	prev_lost |= 1 << 15;
+
     if (num_lost(prev_lost) >= PACKET_LOSS_THRESHOLD)
         return 1;
     return 0;
-}
-
-
-int num_lost(word losses) {
-    int i, lost = 0;
-    for (i = 0; i < 15; i++) {
-        if ((losses >> i) & 1 == 1)
-            lost++;
-    }
-    return lost;
 }
 
 
