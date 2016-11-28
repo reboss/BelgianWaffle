@@ -270,7 +270,6 @@ fsm receive {
 			if (deployed)
 				break;
 			set_ids(packet);
-			set_led(LED_YELLOW);
 			cur_state = 0;
 			switch(get_payload(packet)[0]) {
 			case RSSI_TEST:
