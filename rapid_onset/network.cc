@@ -171,16 +171,16 @@ fsm stream_data {
 fsm indicate_reset {
 
 	initial state YELLOW:
-		set_led(0);
+		set_led(LED_YELLOW);
 	        delay(300, GREEN);
 		release;
 
 	state GREEN:
-		set_led(1);
+		set_led(LED_GREEN);
 		delay(300, RED);
 		release;
 	state RED:
-		set_led(2);
+		set_led(LED_RED);
 	        delay(300, YELLOW);
 		release;
 }
@@ -197,12 +197,12 @@ fsm send_pong {
 
 fsm send_ping {
 
-  int ping_sequence = 0;
-    int ping_retries = 0;
-    bool pong_atf = FALSE;
-    address packet;
+	int ping_sequence = 0;
+	int ping_retries = 0;
+	address packet;
 
     initial state SEND:
+	    diag("entered send ping");
         if (pong) {
             ping_sequence++;
             ping_retries = 0;
@@ -223,10 +223,13 @@ fsm send_ping {
 	    // runfsm send_deploy;
 	    finish;
 	}
-	
+
+	diag("about to send ping\r\n");
         pong = NO;
         packet = tcv_wnp(SEND, sfd, PING_LEN);
         build_packet(packet, my_id, dest_id, PING, ping_sequence, NULL);
+	tcv_endp(packet);
+	diag("ping sent\r\n");
 	delay(ping_delay, SEND);
         release;
 }
@@ -315,8 +318,10 @@ fsm receive {
 		case STOP:
 			if (get_destination(packet) == my_id) {
 				runfsm send_ack(get_source_id(packet));
-				if (cont)
+				if (cont) {
+					diag("cont is equal to 1 and will be set to 0\r\n");
 					runfsm send_ping;
+				}
 				
 				cont = 0;
 				diag("\r\nRECEIVED STOP...\r\n");
