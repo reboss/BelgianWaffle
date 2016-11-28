@@ -28,10 +28,12 @@
 
 extern int my_id, sfd;
 extern bool deployed;
+
 char message[30];
 int receiver = 0, test;
 word current_state;
 
+int max_nodes = 3;
 int ping_delay = 2000;//2 Seconds default
 
 
@@ -61,9 +63,9 @@ fsm root {
           "(C)hange Ping Rate\r\n"
           "(P)acket Deployment\r\n"
           "(R)SSI Deployment\r\n"
-          "(S)ink Status\r\n"
+          "(S)et Number of Nodes: (%d)\r\n"
           "Selection: ",
-          my_id);
+	  my_id, max_nodes);
         proceed SELECTION;
 
     state SELECTION:
@@ -98,8 +100,7 @@ fsm root {
             runfsm send_deploy(test);
             break;
         case 'S':
-	    diag("Sink set to: %d\r\n", sink);
-            //TODO: Do we need this?
+            proceed NODE_PROMPT;
             break;
         default:
             break;
@@ -118,4 +119,17 @@ fsm root {
         ser_outf(PING_CONFIRM, "New ping delay %d\r\n\r\n", ping_delay);
         proceed DISPLAY;
 	
+    state NODE_PROMPT:
+        ser_outf(PING_PROMPT, "Enter new number of nodes: ");
+	proceed NODE_SELECT;
+
+    state NODE_SELECT:
+        ser_inf(PROMPT, "%d", &max_nodes);
+        proceed NODE_CONFIRM;
+
+    state NODE_CONFIRM:
+        ser_outf(PING_CONFIRM, "New max nodes: %d\r\n\r\n", max_nodes);
+        proceed DISPLAY;
+
+
 }
