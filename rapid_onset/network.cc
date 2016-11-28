@@ -26,6 +26,7 @@
 #include "node_led.h"
 
 #define MAX_P      56
+#define SINK_ID    1
 
 //TODO: FIX LENGTHS
 #define PING_LEN   10
@@ -42,6 +43,7 @@
 #define ACK        5
 #define DEPLOYED   6
 #define STOP       7
+#define KILL       8
 
 #define LED_YELLOW 0
 #define LED_GREEN  1
@@ -98,7 +100,7 @@ fsm send_stop(int dest) {//refactor this is ugly
         release;
 }
 
-	//TODO: SEE DEPLOYED case in receive fsm
+//TODO: SEE DEPLOYED case in receive fsm
 fsm send_deploy {
 
 	//address packet;
@@ -185,23 +187,41 @@ fsm send_ping {
 
     int ping_sequence = 0;
     int ping_retries = 0;
+    bool pong_atf = FALSE;
+    address packet;
 
     initial state SEND:
         if (pong) {
             ping_sequence++;
             ping_retries = 0;
-        }
-        else
+        } else
             ping_retries++;
-        if (is_lost_con_ping(ping_retries))
+        if (is_lost_con_ping(ping_retries)) {
 	    set_led(LED_RED_S);
-
+	    if (my_id != SINK_ID) {
+		    killall(receive);
+		    killall(send_pong);
+		    killall(send_stream);
+		    runfsm indicate_reset;
+		    finish;
+	    } else {
+		    // do something else
+	    }
+	    // runfsm send_deploy;
+	    finish;
+	}
+	
         pong = FALSE;
-        address packet;
         packet = tcv_wnp(SEND, sfd, PING_LEN);
         build_packet(packet, my_id, dest_id, PING, ping_sequence, NULL);
         delay(ping_delay, SEND);
         release;
+}
+
+fsm indicate_reset {
+
+	initial state RESET:
+		
 }
 
 fsm receive {
@@ -282,10 +302,12 @@ fsm receive {
 		case STOP:
 		  if (get_destination(packet) == my_id) {
 			runfsm send_ack(parent_id);
+			if (cont)
+				runfsm send_ping;
 			cont = 0;
 			diag("\r\nRECEIVED STOP...\r\n");
 		  }
-			break;
+		  break;
 		default:
 			break;
 		}
