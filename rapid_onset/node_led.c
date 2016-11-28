@@ -52,5 +52,7 @@ void set_led(int cur_state) {
         case 3:
 	        leds(LED_RED,LED_ON);
                 break;
+	default:
+	  break;
         }
 }
