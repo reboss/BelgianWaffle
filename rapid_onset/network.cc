@@ -82,12 +82,15 @@ fsm send_stop(int dest) {//refactor this is ugly
 
     initial state SEND:
         diag("Entered send_stop FSM\r\n");
-	  if (acknowledged) {
-        if (my_id < max_nodes - 1)
-		    runfsm send_deploy(test);
-		set_led(LED_GREEN);
-                finish;
-	  }
+	    if (acknowledged) {
+            if (my_id < max_nodes - 1)//if not last node
+		        runfsm send_deploy(test);
+            else
+                runfsm final_deploy;
+            deployed = TRUE;
+		    set_led(LED_GREEN);
+            finish;
+	    }
         //if (is_lost_con_retries())
 		  //set_led(LED_RED_S);
         address packet = tcv_wnp(SEND, sfd, STOP_LEN);
@@ -136,6 +139,11 @@ fsm send_deploy {
         }
 }
 
+//sends the test messages to sink
+fsm final_deploy {
+    initial state INIT:
+        finish;
+}
 
 fsm send_ack(int dest) {
 
@@ -234,7 +242,6 @@ fsm receive {
 			  if (rssi_setup_test(packet)) {
                     set_ids(packet);//set ids
 			        seq = 0;
-                    deployed = TRUE;
 					runfsm send_stop(my_id - 1);
 			  }
 			break;
@@ -245,7 +252,6 @@ fsm receive {
 			  if (packet_setup_test(packet) == 1) {
                     set_ids(packet);//set id
 			        seq = 0;
-                    deployed = TRUE;
 					runfsm send_stop(my_id - 1);
 			  }
 			break;
