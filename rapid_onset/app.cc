@@ -21,10 +21,13 @@
 
 #include "network.h"
 #include "node_tools.h"
+#include "node_led.h"
 
 /* test files */
 #include "rssi_test.h"
 #include "packet_test.h"
+
+#define LED_GREEN   1
 
 extern int my_id, sfd;
 extern bool deployed;
@@ -96,7 +99,8 @@ fsm root {
             diag("Beginning RSSI Deployment...\r\n");
             sink = 1;
             deployed = TRUE;
-			test = RSSI_TEST;
+	    test = RSSI_TEST;
+	    set_led(LED_GREEN);
             runfsm send_deploy(test);
             break;
         case 'S':
