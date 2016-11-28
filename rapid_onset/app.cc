@@ -28,10 +28,12 @@
 
 extern int my_id, sfd;
 extern bool deployed;
+
 char message[30];
 int receiver = 0, test;
 word current_state;
 
+int max_nodes = 3;
 int ping_delay = 2000;//2 Seconds default
 
 
