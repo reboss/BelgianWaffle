@@ -82,7 +82,7 @@ bool is_lost_con_ping(int ping_retries) {
 fsm send_stop(int dest) {//refactor this is ugly
 
     initial state SEND:
-        diag("send stop fsm\r\n");
+        diag("Entered send_stop FSM\r\n");
 	  if (acknowledged) {
 		runfsm send_deploy(test);
 		set_led(LED_GREEN);
@@ -113,26 +113,20 @@ fsm send_deploy {
     //keep sending deploys
     state SEND_DEPLOY_ACTIVE:
         if (cont) {
-
-		  diag("\r\nmsg is: %d\r\nNull Terminator is: %x\r\nWhole Thing: %x\r\n", pl[0], pl[1], *pl);
-		  diag("\r\nMSG[2] is: %x\r\nMSG[3] is %:%x\r\n", pl[2], pl[3]);
 	    address packet;
 	    packet = tcv_wnp(SEND_DEPLOY_ACTIVE, sfd, DEPLOY_LEN);
 	    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, pl);
-        diag("\r\npacket built\r\nword1: %x\r\nword2:%x\r\n",
-              packet[1], packet[2]);
 		diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n"
 			 "Hop_ID: %x\r\nOpCode: %x\r\nEnd: %x\r\nLength: %x\r\n"
 			 "SeqNum: %x\r\nPayload: %x\r\nRSSI: %x\r\n", get_destination(packet),
 			 get_source_id(packet), get_hop_id(packet), get_opcode(packet), get_end(packet),
 			 get_length(packet), get_seqnum(packet), *get_payload(packet), get_rssi(packet));
 	    //diag("packet built\r\n");
-            tcv_endp(packet);
+		tcv_endp(packet);
 			
 		//temporary increment
 		seq = (seq + 1) % 256;
 		//diag("packet sent\r\n");
-	    tcv_endp(packet);
         delay(1000, SEND_DEPLOY_ACTIVE);
         release;
         } else {

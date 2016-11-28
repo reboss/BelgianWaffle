@@ -93,7 +93,7 @@ int get_rssi(address packet) {
 
 void payload_cpy(byte* packet, char* payload, int len) {
   int i;
-  diag("\r\nB:PAYLOAD=%x\r\n", *payload);
+
   for (i = 0; i < len; i++)
 	packet[i] = payload[i];
   packet = '\0';
@@ -105,9 +105,7 @@ void payload_cpy(byte* packet, char* payload, int len) {
 void build_packet(address packet, int source_id, int destination,
                   int opcode, int seqnum, byte* payload) {
     int length = strlen(payload) + 1;
-	diag("\r\nA:PAYLOAD=%x\r\n", *payload);
-	diag("\r\nLength in build_packet is: %d\r\n", length);
-	
+
     packet[1] = source_id | (destination << 4) | (my_id << 8) | (opcode << 12);
     
     if (length) {
