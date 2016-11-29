@@ -28,7 +28,6 @@
 #define MAX_P      56
 #define SINK_ID    0
 
-//TODO: FIX LENGTHS
 #define PING_LEN   8
 #define STOP_LEN   8
 #define ACK_LEN    8
@@ -98,13 +97,13 @@ fsm send_stop(int dest) {//refactor this is ugly
     initial state SEND:
         diag("Entered send_stop FSM\r\n");
 	    if (acknowledged) {
-            if (my_id < max_nodes - 1)//if not last node
-		        runfsm send_deploy(test);
-            else
-                runfsm final_deploy;
-            deployed = TRUE;
+		    if (my_id < max_nodes - 1)//if not last node
+			    runfsm send_deploy(test);
+		    else
+			    runfsm final_deploy;
+		    deployed = TRUE;
 		    set_led(LED_GREEN);
-            finish;
+		    finish;
 	    }
         //if (is_lost_con_retries())
 		  //set_led(LED_RED_S);
@@ -267,8 +266,10 @@ fsm receive {
 		proceed RECV;
 	
 	state RECV:
+		diag("before\n\r");
 		packet = tcv_rnp(RECV, sfd);
 	        plength = tcv_left(packet);
+		diag("after\n\r");
 		proceed EVALUATE;
 
 	state EVALUATE:
@@ -289,7 +290,7 @@ fsm receive {
 				break;
 			set_ids(packet);
 			cur_state = 0;
-            max_nodes = get_payload(packet)[1];//set max nodes
+			max_nodes = get_payload(packet)[1];//set max nodes
 			switch(get_payload(packet)[0]) {
 			case RSSI_TEST:
 				diag("RSSI: %x\r\n", get_rssi(packet));
@@ -327,21 +328,21 @@ fsm receive {
 		        //runfsm send_deployed;
 			break;
 		case STREAM:
-            diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
+			diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
 			// check sequence number for lost ack
 			// check if packet has reached it's destination
 			acknowledged = NO;
 			//runfsm stream_data;
-            address hop_packet;
-            hop_packet = tcv_wnp(EVALUATE, sfd,
-                                 strlen(get_payload(packet)) + 1 + 8);
-            build_packet(hop_packet, get_source_id(packet),
-                         get_destination(packet), get_opcode(packet), seq++,
-                         get_payload(packet));
-            tcv_endp(hop_packet);
-	    //packet = tcv_wnp(INIT, sfd, 8 + 20);
-	    //build_packet(packet, my_id, SINK_ID, STREAM, seq,
-                     //"TEAM FLABBERGASTED\0");
+			address hop_packet;
+			hop_packet = tcv_wnp(EVALUATE, sfd,
+					     strlen(get_payload(packet)) + 1 + 8);
+			build_packet(hop_packet, get_source_id(packet),
+				     get_destination(packet), get_opcode(packet), seq++,
+				     get_payload(packet));
+			tcv_endp(hop_packet);
+			//packet = tcv_wnp(INIT, sfd, 8 + 20);
+			//build_packet(packet, my_id, SINK_ID, STREAM, seq,
+			//"TEAM FLABBERGASTED\0");
 			runfsm send_ack(get_hop_id(packet));
 			break;
 		case ACK://deal w/ type
