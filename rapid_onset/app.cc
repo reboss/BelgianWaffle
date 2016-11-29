@@ -32,11 +32,10 @@ extern bool deployed;
 
 char message[30];
 int receiver = 0, test;
-word current_state;
-
 int max_nodes = 3;
 int ping_delay = 2000;//2 Seconds default
-
+int debug = 0;//higher numbers for more verbosity
+word current_state;
 
 //Global that indicates if the node is the sink or not
 bool sink = NO;
@@ -65,8 +64,9 @@ fsm root {
           "(P)acket Deployment\r\n"
           "(R)SSI Deployment\r\n"
           "(S)et Number of Nodes: (%d)\r\n"
+          "(D)ebug mode (%d)\r\n"
           "Selection: ",
-	  my_id, max_nodes);
+	      my_id, max_nodes, debug);
         proceed SELECTION;
 
     state SELECTION:
@@ -104,6 +104,8 @@ fsm root {
         case 'S':
             proceed NODE_PROMPT;
             break;
+        case 'D':
+            proceed DEBUG_PROMPT;
         default:
             break;
         }
@@ -114,11 +116,11 @@ fsm root {
         proceed PING_SELECT;
 
     state PING_SELECT:
-        ser_inf(PROMPT, "%d", &ping_delay);
+        ser_inf(PING_SELECT, "%d", &ping_delay);
         proceed PING_CONFIRM;
 
     state PING_CONFIRM:
-        ser_outf(PING_CONFIRM, "New ping delay %d\r\n\r\n", ping_delay);
+        ser_outf(PING_CONFIRM, "New ping delay: %dms\r\n\r\n", ping_delay);
         proceed DISPLAY;
 	
     state NODE_PROMPT:
@@ -126,12 +128,22 @@ fsm root {
 	proceed NODE_SELECT;
 
     state NODE_SELECT:
-        ser_inf(PROMPT, "%d", &max_nodes);
+        ser_inf(NODE_SELECT, "%d", &max_nodes);
         proceed NODE_CONFIRM;
 
     state NODE_CONFIRM:
-        ser_outf(NODE_CONFIRM, "\r\nNew max nodes: %d\r\n\r\n", max_nodes);
+        ser_outf(NODE_CONFIRM, "New max nodes: %d\r\n\r\n", max_nodes);
         proceed DISPLAY;
 
-
+    state DEBUG_PROMPT:
+        ser_outf(DEBUG_PROMPT, "Enter new debug mode (higher for more info): ");
+        proceed DEBUG_SELECT;
+    
+    state DEBUG_SELECT:
+        ser_inf(DEBUG_SELECT, "%d", &debug);
+        proceed DEBUG_CONFIRM;
+    
+    state DEBUG_CONFIRM:
+        ser_outf(DEBUG_CONFIRM, "New debug mode: %d\r\n\r\n", debug);
+        proceed DISPLAY;
 }
