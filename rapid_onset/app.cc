@@ -21,6 +21,7 @@
 
 #include "network.h"
 #include "node_tools.h"
+#include "node_led.h"
 
 /* test files */
 #include "rssi_test.h"
@@ -96,7 +97,8 @@ fsm root {
             diag("Beginning RSSI Deployment...\r\n");
             sink = YES;
             deployed = TRUE;
-	    test = RSSI_TEST;
+	        test = RSSI_TEST;
+	        set_led(LED_GREEN);
             runfsm send_deploy(test);
             break;
         case 'S':
@@ -120,7 +122,7 @@ fsm root {
         proceed DISPLAY;
 	
     state NODE_PROMPT:
-        ser_outf(PING_PROMPT, "Enter new number of nodes: \r\n");
+        ser_outf(NODE_PROMPT, "Enter new number of nodes: ");
 	proceed NODE_SELECT;
 
     state NODE_SELECT:
@@ -128,7 +130,7 @@ fsm root {
         proceed NODE_CONFIRM;
 
     state NODE_CONFIRM:
-        ser_outf(PING_CONFIRM, "New max nodes: %d\r\n\r\n", max_nodes);
+        ser_outf(NODE_CONFIRM, "\r\nNew max nodes: %d\r\n\r\n", max_nodes);
         proceed DISPLAY;
 
 
