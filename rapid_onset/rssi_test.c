@@ -26,7 +26,7 @@ int num_cutoff(word rssi) {
         set_led(LED_RED);
     else
         set_led(LED_YELLOW);
-    diag("Low = %d/r/n",low);
+    diag("Low = %d\r\n",low);
     return low;
 }
 

@@ -89,6 +89,7 @@ fsm final_deploy {
         packet = tcv_wnp(INIT, sfd, 8 + 20);
 	    build_packet(packet, my_id, SINK_ID, STREAM, seq,
                      "TEAM FLABBERGASTED\0");
+        diag("sending starting stream\r\n");
         tcv_endp(packet);
         finish;
 }
