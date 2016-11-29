@@ -168,21 +168,19 @@ fsm send_ack(int dest) {
 }
 
 //wont work need to write the packet here the packet here
-fsm send_stream(address packet) {
-  
-  initial state SEND:
+fsm send_stream(address packet_copy) {
+    address packet;
+    
+    initial state SEND:
         if (acknowledged)
             finish;
         if (is_lost_con_retries())
             set_led(LED_RED_S);
+        
+        packet = tcv_wnp(SEND, sfd, packet_length(packet_copy));
+        copy_packet(packet, packet_copy);//copy over
         tcv_endp(packet);
-        /*address packet;
-        sint plen = strlen(payload);
-        packet = tcv_wnp(SEND, sfd, plen);
-        //should be forwarding not rebuilding
-        build_packet(packet, my_id, child_id, STREAM, seq, payload);
-        tcv_endp(packet);
-        retries++;*/
+        //does not deal with acks
 }
 
 
@@ -334,8 +332,9 @@ fsm receive {
                 diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
 			    acknowledged = NO;
                 address hop_packet;
-                //need to move wnp into send stream
-                hop_packet = tcv_wnp(EVALUATE, sfd, packet_length(packet));
+                //copy packet
+                hop_packet = malloc((packet_length / 2) * sizeof(word), 0);
+                
                 copy_packet(hop_packet, packet);
                 runfsm send_stream(hop_packet);
             }
