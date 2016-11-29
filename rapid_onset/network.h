@@ -18,11 +18,14 @@
 #define RSSI_TEST       1
 #define PACKET_TEST     2
 
-#define TRUE            1
-#define FALSE           0
+#define TRUE  1
+#define FALSE 0
 
-#define TRUE       1
-#define FALSE      0
+void send_stop(word __pi_st);
+
+void send_ack(word __pi_st);
+
+void stream_data(word __pi_st);
 
 void receive(word __pi_st);
 
