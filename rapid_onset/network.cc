@@ -168,22 +168,22 @@ fsm send_ack(int dest) {
     finish;
 }
 
-
-fsm stream_data {
+//wont work need to write the packet here the packet here
+fsm send_stream(address packet) {
   
   initial state SEND:
         if (acknowledged)
             finish;
         if (is_lost_con_retries())
-	    set_led(LED_RED_S);
-        address packet;
+            set_led(LED_RED_S);
+        tcv_endp(packet);
+        /*address packet;
         sint plen = strlen(payload);
         packet = tcv_wnp(SEND, sfd, plen);
         //should be forwarding not rebuilding
         build_packet(packet, my_id, child_id, STREAM, seq, payload);
         tcv_endp(packet);
-        retries++;
-        seq++;
+        retries++;*/
 }
 
 
@@ -233,7 +233,7 @@ fsm send_ping {
 	        if (!sink) {
 		        killall(receive);
 		        killall(send_pong);
-		        killall(stream_data);
+		        killall(send_stream);
 		        runfsm indicate_reset;
 		        finish;
 		}
@@ -268,7 +268,7 @@ fsm receive {
 	
 	state RECV:
 		packet = tcv_rnp(RECV, sfd);
-	        plength = tcv_left(packet);
+	    plength = tcv_left(packet);
 		proceed EVALUATE;
 
 	state EVALUATE:
@@ -327,22 +327,19 @@ fsm receive {
 		        //runfsm send_deployed;
 			break;
 		case STREAM:
-            diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
-			// check sequence number for lost ack
-			// check if packet has reached it's destination
-			acknowledged = NO;
-			//runfsm stream_data;
-            address hop_packet;
-            hop_packet = tcv_wnp(EVALUATE, sfd,
-                                 strlen(get_payload(packet)) + 1 + 8);
-            build_packet(hop_packet, get_source_id(packet),
-                         get_destination(packet), get_opcode(packet), seq++,
-                         get_payload(packet));
-            tcv_endp(hop_packet);
-	    //packet = tcv_wnp(INIT, sfd, 8 + 20);
-	    //build_packet(packet, my_id, SINK_ID, STREAM, seq,
-                     //"TEAM FLABBERGASTED\0");
 			runfsm send_ack(get_hop_id(packet));
+            if (sink) {
+                diag("STREAM:%s\r\n", get_payload(packet));
+                break;//deal with it as sink
+            } else {
+                diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
+			    acknowledged = NO;
+                address hop_packet;
+                //need to move wnp into send stream
+                hop_packet = tcv_wnp(EVALUATE, sfd, packet_length(packet));
+                copy_packet(hop_packet, packet);
+                runfsm send_stream(hop_packet);
+            }
 			break;
 		case ACK://deal w/ type
 			acknowledged = YES;
