@@ -252,7 +252,7 @@ fsm send_ping {
 	        if (!sink) {
 		        killall(receive);
 		        killall(send_pong);
-		        killall(send_stream);
+		        killall(stream_data);
 		        runfsm indicate_reset;
 		        finish;
 		}
@@ -338,7 +338,7 @@ fsm receive {
 				diag("DD\r\n");
 				copy_packet(hop_packet, packet);
 				diag("EE\r\n");
-				runfsm send_stream(hop_packet);
+				runfsm stream_data(hop_packet);
 			}
 			break;
 		case ACK://deal w/ type
