@@ -21,13 +21,6 @@
 #include "phys_cc1100.h"
 #include "node_led.h"
 
-#define LED_YELLOW 0
-#define LED_GREEN  1
-#define LED_RED    2
-
-#define LED_OFF    0
-#define LED_ON     1
-
 bool led_is_on = NO;
 int cur_state = 0;
 
@@ -37,17 +30,16 @@ int cur_state = 0;
 
 void set_led(int cur_state) {
         leds_all(LED_OFF);
+	fastblink(NO);
         switch(cur_state) {
         case 0:
-	        leds(LED_YELLOW,LED_ON);
-		fastblink(YES);
+	        leds(LED_YELLOW,LED_BLINK);
                 break;
         case 1:
 	        leds(LED_GREEN,LED_ON);
                 break;
         case 2:
-	        leds(LED_RED,LED_ON);
-		fastblink(YES);
+	        leds(LED_RED,LED_BLINK);
                 break;
         case 3:
 	        leds(LED_RED,LED_ON);
