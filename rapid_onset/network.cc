@@ -75,7 +75,7 @@ fsm send_stop(int dest) {//refactor this is ugly
 			    runfsm send_deploy(test);
 		    else
 			    runfsm final_deploy;
-		    deployed = TRUE;
+		    deployed = YES;
 		    set_led(LED_GREEN);
 		    finish;
 	    }
@@ -195,7 +195,7 @@ fsm send_pong {
 fsm send_ping {
 
     int ping_retries = 0;
-    bool pong_atf = FALSE;
+    bool pong_atf = NO;
     address packet;
 
     initial state SEND:
