@@ -86,8 +86,8 @@ fsm final_deploy {
     
     initial state INIT:
         packet = tcv_wnp(INIT, sfd, 8 + 20);
-	    build_packet(packet, my_id, SINK_ID, STREAM, seq,
-                     "TEAM FLABBERGASTED\0");
+        build_packet(packet, my_id, SINK_ID, STREAM, seq,
+		 "TEAM FLABBERGASTED");
         tcv_endp(packet);
         finish;
 }
