@@ -15,25 +15,40 @@
 
 //+++ "network.cc"
 
-#define RSSI_TEST       1
-#define PACKET_TEST     2
+#define RSSI_TEST   1
+#define PACKET_TEST 2
 
-#define TRUE  1
-#define FALSE 0
+#define MAP_P 56
 
-void deploy_node(address packet);
+#define PING_LEN     10
+#define STOP_LEN     10
+#define ACK_LEN      10
+#define DEPLOY_LEN   10
+#define DEPLOYED_LEN 18
+#define MAX_RETRY    10
 
-void final_deploy(word __pi_st);
+#define DELAY 2000
 
-void send_stop(word __pi_st);
+#define PING     1
+#define DEPLOY   2
+#define COMMAND  3
+#define STREAM   4
+#define ACK      5
+#define DEPLOYED 6
+#define STOP     7
+#define KILL     8
 
-void send_ack(word __pi_st);
+#define DONE diag("\r\nDone\r\n")
 
-void stream_data(word __pi_st);
+#define LED_YELLOW 0
+#define LED_GREEN  1
+#define LED_RED    2
+#define LED_RED_S  3
 
-void indicate_reset(word __pi_st);
+#define SINK_ID 0
 
-void send_pong(word __pi_st);
+#define MILLISECOND 1
+#define SECOND 1000
 
 void receive(word __pi_st);
 
