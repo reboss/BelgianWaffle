@@ -52,35 +52,6 @@ bool is_last_node(void) {
   return my_id == (max_nodes - 1);
 }
 
-void set_test_behaviour(address packet) {
-    switch(get_payload(packet)[0]) {
-    case RSSI_TEST:
-      diag("RSSI: %x\r\n", get_rssi(packet));
-      test = RSSI_TEST;
-      if (rssi_setup_test(packet)) {
-        set_ids(packet);
-        seq = 0;
-        deployed = YES;
-        runfsm send_stop(my_id - 1);
-      }
-      break;
-    case PACKET_TEST:
-      diag("P TEST SEQ: %x\r\n", get_seqnum(packet));
-      test = PACKET_TEST;
-      if (packet_setup_test(packet) == 1) {
-        set_ids(packet);
-        seq = 0;
-        deployed = YES;
-        runfsm send_stop(my_id - 1);
-      }
-      break;
-    default:
-      set_led(LED_RED_S);
-      diag("Unrecognized deployment type");
-      break;
-    }
-}
-
 /*
    sends the same packet continuously until an ack is received.
    After 10 retries, lost connection is assumed.
@@ -121,6 +92,35 @@ fsm send_stop(int dest) {//refactor this is ugly
         //retries++;
         delay(2000, SEND);//should use define not magic number
         release;
+}
+
+void set_test_behaviour(address packet) {
+    switch(get_payload(packet)[0]) {
+    case RSSI_TEST:
+      diag("RSSI: %x\r\n", get_rssi(packet));
+      test = RSSI_TEST;
+      if (rssi_setup_test(packet)) {
+        set_ids(packet);
+        seq = 0;
+        deployed = YES;
+        runfsm send_stop(my_id - 1);
+      }
+      break;
+    case PACKET_TEST:
+      diag("P TEST SEQ: %x\r\n", get_seqnum(packet));
+      test = PACKET_TEST;
+      if (packet_setup_test(packet) == 1) {
+        set_ids(packet);
+        seq = 0;
+        deployed = YES;
+        runfsm send_stop(my_id - 1);
+      }
+      break;
+    default:
+      set_led(LED_RED_S);
+      diag("Unrecognized deployment type");
+      break;
+    }
 }
 
 //TODO: SEE DEPLOYED case in receive fsm
