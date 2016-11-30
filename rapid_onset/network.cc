@@ -334,8 +334,7 @@ fsm receive {
 				acknowledged = NO;
 				address hop_packet;
 				//copy packet
-				hop_packet = malloc((packet_length / 2) * sizeof(word), 0);
-				
+				hop_packet = umalloc(32*sizeof(word));
 				copy_packet(hop_packet, packet);
 				runfsm send_stream(hop_packet);
 			}
