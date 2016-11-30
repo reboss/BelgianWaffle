@@ -95,8 +95,9 @@ fsm final_deploy {
     state SEND:
 	    //if (acknowledged)
 		    // ptr += 55;
-	    char message[55];
-	    strncpy(message, ptr, 55); 
+	    char message[56];
+	    strncpy(message, ptr, 55);
+	    message[55] = '\0';
 	    packet = tcv_wnp(SEND, sfd, MAX_P);
             build_packet(packet, my_id, SINK_ID, STREAM,
 			 seq, message);
