@@ -70,6 +70,7 @@ fsm final_deploy {
     address packet;
 
     initial state INIT:
+      diag("In final_deploy fsm\r\n");
         packet = tcv_wnp(INIT, sfd, 8 + 20);
         build_packet(packet, my_id, SINK_ID, STREAM, seq,
 		 "TEAM FLABBERGASTED");
@@ -100,6 +101,7 @@ fsm send_stop(int dest) {
         build_packet(packet, my_id, dest, STOP, seq, payload);
         tcv_endp(packet);
         //retries++;
+	diag("Done send stop fsm\r\n");
         delay(2 * SECOND, SEND);
         release;
 }
@@ -115,7 +117,7 @@ void set_test_behaviour(address packet) {
       }
       break;
     case PACKET_TEST:
-      diag("P TEST SEQ: %x\r\n", get_seqnum(packet));
+      diag("PACKET TEST SEQ: %x\r\n", get_seqnum(packet));
       test = PACKET_TEST;
       if (packet_setup_test(packet) == 1) {
 	set_test_mode_data(packet);
@@ -174,6 +176,7 @@ fsm send_ack(int dest) {
   int ack_sequence = 0;
 
   initial state SEND:
+    diag("In send ack fsm\r\n");
     address packet = tcv_wnp(SEND, sfd, ACK_LEN);
     build_packet(packet, my_id, dest, ACK, ack_sequence, NULL);
     tcv_endp(packet);
@@ -184,6 +187,7 @@ fsm send_ack(int dest) {
 fsm stream_data(address packet) {
 
   initial state SEND:
+    diag("In stream data fsm\r\n");
         if (acknowledged)
             finish;
         if (is_lost_con_retries())
@@ -281,10 +285,9 @@ fsm receive {
 		proceed RECV;
 
 	state RECV:
-		diag("before\n\r");
+		diag("before receive RECV packet recieve\n\r");
 	        packet = tcv_rnp(RECV, sfd);
-		diag("here\r\n");
-		diag("after\n\r");
+		diag("after receive RECV packet recieve\n\r");
 		proceed EVALUATE;
 
 	state EVALUATE:
