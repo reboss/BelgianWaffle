@@ -50,6 +50,11 @@ void init_cc1100(void) {
     tcv_control(sfd, PHYSOPT_ON, NULL);
 }
 
+void set_globals_sink_YES(void) {
+  sink = YES;
+  deployed = YES;
+}
+
 fsm root {
 
     char selection = '\0';
@@ -85,8 +90,7 @@ fsm root {
                 break;
             }
             diag("Beginning Packet Deployment...\r\n");
-            sink = YES;
-            deployed = YES;
+	    set_globals_sink_YES();
 	    test = PACKET_TEST;
             runfsm send_deploy(test);
             break;
@@ -96,8 +100,7 @@ fsm root {
                 break;
             }
             diag("Beginning RSSI Deployment...\r\n");
-            sink = YES;
-            deployed = YES;
+	    set_globals_sink_YES();
 	    test = RSSI_TEST;
             runfsm send_deploy(test);
             break;
