@@ -27,6 +27,9 @@
 #include "rssi_test.h"
 #include "packet_test.h"
 
+// Milliseconds
+#define DEFAULT_DELAY 2000
+
 extern int my_id, sfd;
 extern bool deployed;
 
@@ -35,12 +38,12 @@ int receiver = 0, test;
 word current_state;
 
 int max_nodes = 3;
-int ping_delay = 2000; //2 Seconds default
+int ping_delay = DEFAULT_DELAY; //2 Seconds default
 
 //Global that indicates if the node is the sink or not
 int sink = 0;
 
-void init_cc1100() {
+void init_cc1100(void) {
     phys_cc1100(0, 60);
     tcv_plug(0, &plug_null);
     sfd = tcv_open(WNONE, 0, 0);
@@ -59,12 +62,12 @@ fsm root {
 
     state DISPLAY:
         ser_outf(DISPLAY, "Rapid Onset; Node id (%d)\r\n"
-          "(C)hange Ping Rate\r\n"
+          "(C)hange Ping Rate (%dms)\r\n"
           "(P)acket Deployment\r\n"
           "(R)SSI Deployment\r\n"
           "(S)et Number of Nodes: (%d)\r\n"
           "Selection: ",
-	  my_id, max_nodes);
+	  my_id, ping_delay, max_nodes);
         proceed SELECTION;
 
     state SELECTION:
