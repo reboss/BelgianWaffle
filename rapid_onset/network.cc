@@ -332,10 +332,15 @@ fsm receive {
 			} else {
 				diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
 				acknowledged = NO;
+				diag("AA\r\d");
 				address hop_packet;
+				diag("BB\r\n");
 				//copy packet
-				hop_packet = umalloc(32*sizeof(word));
+				diag("CC\r\n");
+				hop_packet = umalloc(packet_length(packet) / 2 * sizeof(word));
+				diag("DD\r\n");
 				copy_packet(hop_packet, packet);
+				diag("EE\r\n");
 				runfsm send_stream(hop_packet);
 			}
 			break;
