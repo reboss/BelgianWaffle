@@ -171,11 +171,10 @@ fsm send_deploy {
 fsm send_ack(int dest) {
 
   // ack sequence will match packet it is responding to
-  int ack_sequence = 0;
 
   initial state SEND:
     address packet = tcv_wnp(SEND, sfd, ACK_LEN);
-    build_packet(packet, my_id, dest, ACK, ack_sequence, NULL);
+    build_packet(packet, my_id, dest, ACK, 0, NULL);
     tcv_endp(packet);
     finish;
 }
@@ -185,15 +184,20 @@ fsm send_stream(address packet_copy) {
     address packet;
     
     initial state SEND:
+        diag("send stream\r\n");
         if (acknowledged)
+            diag("stream ack\r\n");
             finish;
         if (is_lost_con_retries())
             set_led(LED_RED_S);
-        
+        diag("before wnp\r\n");
         packet = tcv_wnp(SEND, sfd, packet_length(packet_copy));
+        diag("before copy_packet\r\n");
         copy_packet(packet, packet_copy);//copy over
+        diag("before endp\r\n");
         tcv_endp(packet);
-        //does not deal with acks
+        diag("after endp\r\n");
+        finish;
 }
 
 
@@ -359,8 +363,10 @@ fsm receive {
 			}
 			break;
 		case ACK://deal w/ type
-			acknowledged = YES;
-			retries = 0;
+            //if(get_destination(packet) == my_id){
+			    acknowledged = YES;
+			    retries = 0;
+            //}
 			break;
 		case COMMAND:
 			break;
@@ -379,6 +385,8 @@ fsm receive {
 		default:
 			break;
 		}
+        diag("YY\r\n");
 		tcv_endp(packet);
+        diag("ZZ\r\n");
 		proceed RECV;
 }
