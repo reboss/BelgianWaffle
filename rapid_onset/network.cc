@@ -95,14 +95,22 @@ fsm final_deploy {
     state SEND:
 	    //if (acknowledged)
 		    // ptr += 55;
-	    char message[56];
-	    strncpy(message, ptr, 55);
-	    message[55] = '\0';
-	    packet = tcv_wnp(SEND, sfd, MAX_P);
+	    char message[MAX_P];
+	    int i;
+	    for (i = 0; i < MAX_P - 1; i++)
+		    message[i] = *ptr++;
+	    message[MAX_P - 1] = '\0';
+	    
+            diag("msg null term\r\n");
+	    packet = tcv_wnp(SEND, sfd, 32);
+            diag("after tcv_wnp\r\n");
             build_packet(packet, my_id, SINK_ID, STREAM,
 			 seq, message);
+            diag("after building\r\n");
 	    tcv_endp(packet);
+            diag("after tcv_end\r\n");
 	    ptr += 55;
+            diag("ptr += 55\r\n");
 	    delay(500, SEND);
 	    release;
 }
