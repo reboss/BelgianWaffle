@@ -168,19 +168,23 @@ fsm send_ack(int dest) {
 }
 
 
-fsm stream_data {
-  
+fsm stream_data(address packet) {
+
+	address hop_packet;
+	
   initial state SEND:
         if (acknowledged)
             finish;
         if (is_lost_con_retries())
 	    set_led(LED_RED_S);
-        address packet;
-        sint plen = strlen(payload);
-        packet = tcv_wnp(SEND, sfd, plen);
-        //should be forwarding not rebuilding
-        build_packet(packet, my_id, child_id, STREAM, seq, payload);
-        tcv_endp(packet);
+	
+	hop_packet = tcv_wnp(SEND, sfd,
+			     strlen(get_payload(packet)) + 1 + 8);
+	build_packet(hop_packet, get_source_id(packet),
+		     get_destination(packet), get_opcode(packet), seq++,
+		     get_payload(packet));
+	tcv_endp(hop_packet);
+       
         retries++;
         seq++;
 }
@@ -267,8 +271,8 @@ fsm receive {
 	
 	state RECV:
 		diag("before\n\r");
-		packet = tcv_rnp(RECV, sfd);
-	        plength = tcv_left(packet);
+	        packet = tcv_rnp(RECV, sfd);
+		diag("here\r\n");
 		diag("after\n\r");
 		proceed EVALUATE;
 
@@ -332,17 +336,8 @@ fsm receive {
 			// check sequence number for lost ack
 			// check if packet has reached it's destination
 			acknowledged = NO;
-			//runfsm stream_data;
-			address hop_packet;
-			hop_packet = tcv_wnp(EVALUATE, sfd,
-					     strlen(get_payload(packet)) + 1 + 8);
-			build_packet(hop_packet, get_source_id(packet),
-				     get_destination(packet), get_opcode(packet), seq++,
-				     get_payload(packet));
-			tcv_endp(hop_packet);
-			//packet = tcv_wnp(INIT, sfd, 8 + 20);
-			//build_packet(packet, my_id, SINK_ID, STREAM, seq,
-			//"TEAM FLABBERGASTED\0");
+			strncpy(get_payload(packet), payload, MAX_P);
+			runfsm stream_data(packet);
 			runfsm send_ack(get_hop_id(packet));
 			break;
 		case ACK://deal w/ type
