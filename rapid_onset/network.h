@@ -45,7 +45,7 @@
 
 #define SINK_ID 0
 
-#define MILLISECOND 100
+#define MILLISECOND 1
 #define SECOND 1000
 
 void receive(word __pi_st);
