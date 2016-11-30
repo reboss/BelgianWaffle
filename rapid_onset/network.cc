@@ -58,13 +58,6 @@ void set_test_mode_data(address packet) {
   deployed = YES;
 }
 
-void detrm_fsm_deploy_behvr(void) {
-  if (!is_last_node()) // OLD (For verify): my_id<max_nodes-1
-    runfsm send_deploy(test);
-  else
-    runfsm final_deploy;
-}
-
 /*
    sends the same packet continuously until an ack is received.
    After 10 retries, lost connection is assumed.
@@ -82,6 +75,13 @@ fsm final_deploy {
 		 "TEAM FLABBERGASTED");
         tcv_endp(packet);
         finish;
+}
+
+void detrm_fsm_deploy_behvr(void) {
+  if (!is_last_node()) // OLD (For verify): my_id<max_nodes-1
+    runfsm send_deploy(test);
+  else
+    runfsm final_deploy;
 }
 
 fsm send_stop(int dest) {
