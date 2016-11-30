@@ -15,6 +15,9 @@
 
 //+++ "network.cc"
 
+#define RSSI_TEST   1
+#define PACKET_TEST 2
+
 #define MAP_P 56
 
 #define PING_LEN     10
