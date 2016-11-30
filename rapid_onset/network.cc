@@ -52,6 +52,35 @@ bool is_last_node(void) {
   return my_id == (max_nodes - 1);
 }
 
+void set_test_behaviour(address packet) {
+    switch(get_payload(packet)[0]) {
+    case RSSI_TEST:
+      diag("RSSI: %x\r\n", get_rssi(packet));
+      test = RSSI_TEST;
+      if (rssi_setup_test(packet)) {
+        set_ids(packet);
+        seq = 0;
+        deployed = YES;
+        runfsm send_stop(my_id - 1);
+      }
+      break;
+    case PACKET_TEST:
+      diag("P TEST SEQ: %x\r\n", get_seqnum(packet));
+      test = PACKET_TEST;
+      if (packet_setup_test(packet) == 1) {
+        set_ids(packet);
+        seq = 0;
+        deployed = YES;
+        runfsm send_stop(my_id - 1);
+      }
+      break;
+    default:
+      set_led(LED_RED_S);
+      diag("Unrecognized deployment type");
+      break;
+    }
+}
+
 /*
    sends the same packet continuously until an ack is received.
    After 10 retries, lost connection is assumed.
@@ -60,9 +89,9 @@ bool is_last_node(void) {
 
 //sends the test messages to sink
 fsm final_deploy {
-  
+
     address packet;
-    
+
     initial state INIT:
         packet = tcv_wnp(INIT, sfd, 8 + 20);
         build_packet(packet, my_id, SINK_ID, STREAM, seq,
@@ -99,13 +128,13 @@ fsm send_deploy {
 
 	//address packet;
     byte pl[3];
-	 
+
     initial state SEND_DEPLOY_INIT:
 	    pl[0] = test;
         pl[1] = max_nodes;
         pl[2] = '\0';
 	    proceed SEND_DEPLOY_ACTIVE;
-        
+
 
     //keep sending deploys
     state SEND_DEPLOY_ACTIVE:
@@ -122,7 +151,7 @@ fsm send_deploy {
              get_rssi(packet));
 	    //diag("packet built\r\n");
 		tcv_endp(packet);
-			
+
 		//temporary increment
 		seq = (seq + 1) % 256;
         delay(1000, SEND_DEPLOY_ACTIVE);
@@ -147,7 +176,7 @@ fsm send_ack(int dest) {
 
 
 fsm stream_data(address packet) {
-	
+
   initial state SEND:
         if (acknowledged)
             finish;
@@ -155,7 +184,7 @@ fsm stream_data(address packet) {
 	    set_led(LED_RED_S);
 	address hop_packet = tcv_wnp(SEND, sfd,
 			     strlen(get_payload(packet)) + 1 + 8);
-	
+
 	build_packet(hop_packet, get_source_id(packet),
 		     get_destination(packet), get_opcode(packet), seq++,
 		     get_payload(packet));
@@ -184,7 +213,7 @@ fsm indicate_reset {
 
 
 fsm send_pong {
-  
+
   initial state SEND:
         address packet = tcv_wnp(SEND, sfd, PING_LEN);
         build_packet(packet, my_id, parent_id, PING, 0, NULL);
@@ -203,9 +232,9 @@ fsm send_ping {
             ping_retries = 0;
         else
             ping_retries++;
-        
+
         if (is_lost_con_ping(ping_retries)) {
-	        
+
 	        if (!sink) {
 		        killall(receive);
 		        killall(send_pong);
@@ -218,7 +247,7 @@ fsm send_ping {
 		runfsm send_deploy;
 	        finish;
 	}
-	
+
 	diag("about to send ping\r\n");
         pong = NO;
         address packet = tcv_wnp(SEND, sfd, PING_LEN);
@@ -236,13 +265,13 @@ fsm send_ping {
 }
 
 fsm receive {
-  
+
 	address packet;
 	sint plength;
 
 	initial state INIT_CC1100:
 		proceed RECV;
-	
+
 	state RECV:
 		diag("before\n\r");
 	        packet = tcv_rnp(RECV, sfd);
@@ -269,34 +298,9 @@ fsm receive {
 			set_ids(packet);
 			cur_state = 0;
 			max_nodes = get_payload(packet)[1];//set max nodes
-			switch(get_payload(packet)[0]) {
-			case RSSI_TEST:
-			  diag("RSSI: %x\r\n", get_rssi(packet));
-			  test = RSSI_TEST;
-			  if (rssi_setup_test(packet)) {
-			    set_ids(packet);//set ids
-			    seq = 0;
-			    deployed = YES;
-			    runfsm send_stop(my_id - 1);
-			  }
-			  break;
-			case PACKET_TEST:
-			  diag("P TEST SEQ: %x\r\n", get_seqnum(packet));
-			  test = PACKET_TEST;
-			  if (packet_setup_test(packet) == 1) {
-			    set_ids(packet);//set id
-			    seq = 0;
-			    deployed = YES;
-			    runfsm send_stop(my_id - 1);
-			  }
-			  break;
-			default:
-			  set_led(LED_RED_S);
-			  diag("Unrecognized deployment type");
-			  break;
-			}
+            set_test_behaviour(packet);
 			break;
-			  
+
 			/* The DEPLOYED opcode is intended for the sink, nodes need to pass
 			   it on and the sink has to keep track of when every node is
 			   deployed, so it can begin streaming */
@@ -328,7 +332,7 @@ fsm receive {
 					diag("cont is equal to 1 and will be set to 0\r\n");
 					runfsm send_ping;
 				}
-				
+
 				cont = 0;
 				diag("\r\nRECEIVED STOP...\r\n");
 			}
