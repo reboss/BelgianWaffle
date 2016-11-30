@@ -48,6 +48,10 @@ bool is_lost_con_ping(int ping_retries) {
     return ping_retries == MAX_RETRY;
 }
 
+bool is_last_node(void) {
+  return my_id == (max_nodes - 1);
+}
+
 /*
    sends the same packet continuously until an ack is received.
    After 10 retries, lost connection is assumed.
@@ -56,6 +60,7 @@ bool is_lost_con_ping(int ping_retries) {
 
 //sends the test messages to sink
 fsm final_deploy {
+  
     address packet;
     
     initial state INIT:
@@ -71,13 +76,13 @@ fsm send_stop(int dest) {//refactor this is ugly
     initial state SEND:
         diag("Entered send_stop FSM\r\n");
 	    if (acknowledged) {
-		    if (my_id < max_nodes - 1)//if not last node
-			    runfsm send_deploy(test);
-		    else
-			    runfsm final_deploy;
-		    deployed = YES;
-		    set_led(LED_GREEN);
-		    finish;
+	      if (!is_last_node()) //OLD (For verify): my_id<max_nodes-1
+		runfsm send_deploy(test);
+	      else
+		runfsm final_deploy;
+	      deployed = YES;
+	      set_led(LED_GREEN);
+	      finish;
 	    }
         //if (is_lost_con_retries())
 		  //set_led(LED_RED_S);
@@ -142,22 +147,19 @@ fsm send_ack(int dest) {
 
 
 fsm stream_data(address packet) {
-
-	address hop_packet;
 	
   initial state SEND:
         if (acknowledged)
             finish;
         if (is_lost_con_retries())
 	    set_led(LED_RED_S);
-	
-	hop_packet = tcv_wnp(SEND, sfd,
+	address hop_packet = tcv_wnp(SEND, sfd,
 			     strlen(get_payload(packet)) + 1 + 8);
+	
 	build_packet(hop_packet, get_source_id(packet),
 		     get_destination(packet), get_opcode(packet), seq++,
 		     get_payload(packet));
 	tcv_endp(hop_packet);
-       
         retries++;
         seq++;
 }
@@ -184,8 +186,7 @@ fsm indicate_reset {
 fsm send_pong {
   
   initial state SEND:
-        address packet;
-        packet = tcv_wnp(SEND, sfd, PING_LEN);
+        address packet = tcv_wnp(SEND, sfd, PING_LEN);
         build_packet(packet, my_id, parent_id, PING, 0, NULL);
 	tcv_endp(packet);
 	diag("sent pong\r\n");
@@ -196,7 +197,6 @@ fsm send_ping {
 
     int ping_retries = 0;
     bool pong_atf = NO;
-    address packet;
 
     initial state SEND:
         if (pong)
@@ -221,7 +221,7 @@ fsm send_ping {
 	
 	diag("about to send ping\r\n");
         pong = NO;
-        packet = tcv_wnp(SEND, sfd, PING_LEN);
+        address packet = tcv_wnp(SEND, sfd, PING_LEN);
         build_packet(packet, my_id, child_id, PING, 0, NULL);
 	diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n"
 	     "Hop_ID: %x\r\nOpCode: %x\r\nEnd: %x\r\nLength: %x\r\n"
@@ -236,6 +236,7 @@ fsm send_ping {
 }
 
 fsm receive {
+  
 	address packet;
 	sint plength;
 
@@ -300,6 +301,7 @@ fsm receive {
 			   it on and the sink has to keep track of when every node is
 			   deployed, so it can begin streaming */
 		case DEPLOYED:
+		  diag("Recieved DEPLOYED");
 		        //runfsm send_deployed;
 			break;
 		case STREAM:
@@ -312,10 +314,12 @@ fsm receive {
 			runfsm send_ack(get_hop_id(packet));
 			break;
 		case ACK://deal w/ type
+		  diag("Recieved ACK\r\n");
 			acknowledged = YES;
 			retries = 0;
 			break;
 		case COMMAND:
+		  diag("Recieved COMMAND\r\n");
 			break;
 		case STOP:
 			if (get_destination(packet) == my_id) {
@@ -330,6 +334,7 @@ fsm receive {
 			}
 			break;
 		default:
+		  diag("Unknown opcode\r\n");
 			break;
 		}
 		tcv_endp(packet);
