@@ -61,6 +61,9 @@ extern int ping_delay, test;
 extern int max_nodes;
 extern bool sink;
 
+const char *deploy_message =
+	"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam sagittis interdum magna nec aliquam. Aenean lacinia gravida erat vel ultricies. Donec sed mi ac ante consequat vestibulum in vitae elit. Donec a bibendum lectus, a varius ex. Cras accumsan sapien quis sem condimentum, at ornare leo scelerisque. Donec sit amet augue risus. Etiam dignissim facilisis dolor eu porttitor. Morbi neque ligula, sodales ac ullamcorper eu, posuere in ipsum. Suspendisse bibendum massa id ligula rhoncus feugiat. Integer posuere dolor magna, a elementum nibh egestas vel. Morbi sit amet orci facilisis, mollis dui id, vulputate neque. Pellentesque pharetra, risus a elementum sagittis, neque ipsum blandit leo, nec viverra augue sapien vel nisi. Morbi euismod consectetur magna, at tincidunt orci laoreet et. Etiam fringilla tincidunt commodo. Donec sollicitudin nunc lectus, non maximus ligula ornare at.";
+
 char payload[MAX_P];
 //Variable that tells the node if it can keep sending deploys
 int cont = 1;
@@ -83,13 +86,33 @@ bool is_lost_con_ping(int ping_retries) {
 //sends the test messages to sink
 fsm final_deploy {
     address packet;
+    char *ptr;
     
     initial state INIT:
-        packet = tcv_wnp(INIT, sfd, 8 + 20);
-        build_packet(packet, my_id, SINK_ID, STREAM, seq,
-		 "TEAM FLABBERGASTED");
-        tcv_endp(packet);
-        finish;
+	    ptr = (char *) deploy_message;
+	    diag("sending starting stream\r\n");
+
+    state SEND:
+	    //if (acknowledged)
+		    // ptr += 55;
+	    char message[MAX_P];
+	    int i;
+	    for (i = 0; i < MAX_P - 1; i++)
+		    message[i] = *ptr++;
+	    message[MAX_P - 1] = '\0';
+	    
+            diag("msg null term\r\n");
+	    packet = tcv_wnp(SEND, sfd, 32);
+            diag("after tcv_wnp\r\n");
+            build_packet(packet, my_id, SINK_ID, STREAM,
+			 seq, message);
+            diag("after building\r\n");
+	    tcv_endp(packet);
+            diag("after tcv_end\r\n");
+	    ptr += 55;
+            diag("ptr += 55\r\n");
+	    delay(500, SEND);
+	    release;
 }
 
 fsm send_stop(int dest) {//refactor this is ugly
@@ -108,14 +131,13 @@ fsm send_stop(int dest) {//refactor this is ugly
         //if (is_lost_con_retries())
 		  //set_led(LED_RED_S);
         address packet = tcv_wnp(SEND, sfd, STOP_LEN);
-        build_packet(packet, my_id, dest, STOP, seq, payload);//payload wrong?
+        build_packet(packet, my_id, dest, STOP, seq, payload);
         tcv_endp(packet);
         //retries++;
         delay(2000, SEND);//should use define not magic number
         release;
 }
 
-//TODO: SEE DEPLOYED case in receive fsm
 fsm send_deploy {
 
 	//address packet;
@@ -146,7 +168,6 @@ fsm send_deploy {
 			
 		//temporary increment
 		seq = (seq + 1) % 256;
-		//diag("packet sent\r\n");
         delay(1000, SEND_DEPLOY_ACTIVE);
         release;
         } else {
@@ -167,26 +188,20 @@ fsm send_ack(int dest) {
     finish;
 }
 
-
-fsm stream_data(address packet) {
-
-	address hop_packet;
-	
-  initial state SEND:
+//wont work need to write the packet here the packet here
+fsm send_stream(address packet_copy) {
+    address packet;
+    
+    initial state SEND:
         if (acknowledged)
             finish;
         if (is_lost_con_retries())
-	    set_led(LED_RED_S);
-	
-	hop_packet = tcv_wnp(SEND, sfd,
-			     strlen(get_payload(packet)) + 1 + 8);
-	build_packet(hop_packet, get_source_id(packet),
-		     get_destination(packet), get_opcode(packet), seq++,
-		     get_payload(packet));
-	tcv_endp(hop_packet);
-       
-        retries++;
-        seq++;
+            set_led(LED_RED_S);
+        
+        packet = tcv_wnp(SEND, sfd, packet_length(packet_copy));
+        copy_packet(packet, packet_copy);//copy over
+        tcv_endp(packet);
+        //does not deal with acks
 }
 
 
@@ -236,7 +251,7 @@ fsm send_ping {
 	        if (!sink) {
 		        killall(receive);
 		        killall(send_pong);
-		        killall(stream_data);
+		        killall(send_stream);
 		        runfsm indicate_reset;
 		        finish;
 		}
@@ -272,7 +287,6 @@ fsm receive {
 	state RECV:
 		diag("before\n\r");
 	        packet = tcv_rnp(RECV, sfd);
-		diag("here\r\n");
 		diag("after\n\r");
 		proceed EVALUATE;
 
@@ -332,13 +346,25 @@ fsm receive {
 		        //runfsm send_deployed;
 			break;
 		case STREAM:
-			diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
-			// check sequence number for lost ack
-			// check if packet has reached it's destination
-			acknowledged = NO;
-			strncpy(get_payload(packet), payload, MAX_P);
-			runfsm stream_data(packet);
+
 			runfsm send_ack(get_hop_id(packet));
+			if (sink) {
+				diag("STREAM:%s\r\n", get_payload(packet));
+				break;//deal with it as sink
+			} else {
+				diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
+				acknowledged = NO;
+				diag("AA\r\n");
+				address hop_packet;
+				diag("BB\r\n");
+				//copy packet
+				diag("CC\r\n");
+				hop_packet = umalloc(packet_length(packet) / 2 * sizeof(word));
+				diag("DD\r\n");
+				copy_packet(hop_packet, packet);
+				diag("EE\r\n");
+				runfsm send_stream(hop_packet);
+			}
 			break;
 		case ACK://deal w/ type
 			acknowledged = YES;

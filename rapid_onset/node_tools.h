@@ -26,6 +26,8 @@ int get_hop_id(address);
 
 int get_opcode(address);
 
+int get_end(address);
+
 int get_length(address);
 
 int get_seqnum(address);
@@ -36,6 +38,8 @@ int get_rssi(address);
 
 void build_packet(address, int, int, int, int, byte *);
 
-int get_end(address);
+void copy_packet(address, address);
+
+int packet_length(address);
 
 #endif /*NODE_TOOLS_H*/
