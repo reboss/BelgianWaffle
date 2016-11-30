@@ -195,20 +195,18 @@ fsm stream_data(address packet_copy) {
             finish;
         if (is_lost_con_retries())
 	  set_led(LED_RED_S);
-        diag("before wnp in fsm stream_data\r\n");
         address packet = tcv_wnp(SEND, sfd, packet_length(packet_copy));
-        diag("before copy_packet in fsm stream_data\r\n");
-        copy_packet(packet, packet_copy);//copy over
-        diag("before endp in fsm stream_data\r\n");
+        copy_packet(packet, packet_copy);
+	ufree(packet_copy);
         tcv_endp(packet);
-        diag("after endp in fsm stream_data\r\n");
+        diag("End fsm stream_data\r\n");
         finish;
 }
 
 
 fsm indicate_reset {
 
-  int reset_time = 3 * MILLISECOND;
+  int reset_time = 300 * MILLISECOND;
 
 	initial state YELLOW:
 		set_led(LED_YELLOW);
@@ -219,6 +217,7 @@ fsm indicate_reset {
 		set_led(LED_GREEN);
 		delay(reset_time, RED);
 		release;
+		
 	state RED:
 		set_led(LED_RED);
 	        delay(reset_time, YELLOW);
@@ -262,7 +261,6 @@ fsm send_ping {
 	        finish;
 	}
 
-	diag("about to send ping\r\n");
         pong = NO;
         address packet = tcv_wnp(SEND, sfd, PING_LEN);
         build_packet(packet, my_id, child_id, PING, 0, NULL);
@@ -272,7 +270,7 @@ fsm send_ping {
 	     get_source_id(packet), get_hop_id(packet), get_opcode(packet), get_end(packet),
 	     get_length(packet), get_seqnum(packet), *get_payload(packet), get_rssi(packet));
 	tcv_endp(packet);
-	diag("ping sent\r\n");
+	diag("Ping sent\r\n");
 	delay(ping_delay, SEND);
 	release;
 
@@ -281,13 +279,12 @@ fsm send_ping {
 fsm receive {
 
 	address packet;
-	sint plength; // Unused
+	sint plength; // Unused?
 
 	initial state INIT_CC1100:
 		proceed RECV;
 
 	state RECV:
-		diag("before receive RECV packet recieve\n\r");
 	        packet = tcv_rnp(RECV, sfd);
 		diag("after receive RECV packet recieve\n\r");
 		proceed EVALUATE;
@@ -329,15 +326,8 @@ fsm receive {
 			} else {
 				diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
 				acknowledged = NO;
-				diag("AA\r\n");
-				address hop_packet;
-				diag("BB\r\n");
-				//copy packet
-				diag("CC\r\n");
-				hop_packet = umalloc(packet_length(packet) / 2 * sizeof(word));
-				diag("DD\r\n");
+				address hop_packet = umalloc(packet_length(packet) / 2 * sizeof(word));
 				copy_packet(hop_packet, packet);
-				diag("EE\r\n");
 				runfsm stream_data(hop_packet);
 			}
 			break;
@@ -367,8 +357,7 @@ fsm receive {
 		  diag("Unknown opcode\r\n");
 			break;
 		}
-        diag("YY\r\n");
 		tcv_endp(packet);
-        diag("ZZ\r\n");
+        diag("END fsm Recieve\r\n");
 		proceed RECV;
 }
