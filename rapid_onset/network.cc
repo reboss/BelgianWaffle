@@ -35,6 +35,9 @@ extern int ping_delay, test;
 extern int max_nodes;
 extern bool sink;
 
+const char *deploy_message =
+	"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam sagittis interdum magna nec aliquam. Aenean lacinia gravida erat vel ultricies. Donec sed mi ac ante consequat vestibulum in vitae elit. Donec a bibendum lectus, a varius ex. Cras accumsan sapien quis sem condimentum, at ornare leo scelerisque. Donec sit amet augue risus. Etiam dignissim facilisis dolor eu porttitor. Morbi neque ligula, sodales ac ullamcorper eu, posuere in ipsum. Suspendisse bibendum massa id ligula rhoncus feugiat. Integer posuere dolor magna, a elementum nibh egestas vel. Morbi sit amet orci facilisis, mollis dui id, vulputate neque. Pellentesque pharetra, risus a elementum sagittis, neque ipsum blandit leo, nec viverra augue sapien vel nisi. Morbi euismod consectetur magna, at tincidunt orci laoreet et. Etiam fringilla tincidunt commodo. Donec sollicitudin nunc lectus, non maximus ligula ornare at.";
+
 char payload[MAX_P];
 //Variable that tells the node if it can keep sending deploys
 int cont = 1;
@@ -173,34 +176,33 @@ fsm send_deploy {
 fsm send_ack(int dest) {
 
   // ack sequence will match packet it is responding to
-  int ack_sequence = 0;
 
   initial state SEND:
     diag("In send ack fsm\r\n");
     address packet = tcv_wnp(SEND, sfd, ACK_LEN);
-    build_packet(packet, my_id, dest, ACK, ack_sequence, NULL);
+    build_packet(packet, my_id, dest, ACK, 0, NULL);
     tcv_endp(packet);
     finish;
 }
 
-
-fsm stream_data(address packet) {
+//wont work need to write the packet here the packet here
+fsm stream_data(address packet_copy) {
 
   initial state SEND:
     diag("In stream data fsm\r\n");
         if (acknowledged)
+            diag("stream ack\r\n");
             finish;
         if (is_lost_con_retries())
-	    set_led(LED_RED_S);
-	address hop_packet = tcv_wnp(SEND, sfd,
-			     strlen(get_payload(packet)) + 1 + 8);
-
-	build_packet(hop_packet, get_source_id(packet),
-		     get_destination(packet), get_opcode(packet), seq++,
-		     get_payload(packet));
-	tcv_endp(hop_packet);
-        retries++;
-        seq++;
+	  set_led(LED_RED_S);
+        diag("before wnp in fsm stream_data\r\n");
+        address packet = tcv_wnp(SEND, sfd, packet_length(packet_copy));
+        diag("before copy_packet in fsm stream_data\r\n");
+        copy_packet(packet, packet_copy);//copy over
+        diag("before endp in fsm stream_data\r\n");
+        tcv_endp(packet);
+        diag("after endp in fsm stream_data\r\n");
+        finish;
 }
 
 
@@ -250,7 +252,7 @@ fsm send_ping {
 	        if (!sink) {
 		        killall(receive);
 		        killall(send_pong);
-		        killall(stream_data);
+		        killall(send_stream);
 		        runfsm indicate_reset;
 		        finish;
 		}
@@ -320,18 +322,31 @@ fsm receive {
 		        //runfsm send_deployed;
 			break;
 		case STREAM:
-			diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
-			// check sequence number for lost ack
-			// check if packet has reached it's destination
-			acknowledged = NO;
-			strncpy(get_payload(packet), payload, MAX_P);
-			runfsm stream_data(packet);
 			runfsm send_ack(get_hop_id(packet));
+			if (sink) {
+				diag("STREAM:%s\r\n", get_payload(packet));
+				break;//deal with it as sink
+			} else {
+				diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
+				acknowledged = NO;
+				diag("AA\r\n");
+				address hop_packet;
+				diag("BB\r\n");
+				//copy packet
+				diag("CC\r\n");
+				hop_packet = umalloc(packet_length(packet) / 2 * sizeof(word));
+				diag("DD\r\n");
+				copy_packet(hop_packet, packet);
+				diag("EE\r\n");
+				runfsm send_stream(hop_packet);
+			}
 			break;
 		case ACK://deal w/ type
 		  diag("Recieved ACK\r\n");
+		  //if (get_destination(packet) == my_id) {
 			acknowledged = YES;
 			retries = 0;
+			// }
 			break;
 		case COMMAND:
 		  diag("Recieved COMMAND\r\n");
@@ -352,6 +367,8 @@ fsm receive {
 		  diag("Unknown opcode\r\n");
 			break;
 		}
+        diag("YY\r\n");
 		tcv_endp(packet);
+        diag("ZZ\r\n");
 		proceed RECV;
 }

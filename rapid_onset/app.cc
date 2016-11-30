@@ -35,10 +35,10 @@ extern bool deployed;
 
 char message[30];
 int receiver = 0, test;
-word current_state;
-
 int max_nodes = 3;
 int ping_delay = DEFAULT_DELAY; //2 Seconds default
+int debug = 0; //Higher numbers for more verbosity
+word current_state; //Unused?
 
 //Global that indicates if the node is the sink or not
 bool sink = NO;
@@ -71,8 +71,9 @@ fsm root {
           "(P)acket Deployment\r\n"
           "(R)SSI Deployment\r\n"
           "(S)et Number of Nodes: (%d)\r\n"
+          "(D)ebug mode (%d)\r\n"
           "Selection: ",
-	  my_id, ping_delay, max_nodes);
+	  my_id, ping_delay, max_nodes, debug);
         proceed SELECTION;
 
     state SELECTION:
@@ -102,11 +103,14 @@ fsm root {
             diag("Beginning RSSI Deployment...\r\n");
 	    set_globals_sink_YES();
 	    test = RSSI_TEST;
+	    set_led(LED_GREEN);
             runfsm send_deploy(test);
             break;
         case 'S':
             proceed NODE_PROMPT;
             break;
+        case 'D':
+            proceed DEBUG_PROMPT;
         default:
             break;
         }
@@ -121,7 +125,7 @@ fsm root {
         proceed PING_CONFIRM;
 
     state PING_CONFIRM:
-        ser_outf(PING_CONFIRM, "New ping delay is %d\r\n\r\n", ping_delay);
+        ser_outf(PING_CONFIRM, "New ping delay: %dms\r\n\r\n", ping_delay);
         proceed DISPLAY;
 	
     state NODE_PROMPT:
@@ -134,5 +138,17 @@ fsm root {
 
     state NODE_CONFIRM:
         ser_outf(NODE_CONFIRM, "New max nodes is: %d\r\n\r\n", max_nodes);
+        proceed DISPLAY;
+	
+    state DEBUG_PROMPT:
+        ser_outf(DEBUG_PROMPT, "Enter new debug mode (higher for more info): ");
+        proceed DEBUG_SELECT;
+    
+    state DEBUG_SELECT:
+        ser_inf(DEBUG_SELECT, "%d", &debug);
+        proceed DEBUG_CONFIRM;
+    
+    state DEBUG_CONFIRM:
+        ser_outf(DEBUG_CONFIRM, "New debug mode: %d\r\n\r\n", debug);
         proceed DISPLAY;
 }

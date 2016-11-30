@@ -113,3 +113,24 @@ void build_packet(address packet, int source_id, int destination,
         packet[2] = (1 << 1) | (seqnum << 8);
     }
 }
+
+/* copys packet but inserts in new hop id*/
+void copy_packet(address new, address old) {
+    int length = strlen((byte *) (old + 3));
+    //copy old word 1 and set new hop id
+    new[1] = old[1] & (15 << 8) | (my_id << 8);
+    //word 2
+    new[2] = old[2];
+    //copy payload
+    payload_cpy((byte *) (new + 3), (byte *) (old + 3), length);
+}
+
+/* Returns packet length in bytes, also adds an extra byte if it would not make
+ *  an even word
+ */
+int packet_length(address packet) {
+    int len = get_length(packet);
+    len += len % 2 ? 1 : 0;
+    len += 6;
+    return len;
+}
