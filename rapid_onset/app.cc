@@ -80,7 +80,7 @@ fsm root {
         proceed PROMPT;
 
 	state PROMPT:
-        switch (selection) {
+	switch (toupper(selection)) {
         case 'C':
             proceed PING_PROMPT;
             break;
@@ -117,11 +117,11 @@ fsm root {
         proceed PING_SELECT;
 
     state PING_SELECT:
-        ser_inf(PROMPT, "%d", &ping_delay);
+        ser_inf(PING_SELECT, "%d", &ping_delay);
         proceed PING_CONFIRM;
 
     state PING_CONFIRM:
-        ser_outf(PING_CONFIRM, "New ping delay %d\r\n\r\n", ping_delay);
+        ser_outf(PING_CONFIRM, "New ping delay is %d\r\n\r\n", ping_delay);
         proceed DISPLAY;
 	
     state NODE_PROMPT:
@@ -129,10 +129,10 @@ fsm root {
 	proceed NODE_SELECT;
 
     state NODE_SELECT:
-        ser_inf(PROMPT, "%d", &max_nodes);
+        ser_inf(NODE_SELECT, "%d", &max_nodes);
         proceed NODE_CONFIRM;
 
     state NODE_CONFIRM:
-        ser_outf(NODE_CONFIRM, "New max nodes: %d\r\n\r\n", max_nodes);
+        ser_outf(NODE_CONFIRM, "New max nodes is: %d\r\n\r\n", max_nodes);
         proceed DISPLAY;
 }
