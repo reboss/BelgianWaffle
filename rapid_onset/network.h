@@ -21,11 +21,19 @@
 #define TRUE  1
 #define FALSE 0
 
+void deploy_node(address packet);
+
+void final_deploy(word __pi_st);
+
 void send_stop(word __pi_st);
 
 void send_ack(word __pi_st);
 
 void stream_data(word __pi_st);
+
+void indicate_reset(word __pi_st);
+
+void send_pong(word __pi_st);
 
 void receive(word __pi_st);
 
