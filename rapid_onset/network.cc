@@ -27,6 +27,7 @@
 
 #define MAX_P      56
 #define SINK_ID    0
+#define DELAY    2000
 
 #define PING_LEN   8
 #define STOP_LEN   8
