@@ -52,6 +52,19 @@ bool is_last_node(void) {
   return my_id == (max_nodes - 1);
 }
 
+void set_test_mode_data(address packet) {
+  set_ids(packet);
+  seq = 0;
+  deployed = YES;
+}
+
+void detrm_fsm_deploy_behvr(void) {
+  if (!is_last_node()) // OLD (For verify): my_id<max_nodes-1
+    runfsm send_deploy(test);
+  else
+    runfsm final_deploy;
+}
+
 /*
    sends the same packet continuously until an ack is received.
    After 10 retries, lost connection is assumed.
@@ -71,15 +84,12 @@ fsm final_deploy {
         finish;
 }
 
-fsm send_stop(int dest) {//refactor this is ugly
+fsm send_stop(int dest) {
 
     initial state SEND:
         diag("Entered send_stop FSM\r\n");
 	    if (acknowledged) {
-	      if (!is_last_node()) //OLD (For verify): my_id<max_nodes-1
-		runfsm send_deploy(test);
-	      else
-		runfsm final_deploy;
+	      detrm_fsm_deploy_behvr();
 	      deployed = YES;
 	      set_led(LED_GREEN);
 	      finish;
@@ -90,7 +100,7 @@ fsm send_stop(int dest) {//refactor this is ugly
         build_packet(packet, my_id, dest, STOP, seq, payload);
         tcv_endp(packet);
         //retries++;
-        delay(2000, SEND);//should use define not magic number
+        delay(2 * SECOND, SEND);
         release;
 }
 
@@ -100,9 +110,7 @@ void set_test_behaviour(address packet) {
       diag("RSSI: %x\r\n", get_rssi(packet));
       test = RSSI_TEST;
       if (rssi_setup_test(packet)) {
-        set_ids(packet);
-        seq = 0;
-        deployed = YES;
+	set_test_mode_data(packet);
         runfsm send_stop(my_id - 1);
       }
       break;
@@ -110,9 +118,7 @@ void set_test_behaviour(address packet) {
       diag("P TEST SEQ: %x\r\n", get_seqnum(packet));
       test = PACKET_TEST;
       if (packet_setup_test(packet) == 1) {
-        set_ids(packet);
-        seq = 0;
-        deployed = YES;
+	set_test_mode_data(packet);
         runfsm send_stop(my_id - 1);
       }
       break;
@@ -154,7 +160,7 @@ fsm send_deploy {
 
 		//temporary increment
 		seq = (seq + 1) % 256;
-        delay(1000, SEND_DEPLOY_ACTIVE);
+        delay(SECOND, SEND_DEPLOY_ACTIVE);
         release;
         } else {
 		  //runfsm send_stop(my_id - 1);
@@ -196,18 +202,20 @@ fsm stream_data(address packet) {
 
 fsm indicate_reset {
 
+  int reset_time = 3 * MILLISECOND;
+
 	initial state YELLOW:
 		set_led(LED_YELLOW);
-	        delay(300, GREEN);
+	        delay(reset_time, GREEN);
 		release;
 
 	state GREEN:
 		set_led(LED_GREEN);
-		delay(300, RED);
+		delay(reset_time, RED);
 		release;
 	state RED:
 		set_led(LED_RED);
-	        delay(300, YELLOW);
+	        delay(reset_time, YELLOW);
 		release;
 }
 
@@ -267,7 +275,7 @@ fsm send_ping {
 fsm receive {
 
 	address packet;
-	sint plength;
+	sint plength; // Unused
 
 	initial state INIT_CC1100:
 		proceed RECV;
@@ -298,7 +306,7 @@ fsm receive {
 			set_ids(packet);
 			cur_state = 0;
 			max_nodes = get_payload(packet)[1];//set max nodes
-            set_test_behaviour(packet);
+			set_test_behaviour(packet);
 			break;
 
 			/* The DEPLOYED opcode is intended for the sink, nodes need to pass
