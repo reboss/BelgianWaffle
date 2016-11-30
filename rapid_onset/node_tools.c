@@ -15,8 +15,6 @@
 #include "ser.h"
 #include "node_tools.h"
 
-#define MAX_P 56
-
 int my_id, parent_id, child_id, dest_id;
 
 /* set_ids() is used during deployment to set the nodes own id, its

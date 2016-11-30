@@ -14,7 +14,10 @@
 #define NODE_TOOLS_H
 
 #include "sysio.h"
+
 //+++ "node_tools.c"
+
+#define MAX_P 56
 
 void set_ids(address);
 

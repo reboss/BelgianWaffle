@@ -35,12 +35,10 @@ int receiver = 0, test;
 word current_state;
 
 int max_nodes = 3;
-int ping_delay = 2000;//2 Seconds default
-
+int ping_delay = 2000; //2 Seconds default
 
 //Global that indicates if the node is the sink or not
 int sink = 0;
-
 
 void init_cc1100() {
     phys_cc1100(0, 60);
@@ -85,8 +83,8 @@ fsm root {
             }
             diag("Beginning Packet Deployment...\r\n");
             sink = 1;
-            deployed = TRUE;
-			test = PACKET_TEST;
+            deployed = YES;
+	    test = PACKET_TEST;
             runfsm send_deploy(test);
             break;
         case 'R':
@@ -96,7 +94,7 @@ fsm root {
             }
             diag("Beginning RSSI Deployment...\r\n");
             sink = 1;
-            deployed = TRUE;
+            deployed = YES;
 	    test = RSSI_TEST;
 	    set_led(LED_GREEN);
             runfsm send_deploy(test);
@@ -132,6 +130,4 @@ fsm root {
     state NODE_CONFIRM:
         ser_outf(NODE_CONFIRM, "New max nodes: %d\r\n\r\n", max_nodes);
         proceed DISPLAY;
-
-
 }

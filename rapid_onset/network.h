@@ -15,14 +15,27 @@
 
 //+++ "network.cc"
 
-#define RSSI_TEST       1
-#define PACKET_TEST     2
+#define MAP_P 56
 
-#define TRUE            1
-#define FALSE           0
+#define RSSI_TEST   1
+#define PACKET_TEST 2
 
-#define TRUE       1
-#define FALSE      0
+#define PING_LEN     10
+#define STOP_LEN     10
+#define ACK_LEN      10
+#define DEPLOY_LEN   10
+#define DEPLOYED_LEN 18
+#define MAX_RETRY    10
+
+#define PING     1
+#define DEPLOY   2
+#define COMMAND  3
+#define STREAM   4
+#define ACK      5
+#define DEPLOYED 6
+#define STOP     7
+
+#define DONE diag("\r\nDone\r\n")
 
 void receive(word __pi_st);
 

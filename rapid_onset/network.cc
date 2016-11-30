@@ -25,26 +25,6 @@
 #include "network.h"
 #include "node_led.h"
 
-#define MAX_P      56
-
-//TODO: FIX LENGTHS
-#define PING_LEN   8
-#define STOP_LEN   8
-#define ACK_LEN    8
-#define DEPLOY_LEN 10
-#define DEPLOYED_LEN 17
-#define MAX_RETRY  10
-
-#define PING       1
-#define DEPLOY     2
-#define COMMAND    3
-#define STREAM     4
-#define ACK        5
-#define DEPLOYED   6
-#define STOP       7
-
-#define DONE diag("\r\ndone\r\n")
-
 volatile int sfd, retries = 0;
 volatile int seq = 0;
 volatile bool acknowledged, pong;
@@ -57,7 +37,7 @@ extern int max_nodes;
 char payload[MAX_P];
 //Variable that tells the node if it can keep sending deploys
 int cont = 1;
-bool deployed = FALSE;
+bool deployed = NO;
 
 bool is_lost_con_retries(void) {
     return retries == MAX_RETRY;
@@ -223,7 +203,7 @@ fsm receive {
 			  if (rssi_setup_test(packet)) {
                     set_ids(packet);//set ids
 			        seq = 0;
-                    deployed = TRUE;
+                    deployed = YES;
 					runfsm send_stop(my_id - 1);
 			  }
 			break;
@@ -234,7 +214,7 @@ fsm receive {
 			  if (packet_setup_test(packet) == 1) {
                     set_ids(packet);//set id
 			        seq = 0;
-                    deployed = TRUE;
+                    deployed = YES;
 					runfsm send_stop(my_id - 1);
 			  }
 			break;
