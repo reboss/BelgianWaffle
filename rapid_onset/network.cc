@@ -88,6 +88,7 @@ fsm final_deploy {
         packet = tcv_wnp(INIT, sfd, 8 + 20);
 	    build_packet(packet, my_id, SINK_ID, STREAM, seq,
                      "TEAM FLABBERGASTED\0");
+        diag("sending starting stream\r\n");
         tcv_endp(packet);
         finish;
 }
@@ -108,14 +109,13 @@ fsm send_stop(int dest) {//refactor this is ugly
         //if (is_lost_con_retries())
 		  //set_led(LED_RED_S);
         address packet = tcv_wnp(SEND, sfd, STOP_LEN);
-        build_packet(packet, my_id, dest, STOP, seq, payload);//payload wrong?
+        build_packet(packet, my_id, dest, STOP, seq, payload);
         tcv_endp(packet);
         //retries++;
         delay(2000, SEND);//should use define not magic number
         release;
 }
 
-//TODO: SEE DEPLOYED case in receive fsm
 fsm send_deploy {
 
 	//address packet;
@@ -146,7 +146,6 @@ fsm send_deploy {
 			
 		//temporary increment
 		seq = (seq + 1) % 256;
-		//diag("packet sent\r\n");
         delay(1000, SEND_DEPLOY_ACTIVE);
         release;
         } else {
@@ -167,22 +166,20 @@ fsm send_ack(int dest) {
     finish;
 }
 
-
-fsm stream_data {
-  
-  initial state SEND:
+//wont work need to write the packet here the packet here
+fsm send_stream(address packet_copy) {
+    address packet;
+    
+    initial state SEND:
         if (acknowledged)
             finish;
         if (is_lost_con_retries())
-	    set_led(LED_RED_S);
-        address packet;
-        sint plen = strlen(payload);
-        packet = tcv_wnp(SEND, sfd, plen);
-        //should be forwarding not rebuilding
-        build_packet(packet, my_id, child_id, STREAM, seq, payload);
+            set_led(LED_RED_S);
+        
+        packet = tcv_wnp(SEND, sfd, packet_length(packet_copy));
+        copy_packet(packet, packet_copy);//copy over
         tcv_endp(packet);
-        retries++;
-        seq++;
+        //does not deal with acks
 }
 
 
@@ -232,7 +229,7 @@ fsm send_ping {
 	        if (!sink) {
 		        killall(receive);
 		        killall(send_pong);
-		        killall(stream_data);
+		        killall(send_stream);
 		        runfsm indicate_reset;
 		        finish;
 		}
@@ -268,7 +265,6 @@ fsm receive {
 	state RECV:
 		diag("before\n\r");
 		packet = tcv_rnp(RECV, sfd);
-	        plength = tcv_left(packet);
 		diag("after\n\r");
 		proceed EVALUATE;
 
@@ -328,22 +324,21 @@ fsm receive {
 		        //runfsm send_deployed;
 			break;
 		case STREAM:
-			diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
-			// check sequence number for lost ack
-			// check if packet has reached it's destination
-			acknowledged = NO;
-			//runfsm stream_data;
-			address hop_packet;
-			hop_packet = tcv_wnp(EVALUATE, sfd,
-					     strlen(get_payload(packet)) + 1 + 8);
-			build_packet(hop_packet, get_source_id(packet),
-				     get_destination(packet), get_opcode(packet), seq++,
-				     get_payload(packet));
-			tcv_endp(hop_packet);
-			//packet = tcv_wnp(INIT, sfd, 8 + 20);
-			//build_packet(packet, my_id, SINK_ID, STREAM, seq,
-			//"TEAM FLABBERGASTED\0");
+
 			runfsm send_ack(get_hop_id(packet));
+			if (sink) {
+				diag("STREAM:%s\r\n", get_payload(packet));
+				break;//deal with it as sink
+			} else {
+				diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
+				acknowledged = NO;
+				address hop_packet;
+				//copy packet
+				hop_packet = malloc((packet_length / 2) * sizeof(word), 0);
+				
+				copy_packet(hop_packet, packet);
+				runfsm send_stream(hop_packet);
+			}
 			break;
 		case ACK://deal w/ type
 			acknowledged = YES;
