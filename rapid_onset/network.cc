@@ -61,6 +61,9 @@ extern int ping_delay, test;
 extern int max_nodes;
 extern bool sink;
 
+const char *deploy_message =
+	"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam sagittis interdum magna nec aliquam. Aenean lacinia gravida erat vel ultricies. Donec sed mi ac ante consequat vestibulum in vitae elit. Donec a bibendum lectus, a varius ex. Cras accumsan sapien quis sem condimentum, at ornare leo scelerisque. Donec sit amet augue risus. Etiam dignissim facilisis dolor eu porttitor. Morbi neque ligula, sodales ac ullamcorper eu, posuere in ipsum. Suspendisse bibendum massa id ligula rhoncus feugiat. Integer posuere dolor magna, a elementum nibh egestas vel. Morbi sit amet orci facilisis, mollis dui id, vulputate neque. Pellentesque pharetra, risus a elementum sagittis, neque ipsum blandit leo, nec viverra augue sapien vel nisi. Morbi euismod consectetur magna, at tincidunt orci laoreet et. Etiam fringilla tincidunt commodo. Donec sollicitudin nunc lectus, non maximus ligula ornare at.";
+
 char payload[MAX_P];
 //Variable that tells the node if it can keep sending deploys
 int cont = 1;
@@ -83,14 +86,24 @@ bool is_lost_con_ping(int ping_retries) {
 //sends the test messages to sink
 fsm final_deploy {
     address packet;
+    char *ptr;
     
     initial state INIT:
-        packet = tcv_wnp(INIT, sfd, 8 + 20);
-	    build_packet(packet, my_id, SINK_ID, STREAM, seq,
-                     "TEAM FLABBERGASTED\0");
-        diag("sending starting stream\r\n");
-        tcv_endp(packet);
-        finish;
+	    ptr = (char *) deploy_message;
+	    diag("sending starting stream\r\n");
+
+    state SEND:
+	    //if (acknowledged)
+		    // ptr += 55;
+	    char message[55];
+	    strncpy(message, ptr, 55); 
+	    packet = tcv_wnp(SEND, sfd, MAX_P);
+            build_packet(packet, my_id, SINK_ID, STREAM,
+			 seq, message);
+	    tcv_endp(packet);
+	    ptr += 55;
+	    delay(500, SEND);
+	    release;
 }
 
 fsm send_stop(int dest) {//refactor this is ugly
@@ -332,7 +345,7 @@ fsm receive {
 			} else {
 				diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
 				acknowledged = NO;
-				diag("AA\r\d");
+				diag("AA\r\n");
 				address hop_packet;
 				diag("BB\r\n");
 				//copy packet
