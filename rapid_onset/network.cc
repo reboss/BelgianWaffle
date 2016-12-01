@@ -126,7 +126,7 @@ void set_test_behaviour(address packet) {
 
     switch(get_payload(packet)[0]) {
     case RSSI_TEST:
-        diag("RSSI: %x\r\n", get_rssi(packet));
+        diag("RSSI: %x\r\n", get_rssi(packet));//curently the seq number ???
         if (backtrack){//need to fix
             if (rssi_setup_test(packet)){
                 set_test_mode_data(packet);
