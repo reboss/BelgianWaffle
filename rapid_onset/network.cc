@@ -127,14 +127,31 @@ void set_test_mode_data(address packet) {
 fsm final_deploy {
 
     address packet;
-
+    char msg[56];
+    int i, len;
+    
     initial state INIT:
-      diag("In final_deploy fsm\r\n");
-        packet = tcv_wnp(INIT, sfd, 8 + 20);
-        build_packet(packet, my_id, SINK_ID, STREAM, seq,
-		 "TEAM FLABBERGASTED");
+        i = 1;
+        diag("In final_deploy fsm\r\n");
+        proceed SEND;
+    
+    state SEND:
+        form(msg, "TEAM FLABERGASTED:%d", i);
+        len = strlen(msg);
+        len += len % 2 ? 1 : 2;//add room for null term
+        diag("msg:%s\r\nlen:%d\r\n", msg, len);
+        packet = tcv_wnp(SEND, sfd, 8 + len);
+        diag("wnp\r\n");
+        build_packet(packet, my_id, SINK_ID, STREAM, seq++, msg);
+        //packet = tcv_wnp(SEND, sfd, 8 + 20);
+        //build_packet(packet, my_id, SINK_ID, STREAM, seq,
+		 //"TEAM FLABBERGASTED");
+        diag("build packet\r\n");
         tcv_endp(packet);
-        finish;
+        diag("endp\r\n");
+        i++;
+        delay(SECOND, SEND);
+        release;
 }
 
 void detrm_fsm_deploy_behvr(void) {
