@@ -82,11 +82,15 @@ byte * get_payload(address packet) {
    int
 */
 int get_rssi(address packet) {//TODO fix its not getting rssi
-    int length = get_length(packet);
+    /*int length = get_length(packet);
     if (length % 2 == 1)//modify length
         length += 1;
     length /= 2;//bytes to words
-    length + 3;//add 3 for the first three words
+    length += 3;//add 3 for the first three words*/
+    int length = packet_length(packet);
+    length /= 2;
+    length -= 1;
+    diag("get_rssi length: %d\r\n", length);
     return (packet[length] >> 8) & 255;
 }
 
@@ -127,7 +131,7 @@ void copy_packet(address new, address old) {
 }
 
 /* Returns packet length in bytes, also adds an extra byte if it would not make
- *  an even word
+ *  an even word, and does not account for rssi
  */
 int packet_length(address packet) {
     int len = get_length(packet);
