@@ -162,27 +162,34 @@ void detrm_fsm_deploy_behvr(void) {
 }
 
 void set_test_behaviour(address packet) {
+    static bool backtrack = NO;
+
     switch(get_payload(packet)[0]) {
     case RSSI_TEST:
-      diag("RSSI: %x\r\n", get_rssi(packet));
-      test = RSSI_TEST;
-      if (rssi_setup_test(packet)) {
-	set_test_mode_data(packet);
-        runfsm send_stop(my_id - 1);
-      }
-      break;
+        diag("RSSI: %x\r\n", get_rssi(packet));
+        if (backtrack){//need to fix
+            if (rssi_test_(pcaket)){
+                set_test_mode_data(packet);
+                runfsm send_stop(my_id - 1);
+            }
+        } else {
+            test = RSSI_TEST;
+            if (rssi_setup_test(packet))
+                backtrack = Yes;
+        }
+        break;
     case PACKET_TEST:
-      diag("PACKET TEST SEQ: %x\r\n", get_seqnum(packet));
-      test = PACKET_TEST;
-      if (packet_setup_test(packet) == 1) {
-	set_test_mode_data(packet);
-        runfsm send_stop(my_id - 1);
-      }
-      break;
+        diag("PACKET TEST SEQ: %x\r\n", get_seqnum(packet));
+        test = PACKET_TEST;
+        if (packet_setup_test(packet) == 1) {
+	        set_test_mode_data(packet);
+            runfsm send_stop(my_id - 1);
+        }
+        break;
     default:
-      set_led(LED_RED_S);
-      diag("Unrecognized deployment type");
-      break;
+        set_led(LED_RED_S);
+        diag("Unrecognized deployment type");
+        break;
     }
 }
 
