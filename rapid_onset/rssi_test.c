@@ -13,7 +13,7 @@
 #include "sysio.h"
 #include "node_led.h"
 
-#define RSSI_THRESHOLD  0xF0
+#define RSSI_THRESHOLD  0x80//currently 0x80 is stable starts droping at 0x70
 #define RSSI_LOW_CUTOFF 10
 
 int num_cutoff(word rssi) {

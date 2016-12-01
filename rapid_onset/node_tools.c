@@ -81,12 +81,13 @@ byte * get_payload(address packet) {
 /* get_rssi() takes in a packet and returns the rssi value as an
    int
 */
-int get_rssi(address packet) {
-        int length = (3 + (get_length(packet) / 2));
-        if (get_length(packet) % 2 == 1) {
-          length += 1;
-        }
-        return (packet[length] >> 8) & 255;
+int get_rssi(address packet) {//TODO fix its not getting rssi
+    int length = get_length(packet);
+    if (length % 2 == 1)//modify length
+        length += 1;
+    length /= 2;//bytes to words
+    length + 3;//add 3 for the first three words
+    return (packet[length] >> 8) & 255;
 }
 
 void payload_cpy(byte* packet, char* payload, int len) {
