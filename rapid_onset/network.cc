@@ -80,7 +80,7 @@ void deploy_node(address packet){
         diag("RSSI: %x\r\n", get_rssi(packet));
         test = RSSI_TEST;
         if (rssi_setup_test(packet)) {
-            set_ids(packet);//set ids                                                
+            set_ids(packet);//set ids
             seq = 0;
             deployed = YES;
             runfsm send_stop(my_id - 1);
@@ -91,7 +91,7 @@ void deploy_node(address packet){
         diag("P TEST SEQ: %x\r\n", get_seqnum(packet));
         test = PACKET_TEST;
         if (packet_setup_test(packet) == 1) {
-            set_ids(packet);//set id                                                 
+            set_ids(packet);//set id
             seq = 0;
             deployed = YES;
             runfsm send_stop(my_id - 1);
@@ -129,12 +129,12 @@ fsm final_deploy {
     address packet;
     char msg[56];
     int i, len;
-    
+
     initial state INIT:
         i = 1;
         diag("In final_deploy fsm\r\n");
         proceed SEND;
-    
+
     state SEND:
         form(msg, "TEAM FLABERGASTED:%d", i);
         len = strlen(msg);
@@ -274,7 +274,7 @@ fsm indicate_reset {
 		set_led(LED_GREEN);
 		delay(reset_time, RED);
 		release;
-		
+
 	state RED:
 		set_led(LED_RED);
 	        delay(reset_time, YELLOW);
