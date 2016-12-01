@@ -168,14 +168,14 @@ void set_test_behaviour(address packet) {
     case RSSI_TEST:
         diag("RSSI: %x\r\n", get_rssi(packet));
         if (backtrack){//need to fix
-            if (rssi_test_(pcaket)){
+            if (rssi_test_(packet)){
                 set_test_mode_data(packet);
                 runfsm send_stop(my_id - 1);
             }
         } else {
             test = RSSI_TEST;
-            if (rssi_setup_test(packet))
-                backtrack = Yes;
+            if (rssi_setup_test(packet))//need to set rssi for backtracking
+                backtrack = YES;
         }
         break;
     case PACKET_TEST:
