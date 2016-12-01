@@ -60,7 +60,6 @@ void set_globals_sink_YES(void) {
 fsm root {
 
     char selection = '\0';
-
     initial state INIT:
         init_cc1100();
         leds_all(0);

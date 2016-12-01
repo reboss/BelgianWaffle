@@ -29,22 +29,22 @@ int cur_state = 0;
 //enum states led_state = YELLOW_FLASH;
 
 void set_led(int cur_state) {
-        leds_all(LED_OFF);
-	fastblink(NO);
-        switch(cur_state) {
-        case 0:
-	        leds(LED_YELLOW,LED_BLINK);
-                break;
-        case 1:
-	        leds(LED_GREEN,LED_ON);
-                break;
-        case 2:
-	        leds(LED_RED,LED_BLINK);
-                break;
-        case 3:
-	        leds(LED_RED,LED_ON);
-                break;
-	default:
-	  break;
-        }
+    leds_all(LED_OFF);
+    fastblink(NO);
+    switch(cur_state) {
+    case 0:
+        leds(LED_YELLOW,LED_BLINK);
+        break;
+    case 1:
+        leds(LED_GREEN,LED_ON);
+        break;
+    case 2:
+        leds(LED_RED,LED_BLINK);
+        break;
+    case 3:
+        leds(LED_RED,LED_ON);
+        break;
+    default:
+        break;
+    }
 }

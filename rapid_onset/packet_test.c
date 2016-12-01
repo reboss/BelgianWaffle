@@ -28,7 +28,6 @@ int packet_setup_test(address packet) {
     static word prev_lost = 0;//last 15 packets and a setup bit
     int i;
     int cur_seq = get_seqnum(packet);
-    
     if (prev_lost == 0){
         last_seq = cur_seq;
         prev_lost = 1 << 15;
@@ -41,8 +40,7 @@ int packet_setup_test(address packet) {
     //deal with current since its valid
     prev_lost <<= 1;
     prev_lost &= ~1;
-	prev_lost |= 1 << 15;
-
+    prev_lost |= 1 << 15;
     if (num_lost(prev_lost) >= PACKET_LOSS_THRESHOLD)
         return 1;
     return 0;
