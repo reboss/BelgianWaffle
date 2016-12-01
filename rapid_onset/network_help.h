@@ -13,6 +13,9 @@
 #ifndef NETWORK_HELP_H
 #define NETWORK_HELP_H
 
+#define HIGH_POWER   1
+#define LOW_POWER    0
+
 //+++ "network_help.c"
 
 void set_power(int sfd, int power);
