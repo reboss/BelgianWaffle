@@ -88,7 +88,9 @@ fsm final_deploy {
 	int i, len;
 	
 	initial state INIT:
-	  i = 1;
+        if (test == PACKET_TEST)
+            set_power(sfd, HIGH_POWER);//set high power
+	i = 1;
 	diag("In final_deploy fsm\r\n");
 	proceed SEND;
 	
@@ -349,7 +351,7 @@ fsm receive {
 		break;
 	  
 	  //blink red if not set up
-	  set_led(LED_RED);
+	  set_led(LED_YELLOW);
 	  
 	  set_ids(packet);
 	  cur_state = 0;
@@ -386,6 +388,8 @@ fsm receive {
 	    diag("Recieved COMMAND\r\n");
 	    break;
 	case STOP:
+            if (test == PACKET_TEST)
+                set_power(sfd, HIGH_POWER);//set high power
 	    if (get_destination(packet) == my_id) {
 		    set_led(LED_GREEN_S);
 	        runfsm send_ack(get_source_id(packet));

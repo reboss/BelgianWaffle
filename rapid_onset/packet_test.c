@@ -24,7 +24,7 @@ int num_lost(word losses) {
 }
 
 int packet_setup_test(address packet) {
-    static int last_seq;//deal with initial setup
+    static int last_seq;//seq of last recieved packet
     static word prev_lost = 0;//last 15 packets and a setup bit
     int i;
     int cur_seq = get_seqnum(packet);
@@ -38,6 +38,7 @@ int packet_setup_test(address packet) {
         prev_lost = (prev_lost << 1) | 1;//add lost packet
 		diag("packet lost");
     }
+    last_seq = cur_seq;
     //deal with current since its valid
     prev_lost <<= 1;
     prev_lost &= ~1;
