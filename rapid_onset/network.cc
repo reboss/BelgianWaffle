@@ -230,7 +230,6 @@ fsm send_ack(int dest) {
 fsm stream_data(address packet_copy) {
 
     initial state SEND:
-        diag("In stream data fsm\r\n");
         if (acknowledged)
             diag("stream ack\r\n");
             finish;
