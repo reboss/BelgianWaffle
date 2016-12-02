@@ -45,11 +45,11 @@ int rssi_setup_test(address packet) {
             backtrack = YES;
         }
         set_led(LED_RED);
-        //if (backtrack) return 0;//does not deploy until above threshold
+        if (backtrack) return 0;//does not deploy until above threshold
         return 1;
     } else {
         set_led(LED_YELLOW);
-        //if (backtrack) return 1;//depoys below threshold on backtrack
+        if (backtrack) return 1;//depoys below threshold on backtrack
         return 0;
     }
 }
