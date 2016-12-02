@@ -15,8 +15,6 @@
 #include "ser.h"
 #include "node_tools.h"
 
-#define MAX_P 56
-
 int my_id = 0, parent_id, child_id = 1, dest_id;
 
 /* set_ids() is used during deployment to set the nodes own id, its
@@ -83,12 +81,17 @@ byte * get_payload(address packet) {
 /* get_rssi() takes in a packet and returns the rssi value as an
    int
 */
-int get_rssi(address packet) {
-        int length = (3 + (get_length(packet) / 2));
-        if (get_length(packet) % 2 == 1) {
-          length += 1;
-        }
-        return (packet[length] >> 8) & 255;
+int get_rssi(address packet) {//TODO fix its not getting rssi
+    /*int length = get_length(packet);
+    if (length % 2 == 1)//modify length
+        length += 1;
+    length /= 2;//bytes to words
+    length += 3;//add 3 for the first three words*/
+    int length = packet_length(packet);
+    length /= 2;
+    length -= 1;
+    diag("get_rssi length: %d\r\n", length);
+    return (packet[length] >> 8) & 255;
 }
 
 void payload_cpy(byte* packet, char* payload, int len) {
@@ -128,7 +131,7 @@ void copy_packet(address new, address old) {
 }
 
 /* Returns packet length in bytes, also adds an extra byte if it would not make
- *  an even word
+ *  an even word, and does not account for rssi
  */
 int packet_length(address packet) {
     int len = get_length(packet);

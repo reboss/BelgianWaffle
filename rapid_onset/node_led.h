@@ -13,12 +13,17 @@
 #ifndef NODE_LED_H
 #define NODE_LED_H
 
+//+++ "node_led.c"
+
 #define LED_YELLOW 0
 #define LED_GREEN  1
 #define LED_RED    2
 #define LED_RED_S  3
 
-//+++ "node_led.c"
+#define LED_OFF   0
+#define LED_ON    1
+#define LED_BLINK 2
+
 void set_led(int);
 
 #endif /* End NODE_LED_H */

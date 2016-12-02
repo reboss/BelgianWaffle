@@ -21,14 +21,6 @@
 #include "phys_cc1100.h"
 #include "node_led.h"
 
-#define LED_YELLOW 0
-#define LED_GREEN  1
-#define LED_RED    2
-
-#define LED_OFF    0
-#define LED_ON     1
-#define LED_BLINK  2
-
 bool led_is_on = NO;
 int cur_state = 0;
 

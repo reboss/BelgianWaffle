@@ -13,6 +13,8 @@
 #ifndef NETWORK_HELP_H
 #define NETWORK_HELP_H
 
+//+++ "network_help.c"
+
 void set_power(int sfd, int power);
 
 #endif /*NETWORK_HELP_H*/

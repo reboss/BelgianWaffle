@@ -20,7 +20,7 @@
 #define CC1100_BUF_SZ	60
 #define UART_BUF_SZ	64
 
-#define POWER 7
+#define POWER 1
 
 /* session descriptor for the single VNETI session */
 int sfd;
@@ -172,7 +172,7 @@ fsm receiver {
   state RCV_DISPLAY_MESSAGE:
     byte first = packet[length + 2] & 255;
     byte last = (packet[length + 2] >> 8) & 255;
-    ser_outf(RCV_BROADCAST, "%s from node #%d: %s\r\nFIRST %x\r\nLAST %x\r\n",
+    ser_outf(RCV_BROADCAST, "%s from node #%d: %s\r\nLQI: %x\r\nRSSI: %x\r\n",
 	     type, sender, data, first, last);
     tcv_endp(packet);
     proceed(RCV_WAIT);
