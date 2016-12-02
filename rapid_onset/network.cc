@@ -123,11 +123,8 @@ fsm send_stop(int dest) {
 	if (acknowledged) {
         detrm_fsm_deploy_behvr();
 		deployed = YES;
-	    set_led(LED_GREEN);
-		//set power to high when deployed
-		set_power(sfd, HIGH_POWER);
-		
-	    finish;
+		finish;
+	    
 	}
 	address packet = tcv_wnp(SEND, sfd, STOP_LEN);
 	build_packet(packet, my_id, dest, STOP, seq, payload);
@@ -198,6 +195,7 @@ fsm send_deploy {
 	    address packet;
 	    packet = tcv_wnp(SEND_DEPLOY_ACTIVE, sfd, DEPLOY_LEN);
 	    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, pl);
+		
 	    diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n"
 			 "Hop_ID: %x\r\nOpCode: %x\r\nEnd: %x\r\nLength: %x\r\n"
 			 "SeqNum: %x\r\nPayload: %x\r\nMaxnodes: %x\r\nRSSI: %x\r\n",
@@ -206,6 +204,9 @@ fsm send_deploy {
              get_seqnum(packet), *get_payload(packet), get_payload(packet)[1],
              get_rssi(packet)); 
 		 diag("deploy sent\r\n");
+		 //green when sending deploys
+		 set_led(LED_GREEN);
+		 
 	     tcv_endp(packet);
 	     seq = (seq + 1) % 256;
 	     delay(SECOND, SEND_DEPLOY_ACTIVE);
@@ -281,39 +282,42 @@ fsm send_ping {
     int ping_retries = 0;
     bool pong_atf = NO;
     initial state SEND:
-        if (pong)
-            ping_retries = 0;
-        else
-            ping_retries++;
-        if (is_lost_con_ping(ping_retries)) {
-	    if (!sink) {
+	  if (pong)
+		ping_retries = 0;
+	  else
+		ping_retries++;
+	  if (is_lost_con_ping(ping_retries)) {
+		if (!sink) {
 		  killall(receive);
+		  killall(send_deploy);
 		  killall(send_pong);
+		  killall(send_stop);
 		  killall(stream_data);
 		  runfsm indicate_reset;
 		  finish;
 		}
 		diag("Network shutdown\r\n");
-		cont = 1;
-		if (sink)
+		if (sink) {
+		  cont = 1;
 		  runfsm send_deploy;
+		}
 		finish;
-	}
-        pong = NO;
-        address packet = tcv_wnp(SEND, sfd, PING_LEN);
-        build_packet(packet, my_id, child_id, PING, 0, NULL);
-		/*diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n" \
-	     "Hop_ID: %x\r\nOpCode: %x\r\nEnd: %x\r\nLength: %x\r\n"  \
-	     "SeqNum: %x\r\nPayload: %x\r\nRSSI: %x\r\n",             \
-	     get_destination(packet), get_source_id(packet),          \
-             get_hop_id(packet), get_opcode(packet), get_end(packet), \
-	     get_length(packet), get_seqnum(packet),                  \ 
-		 *get_payload(packet), get_rssi(packet)); */
-	tcv_endp(packet);
-	diag("Ping sent\r\n");
-	delay(ping_delay, SEND);
-	release;
-
+	  }
+	  pong = NO;
+	  address packet = tcv_wnp(SEND, sfd, PING_LEN);
+	  build_packet(packet, my_id, child_id, PING, 0, NULL);
+	  /*diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n"	\
+		"Hop_ID: %x\r\nOpCode: %x\r\nEnd: %x\r\nLength: %x\r\n"			\
+		"SeqNum: %x\r\nPayload: %x\r\nRSSI: %x\r\n",					\
+		get_destination(packet), get_source_id(packet),					\
+		get_hop_id(packet), get_opcode(packet), get_end(packet),		\
+		get_length(packet), get_seqnum(packet),                  \ 
+		*get_payload(packet), get_rssi(packet)); */
+	  tcv_endp(packet);
+	  diag("Ping sent\r\n");
+	  delay(ping_delay, SEND);
+	  release;
+	  
 }
 
 fsm receive {
@@ -328,27 +332,31 @@ fsm receive {
         proceed EVALUATE;
 
     state EVALUATE:
-	switch (get_opcode(packet)) {
-        case PING:
-	    if (get_destination(packet) == my_id) {
-	        if (get_source_id(packet) == parent_id) {
-		    diag("sending pong");
-		        runfsm send_pong;
-		 } else {
-		    diag("received pong");
-		    pong = YES;
-		 }
-	     }
-	     break;
-        case DEPLOY://turn into funciton to long/complicated
-	    if (deployed)
-		  break;
-	    set_ids(packet);
-	    cur_state = 0;
-	    max_nodes = get_payload(packet)[1];//set max nodes
-	    set_test_behaviour(packet);
-	    break;
-
+    switch (get_opcode(packet)) {
+	case PING:
+	  if (get_destination(packet) == my_id) {
+		if (get_source_id(packet) == parent_id) {
+		  diag("sending pong");
+		  runfsm send_pong;
+		} else {
+		  diag("received pong");
+		  pong = YES;
+		}
+	  }
+	  break;
+	case DEPLOY://turn into funciton to long/complicated	  
+	  if (deployed)
+		break;
+	  
+	  //blink red if not set up
+	  set_led(LED_RED);
+	  
+	  set_ids(packet);
+	  cur_state = 0;
+	  max_nodes = get_payload(packet)[1];//set max nodes
+	  set_test_behaviour(packet);
+	  break;
+		  
         /* IS DEPLOYED OPCODE BEING USED? */
 	case DEPLOYED:
 	    diag("Recieved DEPLOYED");
@@ -379,6 +387,7 @@ fsm receive {
 	    break;
 	case STOP:
 	    if (get_destination(packet) == my_id) {
+		    set_led(LED_GREEN_S);
 	        runfsm send_ack(get_source_id(packet));
 		if (cont) {
 		    diag("cont is equal to 1 and will be set to 0\r\n");
