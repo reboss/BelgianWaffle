@@ -125,7 +125,8 @@ fsm send_stop(int dest) {
 		deployed = YES;
 	    set_led(LED_GREEN);
 		//set power to high when deployed
-		set_power(sfd, HIGH_POWER); 
+		set_power(sfd, HIGH_POWER);
+		
 	    finish;
 	}
 	address packet = tcv_wnp(SEND, sfd, STOP_LEN);
@@ -197,15 +198,14 @@ fsm send_deploy {
 	    address packet;
 	    packet = tcv_wnp(SEND_DEPLOY_ACTIVE, sfd, DEPLOY_LEN);
 	    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, pl);
-	    /*diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n"
+	    diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n"
 			 "Hop_ID: %x\r\nOpCode: %x\r\nEnd: %x\r\nLength: %x\r\n"
 			 "SeqNum: %x\r\nPayload: %x\r\nMaxnodes: %x\r\nRSSI: %x\r\n",
              get_destination(packet), get_source_id(packet), get_hop_id(packet),
              get_opcode(packet), get_end(packet), get_length(packet),
              get_seqnum(packet), *get_payload(packet), get_payload(packet)[1],
-             get_rssi(packet)); */
+             get_rssi(packet)); 
 		 diag("deploy sent\r\n");
-		 set_led(0);
 	     tcv_endp(packet);
 	     seq = (seq + 1) % 256;
 	     delay(SECOND, SEND_DEPLOY_ACTIVE);
@@ -295,7 +295,8 @@ fsm send_ping {
 		}
 		diag("Network shutdown\r\n");
 		cont = 1;
-		runfsm send_deploy;
+		if (sink)
+		  runfsm send_deploy;
 		finish;
 	}
         pong = NO;

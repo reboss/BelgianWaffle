@@ -18,6 +18,15 @@
 
 //+++ "network.cc"
 
+/**
+ * is_lost_con_retries
+ * 
+ * Checks if the number of ACK retries has reached the maximum and
+ * returns a boolean value.
+ *
+ * Returns:
+ * YES if the number of tries has reached the maximum.
+ */
 bool is_lost_con_retries(void);
 
 bool is_lost_con_ping(int ping_retries);
@@ -28,7 +37,7 @@ void final_deploy(word __pi_st);
 
 void detrm_fsm_deploy_behvr(void);
 
-bool send_stop(word __pi_st, int dest);
+void send_stop(word __pi_st);
 
 void set_test_mode_data(address packet);
 
@@ -36,9 +45,9 @@ void set_test_behaviour(address packet);
 
 void send_deploy(word __pi_st);
 
-void send_ack(word __pi_st, int dest);
+void send_ack(word __pi_st);
 
-void stream_data(word __pi_st, address packet_copy);
+void stream_data(word __pi_st);
 
 void indicate_reset(word __pi_st);
 
