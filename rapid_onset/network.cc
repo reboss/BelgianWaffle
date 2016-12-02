@@ -76,22 +76,32 @@ bool is_lost_con_ping(int ping_retries) {
     return ping_retries == MAX_RETRY;
 }
 
+void detrm_fsm_deploy_behvr(void) {
+  if (!is_last_node()){ // OLD (For verify): my_id<max_nodes-1                                     
+	if(test == PACKET_TEST){
+	  set_power(sfd, LOW_POWER);
+	}
+    runfsm send_deploy(test);
+  } else
+	runfsm final_deploy;
+}
+
 fsm send_stop(int dest) {
     initial state SEND:
-        diag("Entered send_stop FSM\r\n");
+	diag("Entered send_stop FSM\r\n");
 	if (acknowledged) {
-            detrm_fsm_deploy_behvr();
-	    deployed = YES;
+        detrm_fsm_deploy_behvr();
+		deployed = YES;
 	    set_led(LED_GREEN);
+		//set power to high when deployed
+		set_power(sfd, HIGH_POWER); 
 	    finish;
-        }
-        //if (is_lost_con_retries())
-            //set_led(LED_RED_S);
-        address packet = tcv_wnp(SEND, sfd, STOP_LEN);
-        build_packet(packet, my_id, dest, STOP, seq, payload);
-        tcv_endp(packet);
-        delay(DELAY, SEND);
-        release;
+	}
+	address packet = tcv_wnp(SEND, sfd, STOP_LEN);
+	build_packet(packet, my_id, dest, STOP, seq, payload);
+	tcv_endp(packet);
+	delay(DELAY, SEND);
+	release;
 }
 
 bool is_last_node(void) {
@@ -137,17 +147,8 @@ fsm final_deploy {
         release;
 }
 
-void detrm_fsm_deploy_behvr(void) {
-    if (!is_last_node()){ // OLD (For verify): my_id<max_nodes-1
-        if(test == PACKET_TEST){
-	    set_power(sfd, LOW_POWER);
-        }
-	runfsm send_deploy(test);
-    } else
-        runfsm final_deploy;
-}
-
 void set_test_behaviour(address packet) {
+    static bool backtrack = NO;
 
     switch(get_payload(packet)[0]) {
     case RSSI_TEST:
@@ -196,13 +197,14 @@ fsm send_deploy {
 	    address packet;
 	    packet = tcv_wnp(SEND_DEPLOY_ACTIVE, sfd, DEPLOY_LEN);
 	    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, pl);
-	    diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n"
+	    /*diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n"
 			 "Hop_ID: %x\r\nOpCode: %x\r\nEnd: %x\r\nLength: %x\r\n"
 			 "SeqNum: %x\r\nPayload: %x\r\nMaxnodes: %x\r\nRSSI: %x\r\n",
              get_destination(packet), get_source_id(packet), get_hop_id(packet),
              get_opcode(packet), get_end(packet), get_length(packet),
              get_seqnum(packet), *get_payload(packet), get_payload(packet)[1],
-             get_rssi(packet));
+             get_rssi(packet)); */
+		diag("deploy sent\r\n");
 	     tcv_endp(packet);
 	     seq = (seq + 1) % 256;
 	     delay(SECOND, SEND_DEPLOY_ACTIVE);
@@ -299,13 +301,13 @@ fsm send_ping {
         pong = NO;
         address packet = tcv_wnp(SEND, sfd, PING_LEN);
         build_packet(packet, my_id, child_id, PING, 0, NULL);
-	diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n" \
+		/*diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n" \
 	     "Hop_ID: %x\r\nOpCode: %x\r\nEnd: %x\r\nLength: %x\r\n"  \
 	     "SeqNum: %x\r\nPayload: %x\r\nRSSI: %x\r\n",             \
 	     get_destination(packet), get_source_id(packet),          \
              get_hop_id(packet), get_opcode(packet), get_end(packet), \
 	     get_length(packet), get_seqnum(packet),                  \ 
-             *get_payload(packet), get_rssi(packet));
+		 *get_payload(packet), get_rssi(packet)); */
 	tcv_endp(packet);
 	diag("Ping sent\r\n");
 	delay(ping_delay, SEND);
@@ -339,7 +341,7 @@ fsm receive {
 	     break;
         case DEPLOY://turn into funciton to long/complicated
 	    if (deployed)
-		break;
+		  break;
 	    set_ids(packet);
 	    cur_state = 0;
 	    max_nodes = get_payload(packet)[1];//set max nodes
