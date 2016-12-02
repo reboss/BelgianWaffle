@@ -87,20 +87,20 @@ fsm root {
             break;
         case 'P':
             if (sink) {
-                diag("This node is already the sink\r\n");
-                break;
+		    ser_outf(PROMPT, "This node is already the sink\r\n");
+		    break;
             }
-            diag("Beginning Packet Deployment...\r\n");
+            ser_outf(PROMPT, "Beginning Packet Deployment...\r\n");
 	    set_globals_sink_YES();
 	    test = PACKET_TEST;
             runfsm send_deploy(test);
             break;
         case 'R':
             if (sink) {
-                diag("This node is already the sink\r\n");
+		    ser_outf(PROMPT, "This node is already the sink\r\n");
                 break;
             }
-            diag("Beginning RSSI Deployment...\r\n");
+            ser_outf(PROMPT, "Beginning RSSI Deployment...\r\n");
 	    set_globals_sink_YES();
 	    test = RSSI_TEST;
 	    set_led(LED_GREEN);
