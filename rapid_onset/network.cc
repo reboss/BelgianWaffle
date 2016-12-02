@@ -25,6 +25,8 @@
 #include "network.h"
 #include "node_led.h"
 
+#define DEPLOY_DELAY 300
+
 volatile int sfd, retries = 0;
 volatile int seq = 0;
 volatile bool acknowledged, pong;
@@ -105,9 +107,6 @@ fsm final_deploy {
         len += len % 2 ? 1 : 2;//add room for null term
         packet = tcv_wnp(SEND, sfd, 8 + len);
         build_packet(packet, my_id, SINK_ID, STREAM, seq++, msg);
-        //packet = tcv_wnp(SEND, sfd, 8 + 20);
-        //build_packet(packet, my_id, SINK_ID, STREAM, seq,
-		 //"TEAM FLABBERGASTED");
         tcv_endp(packet);
         i++;
         delay(SECOND, SEND);
@@ -182,7 +181,7 @@ fsm send_deploy {
 
 		//temporary increment
 		seq = (seq + 1) % 256;
-		delay(SECOND, SEND_DEPLOY_ACTIVE);
+		delay(DEPLOY_DELAY, SEND_DEPLOY_ACTIVE);
 		release;
         } else {
 		  //runfsm send_stop(my_id - 1);
