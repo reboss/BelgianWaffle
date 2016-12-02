@@ -76,6 +76,37 @@ bool is_lost_con_ping(int ping_retries) {
     return ping_retries == MAX_RETRY;
 }
 
+bool is_last_node(void) {
+    return my_id == (max_nodes - 1);
+}
+
+
+fsm final_deploy {
+
+    address packet;
+	char msg[56];
+	int i, len;
+	
+	initial state INIT:
+	  i = 1;
+	diag("In final_deploy fsm\r\n");
+	proceed SEND;
+	
+	state SEND:
+	  form(msg, "TEAM FLABERGASTED:%d", i);
+	len = strlen(msg);
+	len += len % 2 ? 1 : 2;//add room for null term                                              
+	packet = tcv_wnp(SEND, sfd, 8 + len);
+	build_packet(packet, my_id, SINK_ID, STREAM, seq++, msg);
+	//packet = tcv_wnp(SEND, sfd, 8 + 20);                                                       
+	//build_packet(packet, my_id, SINK_ID, STREAM, seq,                                          
+	//"TEAM FLABBERGASTED");                                                                    
+	tcv_endp(packet);
+	i++;
+	delay(SECOND, SEND);
+	release;
+}
+
 void detrm_fsm_deploy_behvr(void) {
   if (!is_last_node()){ // OLD (For verify): my_id<max_nodes-1                                     
 	if(test == PACKET_TEST){
@@ -104,10 +135,6 @@ fsm send_stop(int dest) {
 	release;
 }
 
-bool is_last_node(void) {
-    return my_id == (max_nodes - 1);
-}
-
 void set_test_mode_data(address packet) {
     set_ids(packet);
     seq = 0;
@@ -119,33 +146,6 @@ void set_test_mode_data(address packet) {
    After 10 retries, lost connection is assumed.
 */
 
-
-//sends the test messages to sink
-fsm final_deploy {
-
-    address packet;
-    char msg[56];
-    int i, len;
-
-    initial state INIT:
-        i = 1;
-        diag("In final_deploy fsm\r\n");
-        proceed SEND;
-
-    state SEND:
-        form(msg, "TEAM FLABERGASTED:%d", i);
-        len = strlen(msg);
-        len += len % 2 ? 1 : 2;//add room for null term
-        packet = tcv_wnp(SEND, sfd, 8 + len);
-        build_packet(packet, my_id, SINK_ID, STREAM, seq++, msg);
-        //packet = tcv_wnp(SEND, sfd, 8 + 20);
-        //build_packet(packet, my_id, SINK_ID, STREAM, seq,
-		 //"TEAM FLABBERGASTED");
-        tcv_endp(packet);
-        i++;
-        delay(SECOND, SEND);
-        release;
-}
 
 void set_test_behaviour(address packet) {
     static bool backtrack = NO;
@@ -204,7 +204,8 @@ fsm send_deploy {
              get_opcode(packet), get_end(packet), get_length(packet),
              get_seqnum(packet), *get_payload(packet), get_payload(packet)[1],
              get_rssi(packet)); */
-		diag("deploy sent\r\n");
+		 diag("deploy sent\r\n");
+		 set_led(0);
 	     tcv_endp(packet);
 	     seq = (seq + 1) % 256;
 	     delay(SECOND, SEND_DEPLOY_ACTIVE);
@@ -237,7 +238,7 @@ fsm stream_data(address packet_copy) {
             set_led(LED_RED_S);
         address packet = tcv_wnp(SEND, sfd, packet_length(packet_copy));
         copy_packet(packet, packet_copy);
-	ufree(packet_copy);
+		ufree(packet_copy);
         tcv_endp(packet);
         diag("End fsm stream_data\r\n");
         finish;
@@ -286,16 +287,16 @@ fsm send_ping {
             ping_retries++;
         if (is_lost_con_ping(ping_retries)) {
 	    if (!sink) {
-	        killall(receive);
-		killall(send_pong);
-		killall(stream_data);
-		runfsm indicate_reset;
+		  killall(receive);
+		  killall(send_pong);
+		  killall(stream_data);
+		  runfsm indicate_reset;
+		  finish;
+		}
+		diag("Network shutdown\r\n");
+		cont = 1;
+		runfsm send_deploy;
 		finish;
-	     }
-	     diag("Network shutdown\r\n");
-	     cont = 1;
-	     runfsm send_deploy;
-	     finish;
 	}
         pong = NO;
         address packet = tcv_wnp(SEND, sfd, PING_LEN);
