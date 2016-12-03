@@ -86,17 +86,22 @@ void debug_diag(address packet) {
 	     get_rssi(packet));
 }
 
+
 fsm send_stop(int dest) {
-	
-	initial state SEND:
+    initial state SEND:
 	    if (debug)
 		    diag("Entered send_stop FSM\r\n");
-	    if (acknowledged) {
-		    detrm_fsm_deploy_behvr();
-		    deployed = YES;
-		    set_led(LED_GREEN);
-		    finish;
-	    }
+	if (acknowledged) {
+		detrm_fsm_deploy_behvr();
+		deployed = YES;
+		set_led(LED_GREEN);
+		finish;
+	}
+	address packet = tcv_wnp(SEND, sfd, STOP_LEN);
+	build_packet(packet, my_id, dest, STOP, seq, payload);
+	tcv_endp(packet);
+	delay(DELAY, SEND);
+	release;
 }
 
 
@@ -133,6 +138,7 @@ fsm final_deploy {
 	release;
 }
 
+
 void detrm_fsm_deploy_behvr(void) {
   if (!is_last_node()){ // OLD (For verify): my_id<max_nodes-1
 	if(test == PACKET_TEST){
@@ -141,22 +147,6 @@ void detrm_fsm_deploy_behvr(void) {
     runfsm send_deploy(test);
   } else
 	runfsm final_deploy;
-}
-
-fsm send_stop(int dest) {
-    initial state SEND:
-	    if (debug)
-		    diag("Entered send_stop FSM\r\n");
-	if (acknowledged) {
-        detrm_fsm_deploy_behvr();
-		deployed = YES;
-		finish;
-	}
-	address packet = tcv_wnp(SEND, sfd, STOP_LEN);
-	build_packet(packet, my_id, dest, STOP, seq, payload);
-	tcv_endp(packet);
-	delay(DELAY, SEND);
-	release;
 }
 
 void set_test_mode_data(address packet) {
@@ -170,41 +160,6 @@ void set_test_mode_data(address packet) {
    After 10 retries, lost connection is assumed.
 */
 
-//sends the test messages to sink
-fsm final_deploy {
-
-    address packet;
-    char msg[56];
-    int i, len;
-
-    initial state INIT:
-
-	    i = 1;
-            if(debug)  
-		    diag("In final_deploy fsm\r\n");
-	    proceed SEND;
-
-    state SEND:
-	    form(msg, "TEAM FLABERGASTED:%d", i);
-            len = strlen(msg);
-	    len += len % 2 ? 1 : 2;//add room for null term
-	    packet = tcv_wnp(SEND, sfd, 8 + len);
-	    build_packet(packet, my_id, SINK_ID, STREAM, seq++, msg);
-	    //packet = tcv_wnp(SEND, sfd, 8 + 20);
-	    //build_packet(packet, my_id, SINK_ID, STREAM, seq,
-	    //"TEAM FLABBERGASTED");
-	    tcv_endp(packet);
-	    i++;
-	    delay(SECOND, SEND);
-	    release;
-}
- 
- void detrm_fsm_deploy_behvr(void) {
-	if (!is_last_node()) // OLD (For verify): my_id<max_nodes-1
-		runfsm send_deploy(test);
-	else
-		runfsm final_deploy;
-}
  
 void set_test_behaviour(address packet) {
 	static bool backtrack = NO;
