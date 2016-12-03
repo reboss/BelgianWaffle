@@ -121,20 +121,15 @@ void detrm_fsm_deploy_behvr(void) {
 }
 
 void set_test_behaviour(address packet) {
-    static bool backtrack = NO;
+    //static bool backtrack = NO;
 
     switch(get_payload(packet)[0]) {
     case RSSI_TEST:
         diag("RSSI: %x\r\n", get_rssi(packet));//curently the seq number ???
-        if (backtrack){//need to fix
-            if (rssi_setup_test(packet)){
-                set_test_mode_data(packet);
-                runfsm send_stop(my_id - 1);
-            }
-        } else {
-            test = RSSI_TEST;
-            if (rssi_setup_test(packet))//need to set rssi for backtracking
-                backtrack = YES;
+        test = RSSI_TEST;
+        if (rssi_setup_test(packet)) {//need to set rssi for backtracking
+            set_test_mode_data(packet);
+            runfsm send_stop(my_id - 1);
         }
         break;
     case PACKET_TEST:
