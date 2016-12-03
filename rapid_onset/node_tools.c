@@ -102,6 +102,14 @@ void payload_cpy(byte* packet, char* payload, int len) {
   packet = '\0';
 }
 
+int get_msgs_lost(address packet) {
+  int msgs_lost;
+  char payload[56];
+ 
+  scan((char*) get_payload(packet), "%d%s", &msgs_lost, payload);
+  return msgs_lost;
+}
+
 /* build_packet() takes in the components of a package and assembles
    it into a full package at the address it was sent
 */

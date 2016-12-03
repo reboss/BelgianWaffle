@@ -54,6 +54,7 @@
 
 volatile int sfd, retries = 0;
 volatile int seq = 0;
+volatile int msgs_lost = 0;
 volatile bool acknowledged, pong;
 extern int my_id, parent_id, child_id, dest_id;
 extern cur_state;
@@ -88,14 +89,16 @@ void debug_diag(address packet) {
 
 
 fsm send_stop(int dest) {
-    initial state SEND:
-	    if (debug)
-		    diag("Entered send_stop FSM\r\n");
+  initial state SEND:
+	if (debug)
+	  diag("Entered send_stop FSM\r\n");
 	if (acknowledged) {
-		detrm_fsm_deploy_behvr();
-		deployed = YES;
-		set_led(LED_GREEN);
-		finish;
+	  if (debug)
+		diag("Entered send_stop_acknowledged");
+	  deployed = YES;
+	  detrm_fsm_deploy_behvr();
+	  set_led(LED_GREEN);
+	  finish;
 	}
 	address packet = tcv_wnp(SEND, sfd, STOP_LEN);
 	build_packet(packet, my_id, dest, STOP, seq, payload);
@@ -113,29 +116,34 @@ fsm final_deploy {
 
     address packet;
 	char msg[56];
-	int i, len;
-
+	int len;
 	initial state INIT:
+	  diag("value of ack is %d\r\n", acknowledged);
         if (test == PACKET_TEST)
             set_power(sfd, HIGH_POWER);//set high power
-	i = 1;
-	if (debug)
-		diag("In final_deploy fsm\r\n");
-	proceed SEND;
+		if (debug)
+		  diag("In final_deploy fsm\r\n");
+		proceed SEND;
 
 	state SEND:
-	  form(msg, "TEAM FLABERGASTED:%d", i);
-	len = strlen(msg);
-	len += len % 2 ? 1 : 2;//add room for null term
-	packet = tcv_wnp(SEND, sfd, 8 + len);
-	build_packet(packet, my_id, SINK_ID, STREAM, seq++, msg);
-	//packet = tcv_wnp(SEND, sfd, 8 + 20);
-	//build_packet(packet, my_id, SINK_ID, STREAM, seq,
-	//"TEAM FLABBERGASTED");
-	tcv_endp(packet);
-	i++;
-	delay(SECOND, SEND);
-	release;
+	  if (!acknowledged) {
+		diag("In final_deploy_acknowledged\r\n");
+		form(msg, "%dTEAM FLABERGASTED", msgs_lost);
+		//form(msg, "55TEAM FLABBERGASTED");
+		len = strlen(msg);
+		len += len % 2 ? 1 : 2;//add room for null term
+		packet = tcv_wnp(SEND, sfd, 8 + len);
+		build_packet(packet, my_id, SINK_ID, STREAM, seq++, msg);
+		//packet = tcv_wnp(SEND, sfd, 8 + 20);
+		//build_packet(packet, my_id, SINK_ID, STREAM, seq,
+		//"TEAM FLABBERGASTED");
+		tcv_endp(packet);
+		msgs_lost++;
+		delay(SECOND, SEND);
+		release;
+	  } else {
+		finish;
+	  }
 }
 
 
@@ -145,8 +153,10 @@ void detrm_fsm_deploy_behvr(void) {
 	  set_power(sfd, LOW_POWER);
 	}
     runfsm send_deploy(test);
-  } else
+  } else {
+	acknowledged = NO;
 	runfsm final_deploy;
+  }
 }
 
 void set_test_mode_data(address packet) {
@@ -379,10 +389,13 @@ fsm receive {
 	    break;
 	case STREAM:
 	    runfsm send_ack(get_hop_id(packet));
+		msgs_lost = get_msgs_lost(packet);
 	    if (sink) {
-		    if (debug)
+		  if (debug) {
 			    diag("STREAM:%s\r\n", get_payload(packet));
-		break;//deal with it as sink
+				debug_diag(packet);
+		  }
+				break;
 	    } else {
 		    if (debug)
 			    diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
