@@ -16,6 +16,7 @@
 #include "network_help.h"
 
 void set_power(int sfd, int power) {
-    tcv_control(sfd, PHYSOPT_SETPOWER, power);
+    int pow = power;
+    tcv_control(sfd, PHYSOPT_SETPOWER, &power);
 }
 
