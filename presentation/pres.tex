@@ -1,0 +1,246 @@
+% -----------------------------------------------------------------------------
+% Course: CMPT 464 (Fall 2016)
+% Author: Nicholas M. Boers
+%
+% Beamer template for the final project presentations.
+% -----------------------------------------------------------------------------
+
+\documentclass[compress]{beamer}
+
+% If you'd like a PDF containing only the notes, uncomment the four
+% lines below.
+% \setbeameroption{show notes}
+% \setbeamerfont{note page}{size=\tiny}
+% \setbeamerfont{itemize/enumerate subbody}{size=\tiny}
+% \setbeamerfont{itemize/enumerate subsubbody}{size=\tiny}
+
+\usepackage{multicol}
+\usepackage{siunitx}
+\usepackage{soul}
+
+% the separate bibstyle and verbose-note are quite necessary for the
+% footnote citations to work correctly; I fought with getting them
+% to work for far too long
+\usepackage[bibstyle=ieee,citestyle=verbose-note,firstinits=true]{biblatex}
+\addbibresource{pres.bib}
+\renewcommand{\footnotesize}{\tiny} % use a sensible font size
+
+% -----------------------------------------------------------------------------
+% colours and themes
+% -----------------------------------------------------------------------------
+
+\definecolor{macewan}{RGB}{139,35,50}
+
+% Beamer themes
+\useoutertheme[subsection=false,shadow,footline=institutetitle]{miniframes}
+\useinnertheme{default}
+
+\setbeamercolor*{lower separation line head}{bg=macewan} 
+\setbeamercolor*{normal text}{fg=black,bg=white} 
+\setbeamercolor*{alerted text}{fg=red} 
+\setbeamercolor*{example text}{fg=black} 
+\setbeamercolor*{structure}{fg=black} 
+
+\setbeamercolor*{palette tertiary}{fg=black,bg=black!10} 
+\setbeamercolor*{palette quaternary}{fg=black,bg=black!10} 
+\setbeamercolor*{titlelike}{fg=macewan}
+
+% color schemes for boxes
+\beamerboxesdeclarecolorscheme{normal}{macewan}{macewan!15!averagebackgroundcolor}
+\beamerboxesdeclarecolorscheme{alert}{red}{red!15!averagebackgroundcolor}
+
+% -----------------------------------------------------------------------------
+% constants for title, authors, date, ...
+% -----------------------------------------------------------------------------
+
+\title[Short Title]{Long Title}
+\author[Short Author Names]{Long Author Name}
+\date{Date of Presentation}
+\institute{\vspace{0.2em}
+  \includegraphics[height=0.85cm]{macewan}\\[0.25em]
+  Edmonton, Alberta, Canada
+}
+\def\insertshortevent{CMPT 464}
+\def\insertevent{CMPT 464: Wireless Networks and Embedded Systems}
+
+% -----------------------------------------------------------------------------
+% fonts
+% -----------------------------------------------------------------------------
+
+% If you'd like to customize the font to a TrueType font that's
+% installed on your system, you can uncomment the four lines below and
+% modify those lines with the font name(s).
+%
+% \usepackage{fontspec}
+% \defaultfontfeatures{Ligatures=TeX}
+% \setmainfont{Helvetica Neue}    % MacEwan recommended font
+% \setmonofont{Courier}
+
+% -----------------------------------------------------------------------------
+% custom headline
+% -----------------------------------------------------------------------------
+
+\newlength{\logowidth}
+\setlength{\logowidth}{1.7cm}
+\newlength{\navwidth}
+\setlength{\navwidth}{\paperwidth}
+\addtolength{\navwidth}{-\logowidth}
+\addtolength{\navwidth}{-3pt}
+\addtolength{\logowidth}{-3pt}
+\setbeamertemplate{headline}
+{%
+  \vskip2pt\nobreak%
+  \begin{minipage}{\navwidth}%
+    \insertnavigation{\navwidth}%
+  \end{minipage}%
+  \nobreak\nobreak%
+  \begin{minipage}{\logowidth}%
+    \vskip2pt%
+    \includegraphics[width=\logowidth]{macewan}%
+  \end{minipage}%
+  % 
+  \linebreak[0]\vskip4pt%
+  \begin{beamercolorbox}[colsep=1.5pt]{lower separation line head}
+  \end{beamercolorbox}
+}
+
+% -----------------------------------------------------------------------------
+% custom footline
+% -----------------------------------------------------------------------------
+
+\setbeamercolor{footline}{fg=white,bg=macewan}
+\setbeamertemplate{footline}
+{%
+  \leavevmode%
+  \begin{beamercolorbox}{footline}%
+    \usebeamerfont{page number in head/foot}%
+    % 
+    \vskip2pt\hspace{2mm}%
+    \insertshorttitle, \insertshortauthor, \insertshortevent%
+    \hfill%
+    \insertframenumber\/ of \inserttotalframenumber%
+    \kern2mm\vskip2pt%
+  \end{beamercolorbox}%
+}
+
+% -----------------------------------------------------------------------------
+% custom title page
+% -----------------------------------------------------------------------------
+
+\usetitlepagetemplate{
+  \vbox{}
+  \vfill
+  \begin{centering}
+    {\textcolor{macewan}{\Large{\inserttitle}}}\par
+    \ifx\insertsubtitle\@empty\else\vskip0.0em\vskip0.4em{\large{\structure{\textcolor{macewan}\insertsubtitle}}}\par\fi
+    \vskip2em\par
+    \insertauthor\par
+    \insertinstitute\par\vskip1.25em
+    \insertevent\par\vskip1.25em
+    \insertdate\par
+  \end{centering}
+  \vfill
+}
+
+% -----------------------------------------------------------------------------
+% slides!
+% -----------------------------------------------------------------------------
+
+\begin{document}
+
+\frame[plain,c]{
+  \begin{columns}
+    \begin{column}{0.05\textwidth}
+      ~
+    \end{column}
+    \begin{column}{0.95\textwidth}
+      \titlepage
+    \end{column}
+  \end{columns}
+}
+
+\frame[t]{
+  \frametitle{Outline}
+
+  \tableofcontents
+}
+
+\section{Introduction}
+% NOTE: you must include a subsection, even if it's empty like the one
+% below, after each section; otherwise, the dots used as progress
+% indicators at the top of each slide won't work correctly
+\subsection*{}
+
+\begin{frame}[t]
+  \frametitle{Introduction}
+
+  The first slide
+  \begin{itemize}
+  \item of
+  \item your
+  \item introduction\dots
+  \end{itemize}
+
+  \vfill
+
+  \begin{tiny}
+    \begin{minipage}{1.0\linewidth}
+      Sample source citation: \fullcite{AK02}
+    \end{minipage}
+  \end{tiny}
+  
+  \note{
+    Notes for slide 1:
+    \begin{itemize}
+    \item note
+    \item note
+    \end{itemize}    
+  }
+\end{frame}
+
+\subsection{New Subsection}
+
+\begin{frame}[t]
+  \frametitle{Introduction: Continued\dots}
+
+  \begin{center}
+    Sample Image\\
+    \includegraphics[width=1\linewidth]{macewan}  
+  \end{center}
+
+  \note{
+    Notes for slide 2:
+    \begin{itemize}
+    \item note
+    \item note
+    \end{itemize}
+  }
+\end{frame}
+
+\section{Conclusions}
+\subsection*{}
+
+\begin{frame}[t]
+  \frametitle{Conclusions}
+
+  State some concluding remarks.
+  
+  \vfill
+
+  \begin{center}
+    Thank you!\\
+    \url{student@mymacewan.ca}
+  \end{center}
+
+  \vfill
+  
+  \note{
+    Notes for slide 3:
+    \begin{itemize}
+    \item note
+    \item note
+    \end{itemize}
+  }
+\end{frame}
+
+\end{document}

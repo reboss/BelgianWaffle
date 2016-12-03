@@ -43,9 +43,8 @@ int packet_setup_test(address packet) {
     prev_lost <<= 1;
     prev_lost &= ~1;
     prev_lost |= 1 << 15;
+
     if (num_lost(prev_lost) >= PACKET_LOSS_THRESHOLD)
         return 1;
     return 0;
 }
-
-

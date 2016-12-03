@@ -20,7 +20,7 @@
 #define CC1100_BUF_SZ	60
 #define UART_BUF_SZ	64
 
-#define POWER 1
+#define POWER 0
 
 /* session descriptor for the single VNETI session */
 int sfd;
@@ -195,8 +195,8 @@ fsm root {
       diag("unable to open TCV session");
       syserror(EASSERT, "no session");
     }
-    
-    tcv_control(sfd, PHYSOPT_SETPOWER, POWER);//set power level to 0 (min)
+    int pow = POWER;
+    tcv_control(sfd, PHYSOPT_SETPOWER, &pow);//set power level to 0 (min)
     tcv_control(sfd, PHYSOPT_ON, NULL);
 
     runfsm receiver;
