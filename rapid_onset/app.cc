@@ -19,6 +19,7 @@
 #include "tcvphys.h"
 #include "phys_cc1100.h"
 
+#include "network_help.h"
 #include "network.h"
 #include "node_tools.h"
 #include "node_led.h"
@@ -48,6 +49,7 @@ void init_cc1100(void) {
     tcv_plug(0, &plug_null);
     sfd = tcv_open(WNONE, 0, 0);
     tcv_control(sfd, PHYSOPT_ON, NULL);
+    set_power(sfd, HIGH_POWER);
 }
 
 void set_globals_sink_YES(void) {
@@ -58,7 +60,6 @@ void set_globals_sink_YES(void) {
 fsm root {
 
     char selection = '\0';
-
     initial state INIT:
         init_cc1100();
         leds_all(0);
@@ -100,6 +101,7 @@ fsm root {
                 diag("This node is already the sink\r\n");
                 break;
             }
+	    set_power(sfd,LOW_POWER);
             diag("Beginning RSSI Deployment...\r\n");
 	    set_globals_sink_YES();
 	    test = RSSI_TEST;
