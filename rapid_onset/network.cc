@@ -48,6 +48,16 @@ bool is_lost_con_ping(int ping_retries) {
 	return ping_retries == MAX_RETRY;
 }
 
+void debug_diag(address packet) {
+	diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n"
+	     "Hop_ID: %x\r\nOpCode: %x\r\nEnd: %x\r\nLength: %x\r\n"
+	     "SeqNum: %x\r\nPayload: %x\r\nMaxnodes: %x\r\nRSSI: %x\r\n",
+	     get_destination(packet), get_source_id(packet), get_hop_id(packet),
+	     get_opcode(packet), get_end(packet), get_length(packet),
+	     get_seqnum(packet), *get_payload(packet), get_payload(packet)[1],
+	     get_rssi(packet));
+}
+
 fsm send_stop(int dest) {
 	
 	initial state SEND:
@@ -175,13 +185,7 @@ fsm send_deploy {
 	    packet = tcv_wnp(SEND_DEPLOY_ACTIVE, sfd, DEPLOY_LEN);
 	    build_packet(packet, my_id, my_id + 1, DEPLOY, seq, pl);
 	    if (debug)
-		    diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n"
-		"Hop_ID: %x\r\nOpCode: %x\r\nEnd: %x\r\nLength: %x\r\n"
-		"SeqNum: %x\r\nPayload: %x\r\nMaxnodes: %x\r\nRSSI: %x\r\n",
-		get_destination(packet), get_source_id(packet), get_hop_id(packet),
-		get_opcode(packet), get_end(packet), get_length(packet),
-		get_seqnum(packet), *get_payload(packet), get_payload(packet)[1],
-		get_rssi(packet));
+		    debug_diag(packet);
 	    tcv_endp(packet);
 
 		//temporary increment
@@ -291,11 +295,7 @@ fsm send_ping {
         address packet = tcv_wnp(SEND, sfd, PING_LEN);
         build_packet(packet, my_id, child_id, PING, 0, NULL);
 	if (debug)
-		diag("\r\nFunction Test:\r\nDest_ID: %x\r\nSource_ID: %x\r\n"
-		"Hop_ID: %x\r\nOpCode: %x\r\nEnd: %x\r\nLength: %x\r\n"
-		"SeqNum: %x\r\nPayload: %x\r\nRSSI: %x\r\n", get_destination(packet),
-		get_source_id(packet), get_hop_id(packet), get_opcode(packet), get_end(packet),
-		get_length(packet), get_seqnum(packet), *get_payload(packet), get_rssi(packet));
+		debug_diag(packet);
 	tcv_endp(packet);
 	if (debug)
 		diag("Ping sent\r\n");
@@ -402,3 +402,5 @@ fsm receive {
 			diag("END fsm Recieve\r\n");
 		proceed RECV;
 }
+
+
