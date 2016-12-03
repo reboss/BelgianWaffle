@@ -62,8 +62,7 @@
   Elliott Sobek}
 \date{December 5th, 2016}
 \institute{\vspace{0.2em}
-  \includegraphics[height=0.85cm]{macewan}\\[0.25em]
-  Edmonton, Alberta, Canada
+  \includegraphics[height=1.5cm]{macewan}\\[0.25em]
 }
 \def\insertshortevent{CMPT 464}
 \def\insertevent{CMPT 464: Wireless Networks and Embedded Systems}
@@ -137,14 +136,18 @@
   \vfill
   \begin{centering}
     {\textcolor{macewan}{\Large{\inserttitle}}}\par
+    \insertevent\par\vskip1.25em
     \ifx\insertsubtitle\@empty\else\vskip0.0em\vskip0.4em{\large{\structure{\textcolor{macewan}\insertsubtitle}}}\par\fi
     \vskip2em\par
-    \insertauthor\par
     \insertinstitute\par\vskip1.25em
-    \insertevent\par\vskip1.25em
-    \insertdate\par
   \end{centering}
   \vfill
+  \begin{flushleft}
+    \insertdate\par
+    Authors:
+    \insertauthor\par
+  \end{flushleft}
+  
 }
 
 % -----------------------------------------------------------------------------
