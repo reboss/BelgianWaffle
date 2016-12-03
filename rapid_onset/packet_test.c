@@ -35,7 +35,7 @@ int packet_setup_test(address packet) {
         return 0;
     }
     //deal with lost packets
-    for (i = 0; i < (cur_seq - last_seq); i++) {
+    for (i = 0; i < (cur_seq - last_seq - 1); i++) {
         prev_lost = (prev_lost << 1) | 1;//add lost packet
     }
     //deal with current since its valid
@@ -47,5 +47,3 @@ int packet_setup_test(address packet) {
         return 1;
     return 0;
 }
-
-
