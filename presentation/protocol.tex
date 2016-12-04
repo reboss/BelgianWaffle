@@ -1,4 +1,4 @@
-\section{Our Implementation}
+\section{Implementation}
 \subsection*{}
 
 \begin{frame}[t]
@@ -18,3 +18,14 @@
   
 \end{frame}
 
+\begin{frame}
+  \frametitle{Data Consistency}
+
+  \begin{itemize}
+  \item Messages wait for an ACK before sending the next message when streaming data
+  \item PINGs and PONGs
+  \item An acknowledgment is also used to signal that the STOP signal has been received
+  \item Information about total packet loss is relayed with the packet at each hop
+  \end{itemize}
+  
+\end{frame}
