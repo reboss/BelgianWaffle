@@ -89,7 +89,6 @@ void debug_diag(address packet) {
 	     get_rssi(packet));
 }
 
-
 fsm send_stop(int dest) {
   initial state SEND:
 	if (debug)
