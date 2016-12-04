@@ -65,7 +65,7 @@ fsm root {
     initial state INIT:
         init_cc1100();
         leds_all(0);
-		set_led(LED_RED);
+		set_led(LED_YELLOW_S);
         runfsm receive;
 	proceed DISPLAY;
 

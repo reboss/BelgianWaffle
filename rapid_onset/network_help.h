@@ -13,8 +13,8 @@
 #ifndef NETWORK_HELP_H
 #define NETWORK_HELP_H
 
-#define HIGH_POWER   1
-#define LOW_POWER    0
+#define HIGH_POWER   2
+#define LOW_POWER    1
 
 #define NUM_TEST_MSGS 250
 //+++ "network_help.c"
