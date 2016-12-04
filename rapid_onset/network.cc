@@ -190,7 +190,7 @@ void set_test_behaviour(address packet) {
 	switch(get_payload(packet)[0]) {
 	case RSSI_TEST:
 		if (debug)
-			diag("RSSI: %x\r\n", get_rssi(packet));//curently the seq number ???
+			diag("RSSI: %x\r\n", get_rssi(packet));
 		test = RSSI_TEST;
 		if (rssi_setup_test(packet)) {
 			set_test_mode_data(packet);
@@ -214,7 +214,6 @@ void set_test_behaviour(address packet) {
 	}
 }
 
-//TODO: SEE DEPLOYED case in receive fsm
 fsm send_deploy {
 
     byte pl[3];
