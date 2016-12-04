@@ -98,7 +98,7 @@ fsm send_stop(int dest) {
 		diag("Entered send_stop_acknowledged");
 	  deployed = YES;
 	  detrm_fsm_deploy_behvr();
-	  set_led(LED_GREEN);
+	  set_led(LED_GREEN_S);
 	  finish;
 	}
 	address packet = tcv_wnp(SEND, sfd, STOP_LEN);
@@ -130,7 +130,7 @@ fsm final_deploy {
 	state SEND:
 	  if (msgs_lost == 0 || !acknowledged) {
 		diag("In sending final deploy\r\n");
-		form(msg, "%dTEAM FLABERGASTED%d", msgs_lost, i);
+		form(msg, "%dTEAM FLABERGASTED%d\0", msgs_lost, i);
 		//form(msg, "55TEAM FLABBERGASTED");
 		len = strlen(msg);
 		len += len % 2 ? 1 : 2;//add room for null term
@@ -189,7 +189,7 @@ void set_test_behaviour(address packet) {
 	switch(get_payload(packet)[0]) {
 	case RSSI_TEST:
 		if (debug)
-			diag("RSSI: %x\r\n", get_rssi(packet));//curently the seq number ???
+			diag("RSSI: %x\r\n", get_rssi(packet));
 		test = RSSI_TEST;
 		if (rssi_setup_test(packet)) {
 			set_test_mode_data(packet);
@@ -200,6 +200,7 @@ void set_test_behaviour(address packet) {
 		if (debug)
 			diag("PACKET TEST SEQ: %x\r\n", get_seqnum(packet));
 		test = PACKET_TEST;
+		set_led(LED_YELLOW_S);
 		if (packet_setup_test(packet) == 1) {
 			set_test_mode_data(packet);
 			runfsm send_stop(my_id - 1);
@@ -213,7 +214,6 @@ void set_test_behaviour(address packet) {
 	}
 }
 
-//TODO: SEE DEPLOYED case in receive fsm
 fsm send_deploy {
 
     byte pl[3];
@@ -241,7 +241,7 @@ fsm send_deploy {
 
 	    //temporary increment
 	    seq = (seq + 1) % 256;
-	    delay(SECOND, SEND_DEPLOY_ACTIVE);
+	    delay(DEPLOY_DELAY, SEND_DEPLOY_ACTIVE);
 	    release;
         } else {
 		//runfsm send_stop(my_id - 1);
@@ -263,27 +263,38 @@ fsm send_ack(int dest) {
 }
 
 fsm stream_data(address packet_copy) {
+  
+  /* indicates whether to increment msgs_lost when we don't receive an ACK */
+  int flag;
+  
+  initial state INIT:
+	flag = NO;
+    proceed SEND;
 
-  initial state SEND:
+  state SEND:
 	  if (debug)
 		  diag("In stream data fsm\r\n");
 
 	  if (acknowledged) {
 		  if (debug)
-			  diag("stream ack\r\n");
-	      finish;
-          }
-        if (is_lost_con_retries())
-            set_led(LED_RED_S);
+			diag("stream ack\r\n");
+		  flag = NO;
+		  ufree(packet_copy);
+		  finish;
+	  }
+	  if (flag == YES)
+		msgs_lost++;
+
+	  if (is_lost_con_retries())
+		set_led(LED_RED_S);
         address packet = tcv_wnp(SEND, sfd, packet_length(packet_copy));
         copy_packet(packet, packet_copy);
-		ufree(packet_copy);
 	if (debug)
 		debug_diag(packet);
-        tcv_endp(packet);
-	if (debug)
-		diag("End fsm stream_data\r\n");
-        finish;
+	tcv_endp(packet);
+	flag = YES;
+	delay(SECOND, SEND);
+	release;
 }
 
 
@@ -399,12 +410,13 @@ fsm receive {
             //runfsm send_deployed;
             break;
         case STREAM:
+		  if (debug)
             diag("stream hop id: %d\r\nchild id:%d\r\nstream source id %d\r\n",
-            get_hop_id(packet), child_id, get_source_id(packet));
-            if (get_hop_id(packet) != child_id) {//if not from parent
-                diag("not parent\r\n");
-                break;
-            }
+				 get_hop_id(packet), child_id, get_source_id(packet));
+		  if (get_hop_id(packet) != child_id) {//if not from parent
+			diag("not parent\r\n");
+			break;
+		  }
             runfsm send_ack(get_hop_id(packet));
             msgs_lost = get_msgs_lost(packet);
             if (sink) {
@@ -420,6 +432,7 @@ fsm receive {
                     diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
                     //debug_diag(packet);
                 }
+				
                 acknowledged = NO;
                 address hop_packet = umalloc(packet_length(packet) / 2 *
                                              sizeof(word));
@@ -442,7 +455,7 @@ fsm receive {
         case STOP:
             set_power(sfd, HIGH_POWER);//set high power
             if (get_destination(packet) == my_id) {
-                set_led(LED_GREEN_S);
+			  set_led(LED_GREEN_S);
                 runfsm send_ack(get_source_id(packet));
                 if (cont) {
                     if (debug)

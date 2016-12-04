@@ -34,7 +34,7 @@ int packet_setup_test(address packet) {
         prev_lost = 1 << 15;
         return 0;
     }
-    set_led(LED_YELLOW);//set green for good packets
+    set_led(LED_YELLOW);
 
     //deal with lost packets
     for (i = 0; i < (cur_seq - last_seq - 1); i++) {

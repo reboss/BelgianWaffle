@@ -65,6 +65,7 @@ fsm root {
     initial state INIT:
         init_cc1100();
         leds_all(0);
+		set_led(LED_YELLOW_S);
         runfsm receive;
 	proceed DISPLAY;
 
@@ -95,9 +96,10 @@ fsm root {
 		    break;
             }
             ser_outf(PROMPT, "Beginning Packet Deployment...\r\n");
+			set_power(sfd, LOW_POWER);
 	    set_globals_sink_YES();
-	    test = PACKET_TEST;
-            runfsm send_deploy(test);
+		test = PACKET_TEST;
+		runfsm send_deploy(test);
             break;
         case 'R':
             if (sink) {
