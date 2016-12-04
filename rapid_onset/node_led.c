@@ -22,7 +22,6 @@
 #include "node_led.h"
 
 bool led_is_on = NO;
-int cur_state = 0;
 
 //Inplement into .h? then dont send it literal 0,1,2,3
 //enum states {YELLOW_FLASH, GREEN_SOLID, RED_FLASH, RED_SOLID};

@@ -52,16 +52,18 @@
 #define MILLISECOND 1
 #define SECOND 1000
 
+
 volatile int sfd, retries = 0;
 volatile int seq = 0;
 volatile int msgs_lost = 0;
 volatile bool acknowledged, pong;
+stream_stat stream_info;
+
 extern int my_id, parent_id, child_id, dest_id;
-extern cur_state;
 extern int ping_delay, test;
 extern int max_nodes;
 extern bool sink;
-extern debug;
+extern int debug;
 
 char payload[MAX_P];
 //Variable that tells the node if it can keep sending deploys
@@ -364,103 +366,103 @@ fsm receive {
 
     state RECV:
         packet = tcv_rnp(RECV, sfd);
-    if (debug)
-	    diag("after receive RECV packet recieve\n\r");
+        if (debug)
+            diag("after receive RECV packet recieve\n\r");
         proceed EVALUATE;
 
     state EVALUATE:
-    switch (get_opcode(packet)) {
-	case PING:
-	  if (get_destination(packet) == my_id) {
-		if (get_source_id(packet) == parent_id) {
-			if (debug)
-				diag("sending pong");
-		  runfsm send_pong;
-		} else {
-			if (debug)
-				diag("received pong");
-			pong = YES;
-		}
-	  }
-	  break;
-	case DEPLOY:
-	  if (deployed)
-		break;
-	  set_ids(packet);
-	  cur_state = 0;
-	  max_nodes = get_payload(packet)[1];//set max nodes
-	  set_test_behaviour(packet);
-	  break;
+        switch (get_opcode(packet)) {
+        case PING:
+            if (get_destination(packet) == my_id) {
+                if (get_source_id(packet) == parent_id) {
+                    if (debug)
+                        diag("sending pong");
+                    runfsm send_pong;
+                } else {
+                    if (debug)
+                        diag("received pong");
+                    pong = YES;
+                }
+            }
+            break;
+        case DEPLOY:
+            if (deployed)
+                break;
+            set_ids(packet);
+            max_nodes = get_payload(packet)[1];//set max nodes
+            set_test_behaviour(packet);
+            break;
 
         /* IS DEPLOYED OPCODE BEING USED? */
-	case DEPLOYED:
-		if (debug)
-			diag("Recieved DEPLOYED");
-	    //runfsm send_deployed;
-	    break;
-	case STREAM:
+        case DEPLOYED:
+            if (debug)
+                diag("Recieved DEPLOYED");
+            //runfsm send_deployed;
+            break;
+        case STREAM:
             diag("stream hop id: %d\r\nchild id:%d\r\nstream source id %d\r\n",
-		get_hop_id(packet), child_id, get_source_id(packet));
+            get_hop_id(packet), child_id, get_source_id(packet));
             if (get_hop_id(packet) != child_id) {//if not from parent
-		diag("not parent\r\n");
+                diag("not parent\r\n");
                 break;
             }
-	    runfsm send_ack(get_hop_id(packet));
-		msgs_lost = get_msgs_lost(packet);
-	    if (sink) {
-		  if (debug) {
-			    diag("STREAM:%s\r\n", get_payload(packet));
-				diag("STREAM PACKET LOSS: %d PACKETS\r\n", msgs_lost);
-				//debug_diag(packet);
-		  }
-                  break;
-	    } else {
-		    if (debug){
-			    diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
-                        //debug_diag(packet);
-                    }
-		acknowledged = NO;
-	        address hop_packet = umalloc(packet_length(packet) / 2 * sizeof(word));
-		copy_packet(hop_packet, packet);
-		runfsm stream_data(hop_packet);
-	    }
-	    break;
-	case ACK://deal w/ type
-		if (debug)
-			diag("Recieved ACK\r\n");
-	    if (get_destination(packet) == my_id) {
-	        acknowledged = YES;
-	        retries = 0;
-	    }
-	    break;
-	case COMMAND:
-		if (debug)
-			diag("Recieved COMMAND\r\n");
-	    break;
-	case STOP:
+            runfsm send_ack(get_hop_id(packet));
+            msgs_lost = get_msgs_lost(packet);
+            if (sink) {
+                if (debug) {
+                    diag("STREAM:%s\r\n", get_payload(packet));
+                    diag("STREAM PACKET LOSS: %d PACKETS\r\n", msgs_lost);
+                    //debug_diag(packet);
+                }
+                break;
+            } else {
+                if (debug){
+                    diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
+                    //debug_diag(packet);
+                }
+                acknowledged = NO;
+                address hop_packet = umalloc(packet_length(packet) / 2 *
+                                             sizeof(word));
+                copy_packet(hop_packet, packet);
+                runfsm stream_data(hop_packet);
+            }
+            break;
+        case ACK://deal w/ type
+            if (debug)
+                diag("Recieved ACK\r\n");
+            if (get_destination(packet) == my_id) {
+                acknowledged = YES;
+                retries = 0;
+            }
+            break;
+        case COMMAND:
+            if (debug)
+                diag("Recieved COMMAND\r\n");
+            break;
+        case STOP:
             set_power(sfd, HIGH_POWER);//set high power
-	    if (get_destination(packet) == my_id) {
-		    set_led(LED_GREEN_S);
-	        runfsm send_ack(get_source_id(packet));
-		if (cont) {
-			if (debug)
-				diag("cont is equal to 1 and will be set to 0\r\n");
-		    runfsm send_ping;
-		}
-		cont = 0;
-		if (debug)
-			diag("\r\nRECEIVED STOP...\r\n");
-	    }
-	    break;
-	default:
-		if (debug)
-			diag("Unknown opcode\r\n");
-	    break;
-	}
-	tcv_endp(packet);
-	if (debug)
-		diag("END fsm Recieve\r\n");
-	proceed RECV;
+            if (get_destination(packet) == my_id) {
+                set_led(LED_GREEN_S);
+                runfsm send_ack(get_source_id(packet));
+                if (cont) {
+                    if (debug)
+                        diag("cont is equal to 1 and will be set to 0\r\n");
+                    runfsm send_ping;
+                }
+                cont = 0;
+                if (debug)
+                    diag("\r\nRECEIVED STOP...\r\n");
+            }
+            break;
+        default:
+            if (debug)
+                diag("Unknown opcode\r\n");
+            break;
+        }
+        tcv_endp(packet);
+        if (debug)
+            diag("END fsm Recieve\r\n");
+        proceed RECV;
 }
 
 
