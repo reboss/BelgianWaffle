@@ -37,7 +37,7 @@
 
   TCP
   \begin{itemize}
-  \item Control data transmission by adjusting the congestion window size based on the ACK’s received
+  \item Control data transmission by adjusting the congestion window size based on the ACK's received
   \item Send two packets for each ACK received
     \begin{itemize}
       \item[--] Additive Increase, Multiplicative Decrease
@@ -113,8 +113,8 @@
   With ATP you have\dots
 
   \begin{itemize}
-  \item Feedback about the strength of the connection is “piggybacked” onto packets being routed to their destination
-  \item Selective ACK’s used to report losses of connections, or holes, in the data stream
+  \item Feedback about the strength of the connection is piggybacked onto packets being routed to their destination
+  \item Selective ACK's used to report losses of connections, or holes, in the data stream
     \begin{itemize}
     \item[--] According to RFC 2018, a selective ACK, or SACK, is sent to inform a sender about all segments that have arrived successfully.
     \end{itemize}
@@ -137,10 +137,10 @@
 
   \vfill
   
-  We also “piggyback” statistical information about the strength of the connection on each message sent to the sink
+  We also piggyback statistical information about the strength of the connection on each message sent to the sink
   \vfill
   
-  For future work, SACK’s could be used exclusively in our network
+  For future work, SACK's could be used exclusively in our network
 
   \vspace{\vfill}
   
