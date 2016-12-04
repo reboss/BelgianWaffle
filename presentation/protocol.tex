@@ -1,157 +1,20 @@
-\section{Protocol}
+\section{Our Implementation}
 \subsection*{}
 
-
-
 \begin{frame}[t]
-  \frametitle{TCP vs ATP Protocol\dots}
+  \frametitle{Deployment}
 
-  TCP (Transmission Control Protocol)
-  \begin{itemize}
-  \item Window based transmissions
-  \item Slow start
-  \item Dependant on ACKs
-  \end{itemize}
-
-  \vfill
-
-  ATP (Ad Hoc Transport Protocol)
-  \begin{itemize}
-  \item Rate based transmissions
-  \item Quick start
-  \item Use of SACKs
-  \end{itemize}
-
-  \vfill
-
-  \begin{flushleft}
-    \begin{tiny}
-      \begin{minipage}{1.0\linewidth}
-        \fullcite{AK01}
-      \end{minipage}
-    \end{tiny}
-  \end{flushleft}
-  
-\end{frame}
-
-\begin{frame}[t]
-  \frametitle{Window Based vs Rate BAsed Transmissions}
-
-  TCP
-  \begin{itemize}
-  \item Control data transmission by adjusting the congestion window size based on the ACK’s received
-  \item Send two packets for each ACK received
+  \begin{enumerate}
+  \item On startup, a node begins listening for a deployment brodcast
+  \item The sink node has the option to begin broadcasting the deployment message
     \begin{itemize}
-      \item[--] Additive Increase, Multiplicative Decrease
-      \item[--] Leads to burstiness of data
+    \item[--] Must also set the maximum number of nodes in the network
     \end{itemize}
-  \end{itemize}
-
-  \vfill
-
-  ATP
-  \begin{itemize}
-  \item Rate-based mechanisms control the transmission rate based on the measurement taken at the end host
-  \item No burstiness
-  \item ACK bunching happens
-    \begin{itemize}
-      \item[--] Several acks received at the same time
-      \item[--] Leads to flooding of network with window based transmissions
-    \end{itemize}
-  \end{itemize}
-
-    \vfill
-
-  \begin{flushleft}
-    \begin{tiny}
-      \begin{minipage}{1.0\linewidth}
-        \fullcite{AK01}
-      \end{minipage}
-    \end{tiny}
-  \end{flushleft}
-
-\end{frame}    
-
-\begin{frame}[t]
-  \frametitle{Slow vs. Quick Start}
-
-  TCP
-  \begin{itemize}
-    \item Starts off slow, and gradually increases
-    \item Probes the network for available bandwidth
-    \item May take a while to get to true available bandwidth
-    \item Loss occurs? return to slow start phase
-  \end{itemize}
-
-  \vfill
-  
-  ATP
-  \begin{itemize}
-  \item Starts off quickly and may decrease
-    \begin{itemize}
-    \item[--]Packet loss is more frequent so a connection may spend most of its life in the slow-start phase if using TCP
-    \end{itemize}
-  \end{itemize}
-  
-    \vfill
-
-  \begin{flushleft}
-    \begin{tiny}
-      \begin{minipage}{1.0\linewidth}
-        \fullcite{AK01}
-      \end{minipage}
-    \end{tiny}
-  \end{flushleft}
-  
-\end{frame}
-
-\begin{frame}[t]
-  \frametitle{Decoupling of Congestion Control and Reliability}
-
-  In TCP, congestion control and reliability are tightly coupled through dependence on ACK arrival
-
-  \vfill
-  
-  With ATP you have\dots
-
-  \begin{itemize}
-  \item Feedback about the strength of the connection is “piggybacked” onto packets being routed to their destination
-  \item Selective ACK’s used to report losses of connections, or holes, in the data stream
-    \begin{itemize}
-    \item[--] According to RFC 2018, a selective ACK, or SACK, is sent to inform a sender about all segments that have arrived successfully.
-    \end{itemize}
-  \end{itemize}
-
-  \vfill
-
-  \begin{flushleft}
-    \begin{tiny}
-      \begin{minipage}{1.0\linewidth}
-        \fullcite{AK01}
-      \end{minipage}
-    \end{tiny}
-  \end{flushleft}
-  
-\end{frame}
+  \item A new node is turned on and is travelled in a straight line until it is signalled to be deployed based on packet loss or the rssi
+  \item The node then sends the stop signal to it's parent and begins deploying itself
+  \item If the node is the final node, it will send the stop signal and begin transmitting data to the sink node
     
-\begin{frame}[t]
-  \frametitle{In Relation to Our Implementation}
-
-  \vfill
+  \end{enumerate}
   
-  We also “piggyback” statistical information about the strength of the connection on each message sent to the sink
-  \vfill
-  
-  For future work, SACK’s could be used exclusively in our network
-
-  \vspace{\vfill}
-  
-  \begin{flushleft}
-    \begin{tiny}
-      \begin{minipage}{1.0\linewidth}
-        \fullcite{AK01}
-      \end{minipage}
-    \end{tiny}
-  \end{flushleft}
-
 \end{frame}
+
