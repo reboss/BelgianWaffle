@@ -102,6 +102,14 @@ void payload_cpy(byte* packet, char* payload, int len) {
   packet = '\0';
 }
 
+int get_msgs_lost(address packet) {
+  int msgs_lost;
+  char payload[56];
+ 
+  scan((char*) get_payload(packet), "%d%s", &msgs_lost, payload);
+  return msgs_lost;
+}
+
 /* build_packet() takes in the components of a package and assembles
    it into a full package at the address it was sent
 */
@@ -121,9 +129,9 @@ void build_packet(address packet, int source_id, int destination,
 
 /* copys packet but inserts in new hop id*/
 void copy_packet(address new, address old) {
-    int length = strlen((byte *) (old + 3));
+    int length = get_length(old);//= strlen((byte *) (old + 3));
     //copy old word 1 and set new hop id
-    new[1] = old[1] & (15 << 8) | (my_id << 8);
+    new[1] = (old[1] & ~(15 << 8)) | (my_id << 8);
     //word 2
     new[2] = old[2];
     //copy payload
