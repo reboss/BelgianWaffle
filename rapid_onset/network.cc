@@ -267,15 +267,18 @@ fsm stream_data(address packet_copy) {
 	  if (debug)
 		  diag("In stream data fsm\r\n");
 
-	  if (acknowledged)
+	  if (acknowledged) {
 		  if (debug)
 			  diag("stream ack\r\n");
-	  finish;
+	      finish;
+          }
         if (is_lost_con_retries())
             set_led(LED_RED_S);
         address packet = tcv_wnp(SEND, sfd, packet_length(packet_copy));
         copy_packet(packet, packet_copy);
 		ufree(packet_copy);
+	if (debug)
+		debug_diag(packet);
         tcv_endp(packet);
 	if (debug)
 		diag("End fsm stream_data\r\n");
@@ -344,8 +347,8 @@ fsm send_ping {
         pong = NO;
         address packet = tcv_wnp(SEND, sfd, PING_LEN);
         build_packet(packet, my_id, child_id, PING, 0, NULL);
-	if (debug)
-		debug_diag(packet);
+	/*if (debug)
+		debug_diag(packet);*/
 	tcv_endp(packet);
 	if (debug)
 		diag("Ping sent\r\n");
@@ -396,18 +399,26 @@ fsm receive {
 	    //runfsm send_deployed;
 	    break;
 	case STREAM:
+            diag("stream hop id: %d\r\nchild id:%d\r\nstream source id %d\r\n",
+		get_hop_id(packet), child_id, get_source_id(packet));
+            if (get_hop_id(packet) != child_id) {//if not from parent
+		diag("not parent\r\n");
+                break;
+            }
 	    runfsm send_ack(get_hop_id(packet));
 		msgs_lost = get_msgs_lost(packet);
 	    if (sink) {
 		  if (debug) {
 			    diag("STREAM:%s\r\n", get_payload(packet));
 				diag("STREAM PACKET LOSS: %d PACKETS\r\n", msgs_lost);
-				debug_diag(packet);
+				//debug_diag(packet);
 		  }
 				break;
 	    } else {
-		    if (debug)
+		    if (debug){
 			    diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
+                        //debug_diag(packet);
+                    }
 		acknowledged = NO;
 	        address hop_packet = umalloc(packet_length(packet) / 2 * sizeof(word));
 		copy_packet(hop_packet, packet);

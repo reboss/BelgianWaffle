@@ -23,7 +23,7 @@ int num_cutoff(word rssi) {
             low++;
     }
     if (low >= (RSSI_LOW_CUTOFF / 2))
-        set_led(LED_RED);
+        set_led(LED_RED_S);
     diag("Low = %d\r\n",low);
     return low;
 }
@@ -36,10 +36,10 @@ int rssi_setup_test(address packet) {
     prev_rssi <<= 1;
     //check rssi
     if (get_rssi(packet) < RSSI_THRESHOLD) {
-	set_led(LED_YELLOW);
+	set_led(LED_RED);
         prev_rssi |= 1;
     } else {
-	set_led(LED_GREEN);
+	set_led(LED_YELLOW);
         prev_rssi &= ~1;
     }
 
