@@ -164,6 +164,7 @@ void detrm_fsm_deploy_behvr(void) {
 	}
     runfsm send_deploy(test);
   } else {
+        set_led(LED_GREEN_S);
 	acknowledged = NO;
 	runfsm final_deploy;
   }
@@ -382,9 +383,6 @@ fsm receive {
 	case DEPLOY:
 	  if (deployed)
 		break;
-	  //blink yellow if not set up
-	  set_led(LED_YELLOW);
-
 	  set_ids(packet);
 	  cur_state = 0;
 	  max_nodes = get_payload(packet)[1];//set max nodes
