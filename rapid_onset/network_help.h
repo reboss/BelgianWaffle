@@ -16,10 +16,11 @@
 #define HIGH_POWER   1
 #define LOW_POWER    0
 
-#define NUM_TEST_MSGS 100
+#define NUM_TEST_MSGS 250
 //+++ "network_help.c"
 
 typedef struct _stream_stat {
+    int num_elems;
     int packet_loss[NUM_TEST_MSGS];
     int seq_num[NUM_TEST_MSGS];
     int packet_len[NUM_TEST_MSGS];

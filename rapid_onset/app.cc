@@ -33,6 +33,7 @@
 
 extern int my_id, sfd;
 extern bool deployed;
+extern stream_stat stream_info;
 
 char message[30];
 int receiver = 0, test;
@@ -58,6 +59,7 @@ void set_globals_sink_YES(void) {
 }
 
 fsm root {
+    int stat_index = 0;
 
     char selection = '\0';
     initial state INIT:
@@ -158,16 +160,24 @@ fsm root {
         proceed DISPLAY;
 
     state STATS_HEAD:
-        print_stat_header(STATS_HEAD);
-        proceed STATS_DATA;
-
-    state FIRST_DATA:
-        if (print_stat_line(FIRST_DATA, YES))
-            proceed DISPLAY;
+        ser_outf(STATS_HEAD,
+            "\r\nEach line is for different packets in sequential order.\r\n"
+            "Packets lost, sequence number, packet length, timestamp (s)\r\n");
+        stat_index = 0;
         proceed STATS_DATA;
 
     state STATS_DATA:
-        if (print_stat_line(STATS_DATA, NO))
+        if (stat_index >= stream_info.num_elems)
             proceed DISPLAY;
+        if (debug >= 1)
+            diag("print stat line\r\n");
+        ser_outf(STATS_DATA, "%d,%d,%d,%d\r\n",
+                stream_info.packet_loss[stat_index],
+                stream_info.seq_num[stat_index],
+                stream_info.packet_len[stat_index],
+                stream_info.timestamp[stat_index]);
+
+        stat_index++;
         proceed STATS_DATA;
+
 }
