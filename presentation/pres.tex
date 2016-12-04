@@ -6,7 +6,6 @@
 % -----------------------------------------------------------------------------
 
 \documentclass[compress]{beamer}
-\let\Tiny=\tiny
 % If you'd like a PDF containing only the notes, uncomment the four
 % lines below.
 % \setbeameroption{show notes}
@@ -186,48 +185,49 @@
 \begin{frame}[t]
   \frametitle{Introduction}
 
-  The first slide
+  
+  Lack of fixed network infrastructure
   \begin{itemize}
-  \item of
-  \item your
-  \item introduction\dots
+  \item Dedicated routers absent
+  \end{itemize}
+
+  \vfill
+  
+  Mobility
+  \begin{itemize}
+  \item Hosts in network may be mobile
+  \item In our implementation: only mobile until deployed
   \end{itemize}
 
   \vfill
 
-  \begin{tiny}
-    \begin{minipage}{1.0\linewidth}
-      Sample source citation: \fullcite{AK02}
-    \end{minipage}
-  \end{tiny}
+  Shared Channel
+  \begin{itemize}
+  \item Flows in vicinity contend with each other
+  \item Parts of flows traversing multiple hops will contend with itself
+  \end{itemize}
+
+  \vfill
+
+  Limited Bandwidth
+  \begin{itemize}
+  \item Possibly only a few kilobytes per second
+  \end{itemize}
+
+  \vfill
+
+  \begin{flushleft}
+    \begin{tiny}
+      \begin{minipage}{1.0\linewidth}
+        \fullcite{AK01}
+      \end{minipage}
+    \end{tiny}
+  \end{flushleft}
+
   
-  \note{
-    Notes for slide 1:
-    \begin{itemize}
-    \item note
-    \item note
-    \end{itemize}    
-  }
 \end{frame}
 
 \subsection{New Subsection}
-
-\begin{frame}[t]
-  \frametitle{Introduction: Continued\dots}
-
-  \begin{center}
-    Sample Image\\
-    \includegraphics[width=1\linewidth]{macewan}  
-  \end{center}
-
-  \note{
-    Notes for slide 2:
-    \begin{itemize}
-    \item note
-    \item note
-    \end{itemize}
-  }
-\end{frame}
 
 \include{ad_hoc_positioning}
 \include{Mobile_ad-hoc}
@@ -240,7 +240,7 @@
 \begin{frame}[t]
   \frametitle{Conclusions}
 
-  State some concluding remarks.
+  Questions?
   
   \vfill
 
@@ -251,13 +251,6 @@
 
   \vfill
   
-  \note{
-    Notes for slide 3:
-    \begin{itemize}
-    \item note
-    \item note
-    \end{itemize}
-  }
 \end{frame}
 
 \end{document}
