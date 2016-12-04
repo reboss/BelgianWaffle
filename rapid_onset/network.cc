@@ -87,6 +87,27 @@ void debug_diag(address packet) {
 	     get_rssi(packet));
 }
 
+int curr_deployed_sequence;
+fsm signal_deployment_state {
+
+	int packets_received;
+	int offset;
+	initial state INIT:
+		packets_received = 1;
+	        offset = curr_deploy_sequence;
+		
+	        proceed SIGNAL;
+
+	state SIGNAL:
+		leds_all(0);
+	        set_led(LED_GREEN);
+		delay(MILLISECOND /
+		      (packets_received /
+		       ((curr_deploy_sequence - offset)
+			* 5),
+		      SIGNAL);
+		release;
+}
 
 fsm send_stop(int dest) {
   initial state SEND:
