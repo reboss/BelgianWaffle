@@ -103,6 +103,7 @@ fsm send_stop(int dest) {
 	address packet = tcv_wnp(SEND, sfd, STOP_LEN);
 	build_packet(packet, my_id, dest, STOP, seq, payload);
 	tcv_endp(packet);
+        acknowledged = NO;
 	delay(DELAY, SEND);
 	release;
 }
@@ -114,26 +115,26 @@ bool is_last_node(void) {
 
 fsm final_deploy {
 
+	int i = 0;
     address packet;
 	char msg[56];
 	int len;
 	initial state INIT:
-	  diag("value of ack is %d\r\n", acknowledged);
-        if (test == PACKET_TEST)
+	    diag("value of ack is %d\r\n", acknowledged);
             set_power(sfd, HIGH_POWER);//set high power
-		if (debug)
-		  diag("In final_deploy fsm\r\n");
-		proceed SEND;
+	    if (debug)
+	        diag("In final_deploy fsm\r\n");
+	    proceed SEND;
 
 	state SEND:
-	  if (!acknowledged) {
-		diag("In final_deploy_acknowledged\r\n");
-		form(msg, "%dTEAM FLABERGASTED", msgs_lost);
+	  if (msgs_lost == 0 || !acknowledged) {
+		diag("In sending final deploy\r\n");
+		form(msg, "%dTEAM FLABERGASTED%d", msgs_lost, i);
 		//form(msg, "55TEAM FLABBERGASTED");
 		len = strlen(msg);
 		len += len % 2 ? 1 : 2;//add room for null term
 		packet = tcv_wnp(SEND, sfd, 8 + len);
-		build_packet(packet, my_id, SINK_ID, STREAM, seq++, msg);
+		build_packet(packet, my_id, SINK_ID, STREAM, seq, msg);
 		//packet = tcv_wnp(SEND, sfd, 8 + 20);
 		//build_packet(packet, my_id, SINK_ID, STREAM, seq,
 		//"TEAM FLABBERGASTED");
@@ -141,9 +142,18 @@ fsm final_deploy {
 		msgs_lost++;
 		delay(SECOND, SEND);
 		release;
-	  } else {
-		finish;
-	  }
+	    }
+	    proceed NEW;
+
+	state NEW:
+		acknowledged = NO;
+		diag("final deploy NEW\r\n");
+		if (i >= 100)
+			finish;
+		i++;
+		msgs_lost = 0;
+		seq++;
+		proceed SEND;
 }
 
 
@@ -393,6 +403,7 @@ fsm receive {
 	    if (sink) {
 		  if (debug) {
 			    diag("STREAM:%s\r\n", get_payload(packet));
+				diag("STREAM PACKET LOSS: %d PACKETS\r\n", msgs_lost);
 				debug_diag(packet);
 		  }
 				break;
@@ -418,8 +429,7 @@ fsm receive {
 			diag("Recieved COMMAND\r\n");
 	    break;
 	case STOP:
-            if (test == PACKET_TEST)
-                set_power(sfd, HIGH_POWER);//set high power
+            set_power(sfd, HIGH_POWER);//set high power
 	    if (get_destination(packet) == my_id) {
 		    set_led(LED_GREEN_S);
 	        runfsm send_ack(get_source_id(packet));
@@ -429,8 +439,6 @@ fsm receive {
 		    runfsm send_ping;
 		}
 		cont = 0;
-		if(test == PACKET_TEST)
-		    set_power(sfd,HIGH_POWER);
 		if (debug)
 			diag("\r\nRECEIVED STOP...\r\n");
 	    }
