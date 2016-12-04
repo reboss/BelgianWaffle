@@ -25,7 +25,9 @@ void set_power(int sfd, int power) {
     tcv_control(sfd, PHYSOPT_SETPOWER, &power);
 }
 
-void add_stream_info(address packet, int i) {
+void add_stream_info(address packet) {
+    static i = 0;
+
     if (i >= NUM_TEST_MSGS) {
         if (debug >= 1)
             diag("Past max msgs for test data\r\n");
@@ -35,5 +37,7 @@ void add_stream_info(address packet, int i) {
     stream_info.seq_num[i] = get_seqnum(packet);
     stream_info.packet_len[i] = get_length(packet);
     stream_info.timestamp[i] = seconds();
+
+    i++;
 }
 

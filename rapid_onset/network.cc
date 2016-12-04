@@ -409,6 +409,7 @@ fsm receive {
             runfsm send_ack(get_hop_id(packet));
             msgs_lost = get_msgs_lost(packet);
             if (sink) {
+                add_stream_info(packet);
                 if (debug) {
                     diag("STREAM:%s\r\n", get_payload(packet));
                     diag("STREAM PACKET LOSS: %d PACKETS\r\n", msgs_lost);
