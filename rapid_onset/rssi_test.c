@@ -36,24 +36,17 @@ int rssi_setup_test(address packet) {
     prev_rssi <<= 1;
     //check rssi
     if (get_rssi(packet) < RSSI_THRESHOLD) {
-	set_led(LED_RED);
+        set_led(LED_RED);
         prev_rssi |= 1;
     } else {
-	set_led(LED_YELLOW);
+        set_led(LED_YELLOW);
         prev_rssi &= ~1;
     }
 
     //if to many were low
     if (num_cutoff(prev_rssi) >= RSSI_LOW_CUTOFF) {
-        /*if (backtrack == NO) {//if starting backtrack
-            prev_rssi = ~0;//fill up prev rssi so it does not imediatly deploy
-            backtrack = YES;
-        }*/
-        //if (backtrack) return 0;//does not deploy until above threshold
         return 1;
     } else {
-        //set_led(LED_YELLOW);
-        //if (backtrack) return 1;//depoys below threshold on backtrack
         return 0;
     }
 }

@@ -24,13 +24,13 @@
 #include "node_tools.h"
 #include "node_led.h"
 
-/* test files */
+// Test files 
 #include "rssi_test.h"
 #include "packet_test.h"
 
 // Milliseconds
 #define DEFAULT_DELAY 2000
-
+ 
 extern int my_id, sfd;
 extern bool deployed;
 extern stream_stat stream_info;
@@ -38,9 +38,11 @@ extern stream_stat stream_info;
 char message[30];
 int receiver = 0, test;
 int max_nodes = 3;
-int ping_delay = DEFAULT_DELAY; //2 Seconds default
-int debug = 0; //Higher numbers for more verbosity
-word current_state; //Unused?
+
+//2 Seconds default ping delay
+int ping_delay = DEFAULT_DELAY;
+
+int debug = 0; 
 
 //Global that indicates if the node is the sink or not
 bool sink = NO;
@@ -54,8 +56,8 @@ void init_cc1100(void) {
 }
 
 void set_globals_sink_YES(void) {
-  sink = YES;
-  deployed = YES;
+    sink = YES;
+    deployed = YES;
 }
 
 fsm root {
@@ -65,6 +67,7 @@ fsm root {
     initial state INIT:
         init_cc1100();
         leds_all(0);
+		set_led(LED_YELLOW_S);
         runfsm receive;
 	proceed DISPLAY;
 
@@ -78,7 +81,7 @@ fsm root {
           "(N)etwork statistics\r\n"
           "Selection: ",
 	  my_id, ping_delay, max_nodes, debug);
-        proceed SELECTION;
+	  proceed SELECTION;
 
     state SELECTION:
         ser_inf(SELECTION, "%c", &selection);
@@ -95,9 +98,10 @@ fsm root {
 		    break;
             }
             ser_outf(PROMPT, "Beginning Packet Deployment...\r\n");
+			set_power(sfd, LOW_POWER);
 	    set_globals_sink_YES();
-	    test = PACKET_TEST;
-            runfsm send_deploy(test);
+		test = PACKET_TEST;
+		runfsm send_deploy(test);
             break;
         case 'R':
             if (sink) {

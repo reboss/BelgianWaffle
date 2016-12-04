@@ -34,14 +34,14 @@
 \useoutertheme[subsection=false,shadow,footline=institutetitle]{miniframes}
 \useinnertheme{default}
 
-\setbeamercolor*{lower separation line head}{bg=macewan} 
-\setbeamercolor*{normal text}{fg=black,bg=white} 
-\setbeamercolor*{alerted text}{fg=red} 
-\setbeamercolor*{example text}{fg=black} 
-\setbeamercolor*{structure}{fg=black} 
+\setbeamercolor*{lower separation line head}{bg=macewan}
+\setbeamercolor*{normal text}{fg=black,bg=white}
+\setbeamercolor*{alerted text}{fg=red}
+\setbeamercolor*{example text}{fg=black}
+\setbeamercolor*{structure}{fg=black}
 
-\setbeamercolor*{palette tertiary}{fg=black,bg=black!10} 
-\setbeamercolor*{palette quaternary}{fg=black,bg=black!10} 
+\setbeamercolor*{palette tertiary}{fg=black,bg=black!10}
+\setbeamercolor*{palette quaternary}{fg=black,bg=black!10}
 \setbeamercolor*{titlelike}{fg=macewan}
 
 % color schemes for boxes
@@ -105,7 +105,7 @@
     \vskip2pt%
     \includegraphics[width=\logowidth]{macewan}%
   \end{minipage}%
-  % 
+  %
   \linebreak[0]\vskip4pt%
   \begin{beamercolorbox}[colsep=1.5pt]{lower separation line head}
   \end{beamercolorbox}
@@ -121,7 +121,7 @@
   \leavevmode%
   \begin{beamercolorbox}{footline}%
     \usebeamerfont{page number in head/foot}%
-    % 
+    %
     \vskip2pt\hspace{2mm}%
     \insertshorttitle, \insertshortauthor, \insertshortevent%
     \hfill%
@@ -150,7 +150,7 @@
     Authors:\vskip0.1em
     \insertauthor\par
   \end{flushleft}
-  
+
 }
 
 % -----------------------------------------------------------------------------
@@ -185,54 +185,14 @@
 \begin{frame}[t]
   \frametitle{Introduction}
 
-  
-  Lack of fixed network infrastructure
-  \begin{itemize}
-  \item Dedicated routers absent
-  \end{itemize}
-
-  \vfill
-  
-  Mobility
-  \begin{itemize}
-  \item Hosts in network may be mobile
-  \item In our implementation: only mobile until deployed
-  \end{itemize}
-
-  \vfill
-
-  Shared Channel
-  \begin{itemize}
-  \item Flows in vicinity contend with each other
-  \item Parts of flows traversing multiple hops will contend with itself
-  \end{itemize}
-
-  \vfill
-
-  Limited Bandwidth
-  \begin{itemize}
-  \item Possibly only a few kilobytes per second
-  \end{itemize}
-
-  \vfill
-
-  \begin{flushleft}
-    \begin{tiny}
-      \begin{minipage}{1.0\linewidth}
-        \fullcite{AK01}
-      \end{minipage}
-    \end{tiny}
-  \end{flushleft}
-
-  
 \end{frame}
-
-\subsection{New Subsection}
 
 \include{ad_hoc_positioning}
 \include{Mobile_ad-hoc}
 \include{atp_protocol}
 \include{protocol}
+\include{adaptive_power}
+\include{improve_TCP_in_mobile_ad_hoc}
 
 \section{Conclusions}
 \subsection*{}
@@ -251,7 +211,6 @@
   \end{center}
 
   \vfill
-  
 \end{frame}
 
 \end{document}

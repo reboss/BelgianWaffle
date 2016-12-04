@@ -26,6 +26,7 @@
 #include "node_led.h"
 
 #define DEPLOY_DELAY 300
+#define STREAM_DELAY 250
 #define MAP_P 56
 #define PING_LEN     10
 #define STOP_LEN     10
@@ -89,16 +90,13 @@ void debug_diag(address packet) {
 	     get_rssi(packet));
 }
 
+// sends the stop signal to the parent node after it deploys
 fsm send_stop(int dest) {
   initial state SEND:
-	if (debug)
-	  diag("Entered send_stop FSM\r\n");
 	if (acknowledged) {
-	  if (debug)
-		diag("Entered send_stop_acknowledged");
 	  deployed = YES;
 	  detrm_fsm_deploy_behvr();
-	  set_led(LED_GREEN);
+	  set_led(LED_GREEN_S);
 	  finish;
 	}
 	address packet = tcv_wnp(SEND, sfd, STOP_LEN);
@@ -114,6 +112,9 @@ bool is_last_node(void) {
     return my_id == (max_nodes - 1);
 }
 
+
+// last node in the chain runs this fsm to start sending a stream of
+// data to the sink
 fsm final_deploy {
 
 	int i = 0;
@@ -123,25 +124,19 @@ fsm final_deploy {
 	initial state INIT:
 	    diag("value of ack is %d\r\n", acknowledged);
             set_power(sfd, HIGH_POWER);//set high power
-	    if (debug)
-	        diag("In final_deploy fsm\r\n");
 	    proceed SEND;
 
 	state SEND:
 	  if (msgs_lost == 0 || !acknowledged) {
 		diag("In sending final deploy\r\n");
-		form(msg, "%dTEAM FLABERGASTED%d", msgs_lost, i);
-		//form(msg, "55TEAM FLABBERGASTED");
+		form(msg, "%dTEAM FLABERGASTED%d\0", msgs_lost, i);
 		len = strlen(msg);
 		len += len % 2 ? 1 : 2;//add room for null term
 		packet = tcv_wnp(SEND, sfd, 8 + len);
 		build_packet(packet, my_id, SINK_ID, STREAM, seq, msg);
-		//packet = tcv_wnp(SEND, sfd, 8 + 20);
-		//build_packet(packet, my_id, SINK_ID, STREAM, seq,
-		//"TEAM FLABBERGASTED");
 		tcv_endp(packet);
 		msgs_lost++;
-		delay(SECOND, SEND);
+		delay(STREAM_DELAY, SEND);
 		release;
 	    }
 	    proceed NEW;
@@ -158,6 +153,9 @@ fsm final_deploy {
 }
 
 
+// checks if the current deployed node is the final node or not
+// based on that, it either sends the stop signal to the parent
+// or begins sending a stream of data
 void detrm_fsm_deploy_behvr(void) {
   if (!is_last_node()){ // OLD (For verify): my_id<max_nodes-1
 	if(test == PACKET_TEST){
@@ -177,19 +175,15 @@ void set_test_mode_data(address packet) {
     deployed = YES;
 }
 
-/*
-   sends the same packet continuously until an ack is received.
-   After 10 retries, lost connection is assumed.
-*/
-
- 
+// sets the function used for testing the connection,
+// either packet loss or rssi
 void set_test_behaviour(address packet) {
 	static bool backtrack = NO;
 	
 	switch(get_payload(packet)[0]) {
 	case RSSI_TEST:
 		if (debug)
-			diag("RSSI: %x\r\n", get_rssi(packet));//curently the seq number ???
+			diag("RSSI: %x\r\n", get_rssi(packet));
 		test = RSSI_TEST;
 		if (rssi_setup_test(packet)) {
 			set_test_mode_data(packet);
@@ -200,6 +194,7 @@ void set_test_behaviour(address packet) {
 		if (debug)
 			diag("PACKET TEST SEQ: %x\r\n", get_seqnum(packet));
 		test = PACKET_TEST;
+		set_led(LED_YELLOW_S);
 		if (packet_setup_test(packet) == 1) {
 			set_test_mode_data(packet);
 			runfsm send_stop(my_id - 1);
@@ -213,7 +208,9 @@ void set_test_behaviour(address packet) {
 	}
 }
 
-//TODO: SEE DEPLOYED case in receive fsm
+// broadcast a signal for nodes listening can use to connect to
+// a node that connects will become the child of the node sending
+// the deploy signal
 fsm send_deploy {
 
     byte pl[3];
@@ -241,52 +238,61 @@ fsm send_deploy {
 
 	    //temporary increment
 	    seq = (seq + 1) % 256;
-	    delay(SECOND, SEND_DEPLOY_ACTIVE);
+	    delay(DEPLOY_DELAY, SEND_DEPLOY_ACTIVE);
 	    release;
         } else {
-		//runfsm send_stop(my_id - 1);
 		finish;
 	}
         
 }
 
+//  sends an acknowledgment for certain packets (STOP and STREAM)
 fsm send_ack(int dest) {
 
   // ack sequence will match packet it is responding to
   initial state SEND:
-	  if (debug)
-		  diag("In send ack fsm\r\n");
     address packet = tcv_wnp(SEND, sfd, ACK_LEN);
     build_packet(packet, my_id, dest, ACK, 0, NULL);
     tcv_endp(packet);
     finish;
 }
 
+// Used to middleman, or forward, data to the nodes parent
 fsm stream_data(address packet_copy) {
+  
+  /* indicates whether to increment msgs_lost when we don't receive an ACK */
+  int flag;
+  
+  initial state INIT:
+	flag = NO;
+    proceed SEND;
 
-  initial state SEND:
-	  if (debug)
-		  diag("In stream data fsm\r\n");
+  state SEND:
 
 	  if (acknowledged) {
 		  if (debug)
-			  diag("stream ack\r\n");
-	      finish;
-          }
-        if (is_lost_con_retries())
-            set_led(LED_RED_S);
+			diag("Stream Packet Acknowledged\r\n");
+		  flag = NO;
+		  ufree(packet_copy);
+		  finish;
+	  }
+	  if (flag == YES)
+		msgs_lost++;
+
+	  if (is_lost_con_retries())
+		set_led(LED_RED_S);
         address packet = tcv_wnp(SEND, sfd, packet_length(packet_copy));
         copy_packet(packet, packet_copy);
-		ufree(packet_copy);
 	if (debug)
 		debug_diag(packet);
-        tcv_endp(packet);
-	if (debug)
-		diag("End fsm stream_data\r\n");
-        finish;
+	tcv_endp(packet);
+	flag = YES;
+	delay(STREAM_DELAY, SEND);
+	release;
 }
 
 
+// indicate a reset in the node has occured
 fsm indicate_reset {
 
     int reset_time = 300 * MILLISECOND;
@@ -307,7 +313,7 @@ fsm indicate_reset {
 	release;
 }
 
-
+// respond to a ping
 fsm send_pong {
 
     initial state SEND:
@@ -315,10 +321,11 @@ fsm send_pong {
         build_packet(packet, my_id, parent_id, PING, 0, NULL);
 	tcv_endp(packet);
 	if (debug)
-		diag("sent pong\r\n");
+		diag("Sent Pong\r\n");
         finish;
 }
 
+// send a ping to child node to test if still connected
 fsm send_ping {
 
     int ping_retries = 0;
@@ -328,28 +335,26 @@ fsm send_ping {
 		ping_retries = 0;
 	  else
 		ping_retries++;
-	  /*if (is_lost_con_ping(ping_retries)) {
+	  if (is_lost_con_ping(ping_retries)) {
 		if (!sink) {
-		  killall(receive);
-		  killall(send_deploy);
-		  killall(send_pong);
-		  killall(send_stop);
-		  killall(stream_data);
-		  runfsm indicate_reset;
-		  finish;
+			killall(receive);
+			killall(send_deploy);
+			killall(send_pong);
+			killall(send_stop);
+			killall(stream_data);
+			runfsm indicate_reset;
+			finish;
 		}
 		if (debug)
 			diag("Network shutdown\r\n");
 		cont = 1;
 		runfsm send_deploy;
 	        finish;
-	}*/
+	  }
 
         pong = NO;
         address packet = tcv_wnp(SEND, sfd, PING_LEN);
         build_packet(packet, my_id, child_id, PING, 0, NULL);
-	/*if (debug)
-		debug_diag(packet);*/
 	tcv_endp(packet);
 	if (debug)
 		diag("Ping sent\r\n");
@@ -357,6 +362,8 @@ fsm send_ping {
 	release;
 }
 
+
+// receives and evaluates packets
 fsm receive {
 
     address packet;
@@ -365,14 +372,14 @@ fsm receive {
 
     state RECV:
         packet = tcv_rnp(RECV, sfd);
-        if (debug)
-            diag("after receive RECV packet recieve\n\r");
         proceed EVALUATE;
 
     state EVALUATE:
         switch (get_opcode(packet)) {
         case PING:
+		// check if ping is for me
             if (get_destination(packet) == my_id) {
+		    // check if a ping or pong
                 if (get_source_id(packet) == parent_id) {
                     if (debug)
                         diag("sending pong");
@@ -391,20 +398,16 @@ fsm receive {
             max_nodes = get_payload(packet)[1];//set max nodes
             set_test_behaviour(packet);
             break;
-
-        /* IS DEPLOYED OPCODE BEING USED? */
-        case DEPLOYED:
-            if (debug)
-                diag("Recieved DEPLOYED");
-            //runfsm send_deployed;
-            break;
         case STREAM:
+		if (crunning(stream_data) >= 1)
+			break;
+		  if (debug)
             diag("stream hop id: %d\r\nchild id:%d\r\nstream source id %d\r\n",
-            get_hop_id(packet), child_id, get_source_id(packet));
-            if (get_hop_id(packet) != child_id) {//if not from parent
-                diag("not parent\r\n");
-                break;
-            }
+				 get_hop_id(packet), child_id, get_source_id(packet));
+		  if (get_hop_id(packet) != child_id) {//if not from parent
+			if (debug) diag("not parent\r\n");
+			break;
+		  }
             runfsm send_ack(get_hop_id(packet));
             msgs_lost = get_msgs_lost(packet);
             if (sink) {
@@ -412,14 +415,9 @@ fsm receive {
                 if (debug) {
                     diag("STREAM:%s\r\n", get_payload(packet));
                     diag("STREAM PACKET LOSS: %d PACKETS\r\n", msgs_lost);
-                    //debug_diag(packet);
                 }
                 break;
             } else {
-                if (debug){
-                    diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
-                    //debug_diag(packet);
-                }
                 acknowledged = NO;
                 address hop_packet = umalloc(packet_length(packet) / 2 *
                                              sizeof(word));
@@ -442,11 +440,10 @@ fsm receive {
         case STOP:
             set_power(sfd, HIGH_POWER);//set high power
             if (get_destination(packet) == my_id) {
-                set_led(LED_GREEN_S);
+			  set_led(LED_GREEN_S);
                 runfsm send_ack(get_source_id(packet));
                 if (cont) {
                     if (debug)
-                        diag("cont is equal to 1 and will be set to 0\r\n");
                     runfsm send_ping;
                 }
                 cont = 0;
@@ -460,8 +457,6 @@ fsm receive {
             break;
         }
         tcv_endp(packet);
-        if (debug)
-            diag("END fsm Recieve\r\n");
         proceed RECV;
 }
 

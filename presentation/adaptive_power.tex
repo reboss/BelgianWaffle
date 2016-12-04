@@ -1,0 +1,103 @@
+\section{ATPC}
+\subsection*{}
+
+
+\begin{frame}[t]
+  \frametitle{Adaptive Transmission Power Control}
+  
+  ATPC
+  \begin{itemize}
+  \item Developed an algorithm to change transmission power to improve efficiency
+  \item Try and guaranteed a specified link quality
+  \item Was developed to save power and increase the lifetime of nodes
+  \end{itemize}
+
+  \vfill
+
+  \begin{flushleft}
+    \begin{tiny}
+      \begin{minipage}{1.0\linewidth}
+        \fullcite{AK05}
+      \end{minipage}
+    \end{tiny}
+  \end{flushleft}
+  
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{Deployment and Maintenance}
+
+  Beacons
+  \begin{itemize}
+  \item sends beacons for deployment and periodically after
+  \item the beacons are a set of 100, or 20 packets at differing power levels
+  \end{itemize}
+
+  Model
+  \begin{itemize}
+  \item nodes then report back to the sending node (record the average RSSI and PRR)
+  \item Using the data reported back they create a model that is used to determine optimal power levels for different nodes
+  \end{itemize}
+
+  \vfill
+
+  \begin{flushleft}
+    \begin{tiny}
+      \begin{minipage}{1.0\linewidth}
+        \fullcite{AK05}
+      \end{minipage}
+    \end{tiny}
+  \end{flushleft}
+  
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{RSSI and LQI}
+
+  RSSI and LQI
+  \begin{itemize}
+  \item RSSI: is a measurement of signal power which is averaged for eight signal periods
+  \item LQI: is a measurement based on the error rate of the first eight symbols
+  \end{itemize}
+
+  \vfill
+
+  Discoveries
+  \begin{itemize}
+  \item RSSI and transmission power are linearly related
+  \item There is a strong correlation between RSSI/LQI and TX power
+  \end{itemize}
+
+  \vfill
+
+  \begin{flushleft}
+    \begin{tiny}
+      \begin{minipage}{1.0\linewidth}
+        \fullcite{AK05}
+      \end{minipage}
+    \end{tiny}
+  \end{flushleft}
+
+\end{frame}    
+
+\begin{frame}[t]
+  \frametitle{Discoveries}
+
+  \begin{itemize}
+  \item using ATPC only 78.8\% of the power that a uniform transmission power decide would use
+  \item 3.9\% of the packets sent are control packets and they use 1.9\% of power
+  \item PRR for ATPC is consistently around 98\%
+  \item PRR uniform power level is only at 95\% for 25\% of the time
+  \end{itemize}
+    
+  \vfill
+  
+  \begin{flushleft}
+    \begin{tiny}
+      \begin{minipage}{1.0\linewidth}
+        \fullcite{AK05}
+      \end{minipage}
+    \end{tiny}
+  \end{flushleft}
+
+\end{frame}
