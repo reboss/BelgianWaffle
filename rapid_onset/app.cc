@@ -102,7 +102,7 @@ fsm root {
                 break;
             }
             ser_outf(PROMPT, "Beginning RSSI Deployment...\r\n");
-	    set_power(sfd,LOW_POWER);
+	    set_power(sfd,HIGH_POWER);
 	    set_globals_sink_YES();
 	    test = RSSI_TEST;
 	    set_led(LED_GREEN);
