@@ -1,0 +1,169 @@
+\section{Positioning}
+\subsection{}
+
+
+\begin{frame}[t]
+  \frametitle{Introduction}
+  Locationing In Distributed Ad-Hoc Wireless Sensor Networks
+
+  Chris Savarese, Jan M. Rabaey
+  \begin{itemize}
+  \item Berkeley Wireless Research Center
+  \end{itemize}
+
+  Jan Beutel
+  \begin{itemize}
+  \item Computer Engineering and Networks Lab @ ETH Zurich
+  \end{itemize}
+
+  Date of Conference: May 7-11, 2001
+  Published by IEEE on Aug 7, 2002
+
+  \begin{flushleft}
+    \begin{tiny}
+      \begin{minipage}{1.0\linewidth}
+        \fullcite{AK04}
+      \end{minipage}
+    \end{tiny}
+  \end{flushleft}
+
+  \vfill
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{Purpose}
+  Why do we want the positions of nodes in an ad hoc network?
+  \begin{itemize}
+  \item Deployment
+  \item Military applications
+    \begin{itemize}
+    \item GPS is unreliable in some combat scenarios
+    \item Faster than GPS since it doesn't require a centralized system
+    \item Soldiers can find their position using \textbf{Triangulation}
+    \end{itemize}
+  \end{itemize}
+
+  \vfill
+  
+\end{frame}
+
+    
+
+\begin{frame}[t]
+  \frametitle{Navigation}
+  
+  Positioning in Multihop Networks
+  \begin{itemize}
+  \item Distance Measurements
+    \begin{itemize}
+    \item RSSI
+    \item Angle of arrival (AOA)
+    \item Time of arrival (TOA)
+    \item Time-distance of arrival (TDOA)
+    \end{itemize}
+  \item Triangulation
+    \begin{itemize}
+      \item At least three distance measurements are required to calculate
+        Triangulation.
+      \item Calculated using a system of linear equations
+    \end{itemize}
+  \end{itemize}
+
+  \vfill
+
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{Challenges}
+
+  \begin{itemize}
+  \item Triangulation
+    \begin{itemize}
+    \item Anchor Nodes
+    \item TDOA requires high synchronization
+    \item AOA requires costly antenna arrays
+    \end{itemize}
+  \item RSSI
+    \begin{itemize}
+      \item Sensitive to multi-path, interference and non-line of sight
+        scenarios
+    \end{itemize}
+  \end{itemize}
+
+  \vfill
+
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{Triangulation}
+
+  Range measurements are received from a large amount of neighboring anchor
+  nodes.
+
+  Least-mean squares approach is used to solve the triangluation problem.
+
+  Results with a 5\% range error was achieved.
+
+  \vfill
+
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{Topology Discovery}
+
+  Topology Discovery is done by using the Assumption Based Coordinates (ABC)
+  algorithm.
+
+  \begin{itemize}
+  \item Can return relative, or absolute position.
+  \item Assumes the first node is located at (0,0,0) or GPS determined origin.
+  \end{itemize}
+  \begin{center}
+    x2 = \frac{r^2_{01} + r^2_{02} + r^2_{12}}{2r_{01}}
+  \end{center}
+  \begin{center}
+    y2 = \sqrt{r^2_{02} - x^2_{2}}
+  \end{center}
+  \begin{itemize}
+  \item Where r is the RSSI determined distance
+  \end{itemize}
+
+  \vfill
+\end {frame}
+
+\begin{frame}[t]
+  \frametitle{Global Positioning}
+
+  Cooperative Ranging is used to converge nodes to a global solution.
+  \begin{itemize}
+  \item A global resource is needed.
+  \item Routing bottlenecks and lots of wasted energy
+  \end{itemize}
+
+  Each node concurrently executes functions.
+  \begin{itemize}
+  \item Receive distance information from neighboring nodes
+  \item Solve distance problem
+  \item Transmit results to neighboring nodes
+  \end{itemize}
+  
+
+\begin{frame}[t]
+  \frametitle{Implementation}
+
+  In regards to our project, the ABC algorithm can be used for deployment.
+  
+  You would have to know distance ahead of time.
+
+  Compare network distance to actual distance, deploy if \% error is within a
+  threshold.
+
+  \vfill
+
+\end {frame}
+
+  
+
+  
+  
+    
