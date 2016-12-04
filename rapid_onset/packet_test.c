@@ -13,7 +13,7 @@
 #include "sysio.h"
 #include "node_led.h"
 
-#define PACKET_LOSS_THRESHOLD 8
+#define PACKET_LOSS_THRESHOLD 4
 
 int num_lost(word losses) {
     int i, lost = 0;

@@ -327,7 +327,7 @@ fsm send_ping {
 		ping_retries = 0;
 	  else
 		ping_retries++;
-	  if (is_lost_con_ping(ping_retries)) {
+	  /*if (is_lost_con_ping(ping_retries)) {
 		if (!sink) {
 		  killall(receive);
 		  killall(send_deploy);
@@ -342,7 +342,7 @@ fsm send_ping {
 		cont = 1;
 		runfsm send_deploy;
 	        finish;
-	}
+	}*/
 
         pong = NO;
         address packet = tcv_wnp(SEND, sfd, PING_LEN);
@@ -413,7 +413,7 @@ fsm receive {
 				diag("STREAM PACKET LOSS: %d PACKETS\r\n", msgs_lost);
 				//debug_diag(packet);
 		  }
-				break;
+                  break;
 	    } else {
 		    if (debug){
 			    diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
@@ -428,10 +428,10 @@ fsm receive {
 	case ACK://deal w/ type
 		if (debug)
 			diag("Recieved ACK\r\n");
-	    //if (get_destination(packet) == my_id) {
-	    acknowledged = YES;
-	    retries = 0;
-	    // }
+	    if (get_destination(packet) == my_id) {
+	        acknowledged = YES;
+	        retries = 0;
+	    }
 	    break;
 	case COMMAND:
 		if (debug)

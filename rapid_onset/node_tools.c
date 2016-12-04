@@ -129,7 +129,7 @@ void build_packet(address packet, int source_id, int destination,
 
 /* copys packet but inserts in new hop id*/
 void copy_packet(address new, address old) {
-    int length = strlen((byte *) (old + 3));
+    int length = get_length(old);//= strlen((byte *) (old + 3));
     //copy old word 1 and set new hop id
     new[1] = (old[1] & ~(15 << 8)) | (my_id << 8);
     //word 2
