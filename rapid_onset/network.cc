@@ -91,6 +91,7 @@ void debug_diag(address packet) {
 }
 
 
+// sends the stop signal to the parent node after it deploys
 fsm send_stop(int dest) {
   initial state SEND:
 	if (acknowledged) {
@@ -112,6 +113,9 @@ bool is_last_node(void) {
     return my_id == (max_nodes - 1);
 }
 
+
+// last node in the chain runs this fsm to start sending a stream of
+// data to the sink
 fsm final_deploy {
 
 	int i = 0;
@@ -150,6 +154,9 @@ fsm final_deploy {
 }
 
 
+// checks if the current deployed node is the final node or not
+// based on that, it either sends the stop signal to the parent
+// or begins sending a stream of data
 void detrm_fsm_deploy_behvr(void) {
   if (!is_last_node()){ // OLD (For verify): my_id<max_nodes-1
 	if(test == PACKET_TEST){
@@ -169,12 +176,8 @@ void set_test_mode_data(address packet) {
     deployed = YES;
 }
 
-/*
-   sends the same packet continuously until an ack is received.
-   After 10 retries, lost connection is assumed.
-*/
-
- 
+// sets the function used for testing the connection,
+// either packet loss or rssi
 void set_test_behaviour(address packet) {
 	static bool backtrack = NO;
 	
@@ -206,6 +209,9 @@ void set_test_behaviour(address packet) {
 	}
 }
 
+// broadcast a signal for nodes listening can use to connect to
+// a node that connects will become the child of the node sending
+// the deploy signal
 fsm send_deploy {
 
     byte pl[3];
@@ -241,6 +247,7 @@ fsm send_deploy {
         
 }
 
+//  sends an acknowledgment for certain packets (STOP and STREAM)
 fsm send_ack(int dest) {
 
   // ack sequence will match packet it is responding to
@@ -251,6 +258,7 @@ fsm send_ack(int dest) {
     finish;
 }
 
+// Used to middleman, or forward, data to the nodes parent
 fsm stream_data(address packet_copy) {
   
   /* indicates whether to increment msgs_lost when we don't receive an ACK */
@@ -285,6 +293,7 @@ fsm stream_data(address packet_copy) {
 }
 
 
+// indicate a reset in the node has occured
 fsm indicate_reset {
 
     int reset_time = 300 * MILLISECOND;
@@ -305,7 +314,7 @@ fsm indicate_reset {
 	release;
 }
 
-
+// respond to a ping
 fsm send_pong {
 
     initial state SEND:
@@ -317,6 +326,7 @@ fsm send_pong {
         finish;
 }
 
+// send a ping to child node to test if still connected
 fsm send_ping {
 
     int ping_retries = 0;
@@ -326,28 +336,26 @@ fsm send_ping {
 		ping_retries = 0;
 	  else
 		ping_retries++;
-	  /*if (is_lost_con_ping(ping_retries)) {
+	  if (is_lost_con_ping(ping_retries)) {
 		if (!sink) {
-		  killall(receive);
-		  killall(send_deploy);
-		  killall(send_pong);
-		  killall(send_stop);
-		  killall(stream_data);
-		  runfsm indicate_reset;
-		  finish;
+			killall(receive);
+			killall(send_deploy);
+			killall(send_pong);
+			killall(send_stop);
+			killall(stream_data);
+			runfsm indicate_reset;
+			finish;
 		}
 		if (debug)
 			diag("Network shutdown\r\n");
 		cont = 1;
 		runfsm send_deploy;
 	        finish;
-	}*/
+	  }
 
         pong = NO;
         address packet = tcv_wnp(SEND, sfd, PING_LEN);
         build_packet(packet, my_id, child_id, PING, 0, NULL);
-	/*if (debug)
-		debug_diag(packet);*/
 	tcv_endp(packet);
 	if (debug)
 		diag("Ping sent\r\n");
@@ -355,6 +363,8 @@ fsm send_ping {
 	release;
 }
 
+
+// receives and evaluates packets
 fsm receive {
 
     address packet;
@@ -368,7 +378,9 @@ fsm receive {
     state EVALUATE:
         switch (get_opcode(packet)) {
         case PING:
+		// check if ping is for me
             if (get_destination(packet) == my_id) {
+		    // check if a ping or pong
                 if (get_source_id(packet) == parent_id) {
                     if (debug)
                         diag("sending pong");
@@ -387,13 +399,6 @@ fsm receive {
             max_nodes = get_payload(packet)[1];//set max nodes
             set_test_behaviour(packet);
             break;
-
-        /* IS DEPLOYED OPCODE BEING USED? */
-        case DEPLOYED:
-            if (debug)
-                diag("Recieved DEPLOYED");
-            //runfsm send_deployed;
-            break;
         case STREAM:
 		if (crunning(stream_data) >= 1)
 			break;
@@ -411,7 +416,6 @@ fsm receive {
                 if (debug) {
                     diag("STREAM:%s\r\n", get_payload(packet));
                     diag("STREAM PACKET LOSS: %d PACKETS\r\n", msgs_lost);
-                    //debug_diag(packet);
                 }
                 break;
             } else {
