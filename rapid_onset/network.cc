@@ -401,7 +401,7 @@ fsm receive {
             diag("stream hop id: %d\r\nchild id:%d\r\nstream source id %d\r\n",
 				 get_hop_id(packet), child_id, get_source_id(packet));
 		  if (get_hop_id(packet) != child_id) {//if not from parent
-			diag("not parent\r\n");
+			if (debug) diag("not parent\r\n");
 			break;
 		  }
             runfsm send_ack(get_hop_id(packet));
