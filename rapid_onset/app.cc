@@ -24,7 +24,7 @@
 #include "node_tools.h"
 #include "node_led.h"
 
-/* Test files */
+// Test files 
 #include "rssi_test.h"
 #include "packet_test.h"
 
