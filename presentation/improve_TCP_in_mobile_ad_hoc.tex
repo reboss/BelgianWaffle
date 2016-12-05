@@ -1,0 +1,123 @@
+\section{Positioning}
+\subsection*{}
+
+
+\begin{frame}[t]
+  \frametitle{Introduction}
+  Review of Klemm’s et. al, Improving TCP performance in ad hoc networks using signal strength based link management and Relation to CMPT 464, A2
+
+  Elliott Sobek
+  \begin{flushleft}
+    \begin{tiny}
+      \begin{minipage}{1.0\linewidth}
+        \fullcite{klemmet_et_al}
+      \end{minipage}
+    \end{tiny}
+  \end{flushleft}
+
+  \vfill
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{Introduction}
+  \begin{itemize}
+  \item TCP performance in ad hoc networks
+  \item Seek to increase TCP performance in network
+  \item Proposed solution to implement design uses signal strength
+  \item Proposed solution only effective for solving mobility issues
+  \item Simulation results are promising
+  \item UDP not considered
+  \end{itemize}
+
+  \vfill
+
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{Crux}
+  \begin{itemize}
+  \item Would introducing a connection characteristic such as signal strength improve a mobile TCP ad hoc network’s performance?
+  \end{itemize}
+
+  \vfill
+
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{Related Work}
+  \begin{itemize}
+  \item Use of explicit link failure and explicit rout establishment notifications
+  \item Use of fixed RTO
+  \item Introduction of the COPAS protocol
+  \item Route failure prediction
+  \item Pre-emptive routing scheme
+
+  \item No pervious work salvages transit packets
+  \item Klemm’s design seeks to solve this
+  \end{itemize}
+
+  \vfill
+
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{Packet losses in ad hoc networks}
+  \begin{itemize}
+  \item Node mobility and link layer congestion are the two main reasons for packet losses
+  \item During a situation of congestion false link failures may arise
+  \item Transmission range 250m and interference range of 550m
+  \end{itemize}
+
+  \vfill
+
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{Reducing Link Failures}
+  \begin{itemize}
+  \item Mechanism used to reduce packet loss in mobile network is measuring signal strength at the physical layer
+  \item First determine if a link failure due to mobility or congestion
+  \item Coping with false link failures
+  \item Two mechanisms for alleviating the effects of mobility on TCP performance, Proactive and Reactive Link Management
+  \item Modification to the AOBV
+  \end{itemize}
+
+  \vfill
+
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{Findings/Disscussion}
+  \begin{itemize}
+  \item Simulation results
+  \item Effects of traffic loaf
+  \item Effects of node mobility
+  \item Higher packet loss due to mobility the better greater the improvement
+  \end{itemize}
+
+  \vfill
+
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{Future Work}
+  \begin{itemize}
+  \item The design of smart techniques to estimate the level of congestion in a network
+  \item Correctly determine the levels of congestion of the network
+  \end{itemize}
+
+  \vfill
+
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{Relation}
+  \begin{itemize}
+  \item Use of signal strength to determine positive node loss
+  \item Deploying nodes have a relation to signal strength to find optimal deployment location
+  \item Power level management improves packet throughput
+  \end{itemize}
+
+  \vfill
+
+\end{frame}
