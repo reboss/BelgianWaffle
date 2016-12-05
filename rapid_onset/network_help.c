@@ -28,12 +28,17 @@ void set_power(int sfd, int power) {
 void add_stream_info(address packet) {
     static i = 0;
 
+    diag("%d,%d,%d,%d\r\n", get_msgs_lost(packet), get_seqnum(packet),
+				get_length(packet), seconds());
     if (i == 0)
         stream_info.num_elems = 0;
 
     if (i >= NUM_TEST_MSGS) {
         if (debug >= 1)
             diag("Past max msgs for test data\r\n");
+        return;
+    }
+    if (i != 0 && get_seqnum(packet) == stream_info.seq_num[i - 1]) {
         return;
     }
     stream_info.packet_loss[i] = get_msgs_lost(packet);
