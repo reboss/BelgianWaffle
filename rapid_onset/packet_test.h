@@ -16,11 +16,16 @@
 #include "sysio.h"
 //+++ packet_test.c
 
-/* Records how many on the last 15 packets dropped below the rssi threshold, anh
+/**
+ * packet_setup_test
+ *
+ * Records how many on the last 15 packets dropped below the rssi threshold, anh
  *  returns if too many were lost.
- * Parameters: the packet address being assessed 
- * Return: 1 if the number of lost packets in the last 15 packets exceeds a
- *  thresholds
+ * Args:
+ * address packet - the DEPLOY packet being tested
+ *
+ * Returns:
+ * 1 if the number of lost packets in the last 15 packets exceeds the threshold
  */
 int packet_setup_test(address);
 
