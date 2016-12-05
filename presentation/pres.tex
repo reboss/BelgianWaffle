@@ -6,7 +6,7 @@
 % -----------------------------------------------------------------------------
 
 \documentclass[compress]{beamer}
-
+\let\Tiny=\tiny
 % If you'd like a PDF containing only the notes, uncomment the four
 % lines below.
 % \setbeameroption{show notes}
@@ -53,12 +53,20 @@
 % constants for title, authors, date, ...
 % -----------------------------------------------------------------------------
 
-\title[Short Title]{Long Title}
-\author[Short Author Names]{Long Author Name}
-\date{Date of Presentation}
+\def\insertshorttitle{Rapid Onset Ad Hoc Network}
+\def\insertshortauthor{A.B. C.D. E.S. J.R. K.S.}
+
+\title[Short Title]{Rapid Onset Ad Hoc Network}
+\author[Short Author Names]{
+  A. Bush,
+  C. Dubeau,
+  E. Sobek,
+  J. Robbins,
+  K. Saforo
+}
+\date{December 5th, 2016}
 \institute{\vspace{0.2em}
-  \includegraphics[height=0.85cm]{macewan}\\[0.25em]
-  Edmonton, Alberta, Canada
+  \includegraphics[height=1.5cm]{macewan}\\[0.25em]
 }
 \def\insertshortevent{CMPT 464}
 \def\insertevent{CMPT 464: Wireless Networks and Embedded Systems}
@@ -132,14 +140,18 @@
   \vfill
   \begin{centering}
     {\textcolor{macewan}{\Large{\inserttitle}}}\par
+    \insertevent\par\vskip1.25em
     \ifx\insertsubtitle\@empty\else\vskip0.0em\vskip0.4em{\large{\structure{\textcolor{macewan}\insertsubtitle}}}\par\fi
     \vskip2em\par
-    \insertauthor\par
     \insertinstitute\par\vskip1.25em
-    \insertevent\par\vskip1.25em
-    \insertdate\par
   \end{centering}
   \vfill
+  \begin{flushleft}
+    \insertdate\par\vskip0.2em
+    Authors:\vskip0.1em
+    \insertauthor\par
+  \end{flushleft}
+  
 }
 
 % -----------------------------------------------------------------------------
@@ -217,8 +229,13 @@
   }
 \end{frame}
 
+\include{ad_hoc_positioning}
+\include{Mobile_ad-hoc}
+\include{protocol}
+
 \section{Conclusions}
 \subsection*{}
+
 
 \begin{frame}[t]
   \frametitle{Conclusions}

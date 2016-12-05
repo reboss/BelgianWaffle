@@ -1,0 +1,190 @@
+\section{Mobile Ad-hoc}
+\subsection*{}
+
+
+\begin{frame}[t]
+  \frametitle{Signal Strength Based Link Sensing}
+  
+  Associativity Based Routing (ABR)
+  \begin{itemize}
+  \item Connections are determined to be Stable or Unstable
+  \irem Uses packet tests to check connection
+  \item Changes after detecting lost packets in a row
+  \item Prefrence to stable links when selecting route
+  \end{itemize}
+
+  \vfill
+  
+  Protocol Based Signal Strength
+  \begin{itemize}
+  \item Connections are determined to be strong or weakly connected
+  \item Uses RSSI comparison to determin a connections strength
+  \item Based on the interval of strong and weak connectivity to determin route
+  \end{itemize}
+
+  \vfill
+
+  Weaknesses
+  \begin{itemize}
+    \item Assume there is an exisiting link
+    \item Attempt to avoid link breakage based on signal strength
+    \item Use information to sellect a path with stable links
+  \end{itemize}
+
+  \vfill
+
+  \begin{flushleft}
+    \begin{tiny}
+      \begin{minipage}{1.0\linewidth}
+        \fullcite{AK03}
+      \end{minipage}
+    \end{tiny}
+  \end{flushleft}
+  
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{Optimized Link State Routing}
+
+  OLSR
+  \begin{itemize}
+  \item Uses a partialy fixed network of nodes
+  \item Not suited to a mobile ad-hoc network where link breakage is common
+  \item Connection is unstable after 2 lost pings
+  \item Between missed pings the sent packets are lost
+  \end{itemize}
+
+  \vfill
+
+  Signal Strength Based Link in OLSR
+  \begin{itemize}
+  \item  Predict link breakage before they occure
+  \item  Reward improved or strong signal strength
+  \item  Punish weakening or weak signal strength 
+  \end{itemize}
+
+  \vfill
+
+  \begin{flushleft}
+    \begin{tiny}
+      \begin{minipage}{1.0\linewidth}
+        \fullcite{AK03}
+      \end{minipage}
+    \end{tiny}
+  \end{flushleft}
+  
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{Signal Strength Based Link Algorith}
+
+  Assumptions
+  \begin{itemize}
+  \item The network will be set up in an open space
+  \item The recived power measurement is delivered by hardware
+  \item Always have a fixed node near a mobile node
+  \end{itemize}
+
+  \vfill
+  
+  Algorithm
+  \begin{itemize}
+  \item Will use two thresholds for implementing RSSI
+    \begin{itemize}
+      \item[--] A low threshold will be used to indicate an unstable connection
+      \item[--] A high threshold will be used to indicate a stable connection
+    \end{itemize}
+  \item The diffrence between packet signal strengths is evaluated to affect
+    the connection
+    \begin{itemize}
+      \item[--] If the signal strength from the previous packet and current
+        packet increase it reward the connection
+      \item[--] If the signal strength from the previous packet and current
+        packet decreases it punishes the connection
+    \end{itemize}
+  \end{itemize}
+
+  \vfill
+
+  \begin{flushleft}
+    \begin{tiny}
+      \begin{minipage}{1.0\linewidth}
+        \fullcite{AK03}
+      \end{minipage}
+    \end{tiny}
+  \end{flushleft}
+
+\end{frame}    
+
+\begin{frame}[t]
+  \frametitle{Operational Test}
+
+    Used multiple set up methods for the ad-hoc network
+    \begin{itemize}
+      \item Sequential line
+      \item Disperced deployment
+    \end{itemize}
+    
+    After deployment check overall network performace \linebreak
+    Use Three test for connectivity of nodes
+    \begin{itemize}
+    \item Stationary to Stationary
+    \item Stationary to Mobile
+    \item Mobile to Mobile
+    \end{itemize}
+    
+  \vfill
+  
+  Conclusions
+  \begin{itemize}
+  \item Use of both a packet loss and signal strength check made a more robust
+    network
+  \item Use of algorithm improved performace and helps prevent loops in the
+    letwork
+  \item Increased capacity utilization
+  \end{itemize}
+  
+  \vfill
+  
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{Relevance to Project}
+  
+  RSSI
+  \begin{itemize}
+  \item Strengths
+    \begin{itemize}
+      \item[--] Able to adjust the signal strength that node disconnects
+    \end{itemize}
+  \item Weakness
+    \begin{itemize}
+      \item[--] Objects interfere with signal strength
+    \end{itemize}
+  \end{itemize}
+
+  \vfill
+
+  Packet Loss
+  \begin{itemize}
+  \item Strengths
+    \begin{itemize}
+      \item[--] Quick to disconnect a bad node
+    \end{itemize}
+  \item Weakness
+    \begin{itemize}
+      \item[--] Can lead to less efficent or unstable networks
+    \end{itemize}
+  \end{itemize}
+
+  \vfill
+  
+  \begin{flushleft}
+    \begin{tiny}
+      \begin{minipage}{1.0\linewidth}
+        \fullcite{AK03}
+      \end{minipage}
+    \end{tiny}
+  \end{flushleft}
+
+\end{frame}
