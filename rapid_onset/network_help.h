@@ -16,7 +16,7 @@
 #define HIGH_POWER   2
 #define LOW_POWER    1
 
-#define NUM_TEST_MSGS 2000
+#define NUM_TEST_MSGS 250
 //+++ "network_help.c"
 
 typedef struct _stream_stat {
