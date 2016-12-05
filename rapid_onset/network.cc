@@ -26,6 +26,7 @@
 #include "node_led.h"
 
 #define DEPLOY_DELAY 300
+#define STREAM_DELAY 250
 #define MAP_P 56
 #define PING_LEN     10
 #define STOP_LEN     10
@@ -91,11 +92,7 @@ void debug_diag(address packet) {
 
 fsm send_stop(int dest) {
   initial state SEND:
-	if (debug)
-	  diag("Entered send_stop FSM\r\n");
 	if (acknowledged) {
-	  if (debug)
-		diag("Entered send_stop_acknowledged");
 	  deployed = YES;
 	  detrm_fsm_deploy_behvr();
 	  set_led(LED_GREEN_S);
@@ -123,25 +120,19 @@ fsm final_deploy {
 	initial state INIT:
 	    diag("value of ack is %d\r\n", acknowledged);
             set_power(sfd, HIGH_POWER);//set high power
-	    if (debug)
-	        diag("In final_deploy fsm\r\n");
 	    proceed SEND;
 
 	state SEND:
 	  if (msgs_lost == 0 || !acknowledged) {
 		diag("In sending final deploy\r\n");
 		form(msg, "%dTEAM FLABERGASTED%d\0", msgs_lost, i);
-		//form(msg, "55TEAM FLABBERGASTED");
 		len = strlen(msg);
 		len += len % 2 ? 1 : 2;//add room for null term
 		packet = tcv_wnp(SEND, sfd, 8 + len);
 		build_packet(packet, my_id, SINK_ID, STREAM, seq, msg);
-		//packet = tcv_wnp(SEND, sfd, 8 + 20);
-		//build_packet(packet, my_id, SINK_ID, STREAM, seq,
-		//"TEAM FLABBERGASTED");
 		tcv_endp(packet);
 		msgs_lost++;
-		delay(SECOND, SEND);
+		delay(STREAM_DELAY, SEND);
 		release;
 	    }
 	    proceed NEW;
@@ -244,7 +235,6 @@ fsm send_deploy {
 	    delay(DEPLOY_DELAY, SEND_DEPLOY_ACTIVE);
 	    release;
         } else {
-		//runfsm send_stop(my_id - 1);
 		finish;
 	}
         
@@ -254,8 +244,6 @@ fsm send_ack(int dest) {
 
   // ack sequence will match packet it is responding to
   initial state SEND:
-	  if (debug)
-		  diag("In send ack fsm\r\n");
     address packet = tcv_wnp(SEND, sfd, ACK_LEN);
     build_packet(packet, my_id, dest, ACK, 0, NULL);
     tcv_endp(packet);
@@ -272,12 +260,10 @@ fsm stream_data(address packet_copy) {
     proceed SEND;
 
   state SEND:
-	  if (debug)
-		  diag("In stream data fsm\r\n");
 
 	  if (acknowledged) {
 		  if (debug)
-			diag("stream ack\r\n");
+			diag("Stream Packet Acknowledged\r\n");
 		  flag = NO;
 		  ufree(packet_copy);
 		  finish;
@@ -293,7 +279,7 @@ fsm stream_data(address packet_copy) {
 		debug_diag(packet);
 	tcv_endp(packet);
 	flag = YES;
-	delay(SECOND, SEND);
+	delay(STREAM_DELAY, SEND);
 	release;
 }
 
@@ -326,7 +312,7 @@ fsm send_pong {
         build_packet(packet, my_id, parent_id, PING, 0, NULL);
 	tcv_endp(packet);
 	if (debug)
-		diag("sent pong\r\n");
+		diag("Sent Pong\r\n");
         finish;
 }
 
@@ -376,8 +362,6 @@ fsm receive {
 
     state RECV:
         packet = tcv_rnp(RECV, sfd);
-        if (debug)
-            diag("after receive RECV packet recieve\n\r");
         proceed EVALUATE;
 
     state EVALUATE:
@@ -410,11 +394,13 @@ fsm receive {
             //runfsm send_deployed;
             break;
         case STREAM:
+		if (crunning(stream_data) >= 1)
+			break;
 		  if (debug)
             diag("stream hop id: %d\r\nchild id:%d\r\nstream source id %d\r\n",
 				 get_hop_id(packet), child_id, get_source_id(packet));
 		  if (get_hop_id(packet) != child_id) {//if not from parent
-			diag("not parent\r\n");
+			if (debug) diag("not parent\r\n");
 			break;
 		  }
             runfsm send_ack(get_hop_id(packet));
@@ -428,11 +414,6 @@ fsm receive {
                 }
                 break;
             } else {
-                if (debug){
-                    diag("\r\nHOP PACKET!!!!!\r\n%s\r\n", get_payload(packet));
-                    //debug_diag(packet);
-                }
-				
                 acknowledged = NO;
                 address hop_packet = umalloc(packet_length(packet) / 2 *
                                              sizeof(word));
@@ -459,7 +440,6 @@ fsm receive {
                 runfsm send_ack(get_source_id(packet));
                 if (cont) {
                     if (debug)
-                        diag("cont is equal to 1 and will be set to 0\r\n");
                     runfsm send_ping;
                 }
                 cont = 0;
@@ -473,8 +453,6 @@ fsm receive {
             break;
         }
         tcv_endp(packet);
-        if (debug)
-            diag("END fsm Recieve\r\n");
         proceed RECV;
 }
 
