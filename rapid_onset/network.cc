@@ -395,6 +395,8 @@ fsm receive {
             //runfsm send_deployed;
             break;
         case STREAM:
+		if (crunning(stream_data) >= 1)
+			break;
 		  if (debug)
             diag("stream hop id: %d\r\nchild id:%d\r\nstream source id %d\r\n",
 				 get_hop_id(packet), child_id, get_source_id(packet));
