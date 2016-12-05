@@ -5,16 +5,34 @@
   \frametitle{Deployment}
 
   \begin{enumerate}
-  \item On startup, a node begins listening for a deployment brodcast
-  \item The sink node has the option to begin broadcasting the deployment message
+  \item On startup, a node begins listening for a deployment broadcast
+  \item The sink node has the option to begin broadcasting the deployment message (300ms)
     \begin{itemize}
-    \item[--] Must also set the maximum number of nodes in the network
+    \item[--] The maximum number of nodes and deployment type are held in the deployment packet
     \end{itemize}
-  \item A new node is turned on and is travelled in a straight line until it is signalled to be deployed based on packet loss or the rssi
-  \item The node then sends the stop signal to it's parent and begins deploying itself
-  \item If the node is the final node, it will send the stop signal and begin transmitting data to the sink node
+  \item A new node is turned on as is moves away from the broadcasting node, it runs the specified deployment test
+  \item The node then sends the stop signal once deployed and begins deploying if it is not the last node
+  \item If the node is the final node, it will send the stop signal and begin transmitting data to the sink node(250ms)
     
   \end{enumerate}
   
 \end{frame}
+
+\begin{frame}[t]
+  \frametitle{Deployment tests}
+
+  RSSI test
+  \begin{itemize}
+  \item Records how many of the previous 16 packets were below the RSSI threshold
+  \item Compares the number of low RSSI values to a threshold (10)
+  \end{itemize}
+
+  \vfill
+
+  Packet Loss test
+  \begin{itemize}
+  \item Records how many of the previous 15 packets were lost, based on sequence number
+  \item Compares the number of lost packets to a threshold (4)
+  \end{itemize}
+\end
 
