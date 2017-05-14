@@ -1,0 +1,14 @@
+#ifdef BANNER
+#undef BANNER
+#endif /* End BANNER */
+#define BANNER ""
+
+#ifdef RADIO_POWER_SETABLE
+#undef RADIO_POWER_SETABLE
+#endif /*RADIO_POWER_SETABLE*/
+#define RADIO_POWER_SETABLE 1
+
+#ifdef RADIO_USE_LEDS
+#undef RADIO_USE_LEDS
+#endif /* RADIO_USE_LEDS */
+#define RADIO_USE_LEDS 0
